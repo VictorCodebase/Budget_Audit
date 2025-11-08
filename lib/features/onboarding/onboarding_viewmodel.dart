@@ -6,7 +6,7 @@ class OnboardingViewModel extends ChangeNotifier {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
 
-  final bool isOnboardingComplete = false;
+  bool isOnboardingComplete = false;
 
   String? selectedOption;
   bool isUrgent = false;
@@ -36,6 +36,7 @@ class OnboardingViewModel extends ChangeNotifier {
       debugPrint('Amount: ${amountController.text}');
       debugPrint('Category: $selectedOption');
       debugPrint('Urgent: $isUrgent');
+      isOnboardingComplete = true;
       return true;
     }
     return false;

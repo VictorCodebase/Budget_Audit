@@ -1,48 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-
-
-// Feature views
+import '../../core/services/service_locator.dart';
+import '../../core/services/participant_service.dart';
+import '../../core/context.dart';
 import '../../features/home/home_view.dart';
 import '../../features/onboarding/onboarding_view.dart';
-
-// ViewModels
 import '../../features/onboarding/onboarding_viewmodel.dart';
 import '../../features/home/home_viewmodel.dart';
 
-/// AppRouter sets up all navigation rules and guards.
-/// It uses Provider to determine which page to start from (Onboarding or Home).
 class AppRouter {
-  static final GlobalKey<NavigatorState> _rootNavigatorKey =
-  GlobalKey<NavigatorState>();
+  static final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
   static GoRouter createRouter(BuildContext context) {
+    final appContext = Provider.of<AppContext>(context, listen: false);
+
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: '/onboarding',
-      refreshListenable: Provider.of<OnboardingViewModel>(context, listen: false),
-      redirect: (context, state) {
-        final onboardingVM = Provider.of<OnboardingViewModel>(
-          context,
-          listen: false,
-        );
-
-        // If onboarding is complete, redirect to home
-        final isOnboardingComplete = onboardingVM.isOnboardingComplete;
-        final goingToOnboarding = state.fullPath == '/onboarding';
-
-        if (isOnboardingComplete && goingToOnboarding) {
-          return '/home';
-        } else if (!isOnboardingComplete && !goingToOnboarding) {
-          return '/onboarding';
-        }
-        return null; // no redirect
-      },
+      initialLocation: '/loading',
       routes: [
         GoRoute(
+          path: '/loading',
+          builder: (_, __) => FutureBuilder(
+            future: _checkParticipant(context, appContext),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              // Once future resolves, GoRouter redirect will handle navigation
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+        GoRoute(
           path: '/onboarding',
-          name: 'onboarding',
           builder: (context, state) => ChangeNotifierProvider(
             create: (_) => OnboardingViewModel(),
             child: const OnboardingView(),
@@ -50,13 +41,33 @@ class AppRouter {
         ),
         GoRoute(
           path: '/home',
-          name: 'home',
           builder: (context, state) => ChangeNotifierProvider(
             create: (_) => HomeViewModel(),
             child: const HomeView(),
           ),
         ),
       ],
+      redirect: (context, state) async {
+        final hasParticipant = appContext.currentParticipant != null;
+        if (!hasParticipant && state.fullPath != '/onboarding') {
+          return '/onboarding';
+        } else if (hasParticipant && state.fullPath == '/onboarding') {
+          return '/home';
+        }
+        return null;
+      },
     );
+  }
+
+  static Future<void> _checkParticipant(
+      BuildContext context, AppContext appContext) async {
+    final participantService = sl<ParticipantService>();
+    final participant = await participantService.getCurrentParticipant();
+    if (participant != null) {
+      appContext.setParticipant(participant);
+      context.go('/home');
+    } else {
+      context.go('/onboarding');
+    }
   }
 }
