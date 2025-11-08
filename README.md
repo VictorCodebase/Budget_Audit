@@ -32,9 +32,9 @@ dart run build_runner build
 >! You shall require a SyncFusion Lisence key
 _Visit: https://www.syncfusion.com/account/claim-license-key_
 
-Replace `SYNCFUSION_LICENSE_KEY` in `.env`
+add a .env file in root, add a variable`SYNCFUSION_LICENSE`
 ```env
-SYNCFUSION_LICENSE_KEY = "***"
+SYNCFUSION_LICENSE = "***"
 ```
 
 ## Google Sign-In 

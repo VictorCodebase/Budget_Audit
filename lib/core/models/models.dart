@@ -8,7 +8,7 @@ class Participant {
   final String firstName;
   final String? lastName;
   final String? nickname;
-  final String role;
+  final Role role;
   final String email;
   // PasswordHash is usually not exposed in the app model
 
@@ -21,6 +21,23 @@ class Participant {
     required this.email,
   });
 }
+
+enum Role {
+  participant('participant'),
+  editor('editor'),
+  manager('manager');
+
+  final String value;
+  const Role(this.value);
+
+  static Role fromString(String role) {
+    return Role.values.firstWhere(
+          (r) => r.value.toLowerCase() == role.toLowerCase(),
+      orElse: () => throw ArgumentError('Invalid role: $role'),
+    );
+  }
+  }
+
 
 // 1.2. Categories Model
 class Category {

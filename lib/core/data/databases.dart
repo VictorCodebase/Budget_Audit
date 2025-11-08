@@ -1,14 +1,15 @@
 import  'package:drift/drift.dart' as drift;
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:flutter/cupertino.dart';
+//import 'package:flutter/cupertino.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 import 'dart:io';
 
-import '../models/models.dart';
+//import '../models/models.dart';
 
-part 'database.g.dart'; // generated db
+part 'databases.g.dart'; // generated db
 
 @drift.DataClassName('Participant')
 class Participants extends drift.Table {
@@ -20,8 +21,8 @@ class Participants extends drift.Table {
   drift.TextColumn get email => text().withLength(min: 1, max: 255).unique()();
   drift.TextColumn get pwdhash => text().withLength(min: 60, max: 60)(); //TODO: Ensure the hashing algorithm gets the correct char length
 
-  @override
-  Set<drift.Column> get primaryKey => {participantId};
+  //@override
+  //Set<drift.Column> get primaryKey => {participantId};
 }
 
 @drift.DataClassName('Category')
@@ -30,8 +31,8 @@ class Categories extends drift.Table {
   drift.TextColumn get categoryName => text().withLength(min: 1, max: 100).unique()();
   drift.TextColumn get colorHex => text().withLength(min: 7, max: 7)();
 
-  @override
-  Set<drift.Column> get primaryKey => {categoryId};
+  //@override
+  //Set<drift.Column> get primaryKey => {categoryId};
 }
 
 @drift.DataClassName('Template')
@@ -44,8 +45,8 @@ class Templates extends drift.Table {
   drift.DateTimeColumn get dateCreated => dateTime()();
   drift.IntColumn get timesUsed => integer()();
 
-  @override
-  Set<drift.Column> get primaryKey => {templateId};
+  //@override
+  //Set<drift.Column> get primaryKey => {templateId};
 }
 
 @drift.DataClassName('Account')
@@ -59,8 +60,8 @@ class Accounts extends drift.Table {
   drift.IntColumn get responsibleParticipantId => integer().references(Participants, #participantId)();
   drift.DateTimeColumn get dateCreated => dateTime()();
 
-  @override
-  Set<drift.Column> get primaryKey => {accountId};
+  //@override
+  //Set<drift.Column> get primaryKey => {accountId};
 }
 
 @drift.DataClassName('Vendor')
@@ -68,8 +69,8 @@ class Vendors extends drift.Table {
   drift.IntColumn get vendorId => integer().autoIncrement()();
   drift.TextColumn get vendorName => text().withLength(min: 1, max: 250)();
 
-  @override
-  Set<drift.Column> get primaryKey => {vendorId};
+  //@override
+  //Set<drift.Column> get primaryKey => {vendorId};
 }
 
 
@@ -80,16 +81,16 @@ class SyncLog extends drift.Table {
   drift.IntColumn get syncId => integer().autoIncrement()();
   // Note: TransactionId is nullable here as it might be used for
   // template/other syncs, not just transactions.
-  drift.IntColumn get transactionId => integer().nullable().references(Transactions, #transactionId)();
+  //drift.IntColumn get transactionId => integer().nullable().references(Transactions, #transactionId)();
   drift.TextColumn get syncDirection => text().withLength(min: 1, max: 100)();
   drift.BoolColumn get synced => boolean()();
   drift.BoolColumn get success => boolean()();
   drift.TextColumn get errorMessage => text().nullable()();
   drift.TextColumn get sheetUrl => text()();
-  drift.IntColumn get associatedTemplate => integer().references(Templates, #templateId)();
+  //drift.IntColumn get associatedTemplate => integer().references(Templates, #templateId)();
 
-  @override
-  Set<drift.Column> get primaryKey => {syncId};
+  //@override
+  //Set<drift.Column> get primaryKey => {syncId};
 }
 
 @drift.DataClassName('Transaction')
@@ -101,12 +102,16 @@ class Transactions extends drift.Table {
   drift.DateTimeColumn get date => dateTime()();
   drift.IntColumn get vendorId => integer().references(Vendors, #vendorId)();
   drift.RealColumn get amount => real()();
+
+  @drift.ReferenceName('transactionOwner')
   drift.IntColumn get participantId => integer().references(Participants, #participantId)();
+
+  @drift.ReferenceName('transactionEditor')
   drift.IntColumn get editorParticipantId => integer().references(Participants, #participantId)();
   drift.TextColumn get reason => text().nullable()();
 
-  @override
-  Set<drift.Column> get primaryKey => {transactionId};
+  //@override
+//Set<drift.Column> get primaryKey => {transactionId};
 }
 
 @drift.DataClassName('TransactionEditHistory')
@@ -119,8 +124,8 @@ class TransactionEditHistories extends drift.Table {
   drift.TextColumn get newValue => text().withLength(min: 1, max: 250)();
   drift.DateTimeColumn get timeStamp => dateTime()();
 
-  @override
-  Set<drift.Column> get primaryKey => {transactionEditId};
+  //@override
+//Set<drift.Column> get primaryKey => {transactionEditId};
 }
 
 @drift.DataClassName('VendorPreference')
@@ -129,8 +134,8 @@ class VendorPreferences extends drift.Table {
   drift.IntColumn get vendorId => integer().references(Vendors, #vendorId)();
   drift.IntColumn get participantId => integer().references(Participants, #participantId)();
 
-  @override
-  Set<drift.Column> get primaryKey => {vendorPreferenceId};
+  //@override
+  //Set<drift.Column> get primaryKey => {vendorPreferenceId};
 
   @override
   List<String> get customConstraints => [
@@ -147,8 +152,8 @@ class ParticipantIncomes extends drift.Table {
   drift.TextColumn get incomeType => text().withLength(min: 1, max: 100)();
   drift.DateTimeColumn get dateReceived => dateTime().clientDefault(() => DateTime.now())();
 
-  @override
-  Set<drift.Column> get primaryKey => {incomeId};
+  //@override
+//Set<drift.Column> get primaryKey => {incomeId};
 }
 
 @drift.DataClassName('TemplateParticipant')
@@ -157,8 +162,8 @@ class TemplateParticipants extends drift.Table {
   drift.IntColumn get participantId => integer().references(Participants, #participantId)();
   drift.TextColumn get permissionRole => text().withLength(min: 1, max: 50)();
 
-  @override
-  Set<drift.Column> get primaryKey => {templateId, participantId};
+//@override
+//Set<drift.Column> get primaryKey => {templateId, participantId};
 }
 
 @drift.DataClassName('ChartSnapshot')
@@ -170,8 +175,8 @@ class ChartSnapshots extends drift.Table {
   drift.TextColumn get permissionRole => text().withLength(min: 1, max: 50)();
   drift.IntColumn get associatedTemplate => integer().references(Templates, #templateId)();
 
-  @override
-  Set<drift.Column> get primaryKey => {snapshotId};
+  //@override
+//Set<drift.Column> get primaryKey => {snapshotId};
 }
 
 // --- Main Database Class ---
@@ -212,7 +217,6 @@ drift.LazyDatabase _openConnection() {
       final cachebase = (await getTemporaryDirectory()).path;
       sqlite3.tempDirectory = cachebase;
     }
-
     return NativeDatabase.createInBackground(file);
   });
 }

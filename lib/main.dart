@@ -1,30 +1,53 @@
+import 'package:budget_audit/core/routing/app_router.dart';
+import 'package:budget_audit/features/onboarding/onboarding_viewmodel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:syncfusion_flutter_core/core.dart';
+import 'package:logging/logging.dart';
 
-void main() {
-  runApp(const MyApp());
+import './core/data/databases.dart' as db;
+import './core/services/participant_service.dart' as participantService;
+import './core/services/budget_service.dart' as budgetService;
+
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
+  final Logger _logger = Logger("main");
+  final database = db.AppDatabase();
+  final _participantService = participantService.ParticipantService(database);
+  final _budgetService = budgetService.BudgetService(database);
+
+  //TODO: Declutter this area
+  final syncfusionkey = dotenv.env['SYNCFUSION_LICENSE'];
+  if (syncfusionkey != null && syncfusionkey.isNotEmpty) {
+    SyncfusionLicense.registerLicense(syncfusionkey);
+  } else {
+    _logger.severe("Syncfusion license not found in your .env file");
+  }
+
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
+    ],
+    child: const BudgetAudit(),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class BudgetAudit extends StatelessWidget {
+  const BudgetAudit({super.key});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
+    final router = AppRouter.createRouter(context);
+
+    return MaterialApp.router(
+      title: 'Budget Audit (Early Access)',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      //home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      routerConfig: router,
     );
   }
 }
@@ -32,14 +55,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
