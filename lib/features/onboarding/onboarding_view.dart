@@ -1,118 +1,198 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'onboarding_viewmodel.dart';
+import 'widgets/participant_form.dart';
+import 'widgets/participant_list.dart';
+import 'widgets/sign_in_form.dart';
+import '../../core/theme/app_theme.dart';
 
-class OnboardingView extends StatelessWidget {
-  const OnboardingView({super.key});
+class OnboardingView extends StatefulWidget {
+  const OnboardingView({Key? key}) : super(key: key);
+
+  @override
+  State<OnboardingView> createState() => _OnboardingViewState();
+}
+
+class _OnboardingViewState extends State<OnboardingView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OnboardingViewModel>().initialize();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<OnboardingViewModel>(
-      builder: (context, viewModel, child) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('ONBOARDING GENERIC EXAMPLE'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: viewModel.resetForm,
-              )
-            ],
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: viewModel.formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Common widgets
-                  const Text(
-                    'Welcome to a sample feature page!',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Example Dropdown
-                  DropdownButtonFormField<String>(
-                    value: viewModel.selectedOption,
-                    decoration: const InputDecoration(
-                      labelText: 'Select Category',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: ['Food', 'Transport', 'Utilities']
-                        .map((item) =>
-                        DropdownMenuItem(value: item, child: Text(item)))
-                        .toList(),
-                    onChanged: (value) => viewModel.setOption(value),
-                    validator: (value) =>
-                    value == null ? 'Please select a category' : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Example TextField
-                  TextFormField(
-                    controller: viewModel.nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) =>
-                    value == null || value.isEmpty ? 'Enter a name' : null,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Example Number Field
-                  TextFormField(
-                    controller: viewModel.amountController,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Enter amount';
-                      }
-                      final num? val = num.tryParse(value);
-                      return val == null ? 'Invalid number' : null;
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Checkbox
-                  CheckboxListTile(
-                    title: const Text('Mark as urgent'),
-                    value: viewModel.isUrgent,
-                    onChanged: viewModel.toggleUrgent,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Submit Button
-                  Center(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.check),
-                      label: const Text('Submit'),
-                      onPressed: () {
-                        if (viewModel.submitForm()) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Form submitted successfully!')),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _buildContent(),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+      child: Column(
+        children: [
+          // Logo
+          Image.asset(
+            'assets/images/budget_audit_logo.png',
+            height: 100,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 100,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryPink.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Text(
+                    'BA',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryPink,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
+          const SizedBox(height: 16),
+          // Title
+          Text(
+            'Budget Audit',
+            style: AppTheme.h1.copyWith(color: AppTheme.primaryPink),
+          ),
+          const SizedBox(height: 8),
+          Consumer<OnboardingViewModel>(
+            builder: (context, viewModel, _) {
+              return Text(
+                viewModel.isFirstParticipant
+                    ? 'Welcome! Let\'s set up your account'
+                    : 'Manage participants or sign in',
+                style: AppTheme.bodyMedium.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Consumer<OnboardingViewModel>(
+      builder: (context, viewModel, _) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left side - Form
+            Expanded(
+              flex: 3,
+              child: _buildLeftPanel(viewModel),
+            ),
+            // Right side - Participants list
+            Expanded(
+              flex: 2,
+              child: ParticipantList(viewModel: viewModel),
+            ),
+          ],
         );
       },
+    );
+  }
+
+  Widget _buildLeftPanel(OnboardingViewModel viewModel) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          _buildModeTabs(viewModel),
+          const SizedBox(height: 32),
+          Expanded(
+            child: viewModel.mode == OnboardingMode.addParticipants
+                ? ParticipantForm(viewModel: viewModel)
+                : SignInForm(viewModel: viewModel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeTabs(OnboardingViewModel viewModel) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppTheme.border, width: 1),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildModeTab(
+              label: 'Add Participants',
+              isSelected: viewModel.mode == OnboardingMode.addParticipants,
+              onTap: () => viewModel.switchMode(OnboardingMode.addParticipants),
+            ),
+          ),
+          Expanded(
+            child: _buildModeTab(
+              label: 'Sign in as a participant',
+              isSelected: viewModel.mode == OnboardingMode.signInAsParticipant,
+              onTap: () => viewModel.switchMode(OnboardingMode.signInAsParticipant),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeTab({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: isSelected
+              ? const Border(
+            bottom: BorderSide(
+              color: AppTheme.primaryPink,
+              width: 3,
+            ),
+          )
+              : null,
+        ),
+        child: Text(
+          label,
+          style: AppTheme.label.copyWith(
+            color: isSelected ? AppTheme.primaryPink : AppTheme.textSecondary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 }

@@ -3,17 +3,17 @@ import 'package:provider/provider.dart';
 import 'core/bootstrap/app_initialize.dart';
 import 'core/routing/app_router.dart';
 import 'core/context.dart';
+import 'core/theme/app_theme.dart';
 import 'features/onboarding/onboarding_viewmodel.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeApp();
+  await initializeApp(); // This should call setupLocator() inside
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AppContext()),
-        ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
       ],
       child: const BudgetAudit(),
     ),
@@ -25,11 +25,13 @@ class BudgetAudit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final router = AppRouter.createRouter(context);
-    return MaterialApp.router(
+    return MaterialApp(
       title: 'BudgetAudit',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      routerConfig: router,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
+      initialRoute: '/onboarding',
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }

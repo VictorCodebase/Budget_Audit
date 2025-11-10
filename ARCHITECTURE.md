@@ -13,6 +13,7 @@ lib/
 │   │   ├── database.dart              # Drift database definition
 │   │   └── database.g.dart            # Generated database code
 │   ├── models/                        # Data models (Participant, Account, etc.)
+|   ├── client_models/                        # Data models (Participant, Account, etc.)
 │   ├── services/                      # Business logic services
 │   │   ├── service_locator.dart       # Dependency injection
 │   │   ├── participant_service.dart

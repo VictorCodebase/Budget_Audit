@@ -1,0 +1,1649 @@
+// ============================================================================
+// FILE: lib/features/onboarding/onboarding_viewmodel.dart
+// ============================================================================
+
+import 'package:flutter/foundation.dart';
+import '../../core/services/participant_service.dart';
+import '../../core/models/models.dart' as models;
+import '../../core/client_models/client_models.dart' as client_models;
+
+enum OnboardingMode {
+  addParticipants,
+  signInAsParticipant,
+}
+
+class OnboardingViewModel extends ChangeNotifier {
+  final ParticipantService _participantService;
+
+  OnboardingViewModel(this._participantService);
+
+  // State management
+  OnboardingMode _mode = OnboardingMode.addParticipants;
+  OnboardingMode get mode => _mode;
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  String? _error;
+  String? get error => _error;
+
+  // List of participants (for display on the right side)
+  List<models.Participant> _participants = [];
+  List<models.Participant> get participants => _participants;
+
+  // Current participant being added/edited
+  int? _editingParticipantId;
+  int? get editingParticipantId => _editingParticipantId;
+
+  // Form state
+  final Map<String, String> _formData = {
+    'firstName': '',
+    'lastName': '',
+    'nickname': '',
+    'email': '',
+    'password': '',
+  };
+
+  String getFormValue(String field) => _formData[field] ?? '';
+
+  // Track if this is the first participant (owner/manager)
+  bool get isFirstParticipant => _participants.isEmpty;
+
+  // ========== Initialization ==========
+
+  Future<void> initialize() async {
+    await loadParticipants();
+  }
+
+  Future<void> loadParticipants() async {
+    _setLoading(true);
+    try {
+      _participants = await _participantService.getAllParticipants();
+      _clearError();
+    } catch (e) {
+      _setError('Failed to load participants: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ========== Mode Switching ==========
+
+  void switchMode(OnboardingMode newMode) {
+    _mode = newMode;
+    _clearForm();
+    _clearError();
+    notifyListeners();
+  }
+
+  // ========== Form Management ==========
+
+  void updateFormField(String field, String value) {
+    _formData[field] = value;
+    notifyListeners();
+  }
+
+  void _clearForm() {
+    _formData.clear();
+    _formData.addAll({
+      'firstName': '',
+      'lastName': '',
+      'nickname': '',
+      'email': '',
+      'password': '',
+    });
+    _editingParticipantId = null;
+  }
+
+  // ========== Validation ==========
+
+  String? validateForm() {
+    final firstName = _formData['firstName']?.trim() ?? '';
+    final email = _formData['email']?.trim() ?? '';
+    final password = _formData['password']?.trim() ?? '';
+
+    if (firstName.isEmpty) {
+      return 'First name is required';
+    }
+
+    if (email.isEmpty) {
+      return 'Email is required';
+    }
+
+    // Basic email validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(email)) {
+      return 'Please enter a valid email address';
+    }
+
+    // Password validation (for now, just check if not empty)
+    if (password.isEmpty) {
+      return 'Password is required';
+    }
+
+    if (password.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+
+    return null;
+  }
+
+  // ========== Add Participant ==========
+
+  Future<bool> createNewParticipant() async {
+    final validationError = validateForm();
+    if (validationError != null) {
+      _setError(validationError);
+      return false;
+    }
+
+    _setLoading(true);
+    try {
+      // Determine role based on whether this is the first participant
+      final role = isFirstParticipant
+          ? client_models.Role.manager
+          : client_models.Role.participant;
+
+      final participant = client_models.Participant(
+        firstName: _formData['firstName']!.trim(),
+        lastName: _formData['lastName']?.trim().isEmpty == true
+            ? null
+            : _formData['lastName']?.trim(),
+        nickname: _formData['nickname']?.trim().isEmpty == true
+            ? null
+            : _formData['nickname']?.trim(),
+        role: role,
+        email: _formData['email']!.trim(),
+      );
+
+      // TODO: Hash password before storing
+      // For now, we're passing it directly - you should implement proper hashing
+      final participantId = await _participantService.addParticipant(
+        participant,
+        _formData['password']!,
+      );
+
+      if (participantId > 0) {
+        await loadParticipants();
+        _clearForm();
+        _clearError();
+        return true;
+      } else {
+        _setError('Failed to create participant');
+        return false;
+      }
+    } catch (e) {
+      _setError('Error creating participant: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ========== Edit Participant ==========
+
+  void startEditingParticipant(models.Participant participant) {
+    _editingParticipantId = participant.participantId;
+    _formData['firstName'] = participant.firstName;
+    _formData['lastName'] = participant.lastName ?? '';
+    _formData['nickname'] = participant.nickname ?? '';
+    _formData['email'] = participant.email;
+    _formData['password'] = ''; // Don't populate password for security
+    notifyListeners();
+  }
+
+  Future<bool> updateExistingParticipant() async {
+    if (_editingParticipantId == null) return false;
+
+    final validationError = validateForm();
+    if (validationError != null) {
+      _setError(validationError);
+      return false;
+    }
+
+    _setLoading(true);
+    try {
+      final participant = models.Participant(
+        participantId: _editingParticipantId!,
+        firstName: _formData['firstName']!.trim(),
+        lastName: _formData['lastName']?.trim().isEmpty == true
+            ? null
+            : _formData['lastName']?.trim(),
+        nickname: _formData['nickname']?.trim().isEmpty == true
+            ? null
+            : _formData['nickname']?.trim(),
+        role: _participants
+            .firstWhere((p) => p.participantId == _editingParticipantId)
+            .role,
+        email: _formData['email']!.trim(),
+      );
+
+      final success = await _participantService.updateParticipant(participant);
+
+      if (success) {
+        await loadParticipants();
+        _clearForm();
+        _clearError();
+        return true;
+      } else {
+        _setError('Failed to update participant');
+        return false;
+      }
+    } catch (e) {
+      _setError('Error updating participant: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ========== Delete Participant ==========
+
+  Future<bool> deleteParticipant(int participantId) async {
+    // Prevent deleting the manager/owner
+    final participant = _participants.firstWhere(
+      (p) => p.participantId == participantId,
+    );
+
+    if (participant.role == models.Role.manager) {
+      _setError('Cannot delete the owner account');
+      return false;
+    }
+
+    _setLoading(true);
+    try {
+      // TODO: Implement delete in participant service
+      // For now, return false as it's not implemented
+      _setError('Delete functionality not yet implemented');
+      return false;
+    } catch (e) {
+      _setError('Error deleting participant: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ========== Sign In ==========
+
+  Future<models.Participant?> signInAsParticipant(
+    String email,
+    String password,
+  ) async {
+    _setLoading(true);
+    try {
+      // Find participant by email
+      final participant = _participants.firstWhere(
+        (p) => p.email.toLowerCase() == email.toLowerCase(),
+        orElse: () => throw Exception('Participant not found'),
+      );
+
+      // TODO: Verify password hash
+      // For now, we'll just return the participant
+      // You need to implement proper password verification
+
+      _clearError();
+      return participant;
+    } catch (e) {
+      _setError('Invalid email or password');
+      return null;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // ========== Navigation Helpers ==========
+
+  bool canProceed() {
+    // Must have at least one participant (the manager/owner)
+    return _participants.isNotEmpty;
+  }
+
+  String getNextRoute() {
+    // Check if any templates/budgets exist
+    // For now, always route to budgeting page after onboarding
+    // You can enhance this later to check for existing budgets
+    return '/budgeting';
+  }
+
+  // ========== Helper Methods ==========
+
+  void _setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+
+  void _setError(String error) {
+    _error = error;
+    notifyListeners();
+  }
+
+  void _clearError() {
+    _error = null;
+    notifyListeners();
+  }
+
+  String getDisplayName(models.Participant participant) {
+    if (participant.nickname != null && participant.nickname!.isNotEmpty) {
+      return participant.nickname!;
+    }
+    return participant.firstName;
+  }
+
+  String getFullName(models.Participant participant) {
+    final parts = [
+      participant.firstName,
+      if (participant.lastName != null) participant.lastName!,
+    ];
+    return parts.join(' ');
+  }
+}
+
+
+// ============================================================================
+// FILE: lib/features/onboarding/onboarding_view.dart
+// ============================================================================
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'onboarding_viewmodel.dart';
+import 'widgets/participant_form.dart';
+import 'widgets/participant_list.dart';
+import 'widgets/sign_in_form.dart';
+import '../../core/theme/app_theme.dart';
+
+class OnboardingView extends StatefulWidget {
+  const OnboardingView({Key? key}) : super(key: key);
+
+  @override
+  State<OnboardingView> createState() => _OnboardingViewState();
+}
+
+class _OnboardingViewState extends State<OnboardingView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OnboardingViewModel>().initialize();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: _buildContent(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
+      child: Column(
+        children: [
+          // Logo
+          Image.asset(
+            'assets/images/budget_audit_logo.png',
+            height: 100,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 100,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryPink.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Text(
+                    'BA',
+                    style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryPink,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          // Title
+          Text(
+            'Budget Audit',
+            style: AppTheme.h1.copyWith(color: AppTheme.primaryPink),
+          ),
+          const SizedBox(height: 8),
+          Consumer<OnboardingViewModel>(
+            builder: (context, viewModel, _) {
+              return Text(
+                viewModel.isFirstParticipant
+                    ? 'Welcome! Let\'s set up your account'
+                    : 'Manage participants or sign in',
+                style: AppTheme.bodyMedium.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Consumer<OnboardingViewModel>(
+      builder: (context, viewModel, _) {
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left side - Form
+            Expanded(
+              flex: 3,
+              child: _buildLeftPanel(viewModel),
+            ),
+            // Right side - Participants list
+            Expanded(
+              flex: 2,
+              child: ParticipantList(viewModel: viewModel),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLeftPanel(OnboardingViewModel viewModel) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          _buildModeTabs(viewModel),
+          const SizedBox(height: 32),
+          Expanded(
+            child: viewModel.mode == OnboardingMode.addParticipants
+                ? ParticipantForm(viewModel: viewModel)
+                : SignInForm(viewModel: viewModel),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeTabs(OnboardingViewModel viewModel) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppTheme.border, width: 1),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildModeTab(
+              label: 'Add Participants',
+              isSelected: viewModel.mode == OnboardingMode.addParticipants,
+              onTap: () => viewModel.switchMode(OnboardingMode.addParticipants),
+            ),
+          ),
+          Expanded(
+            child: _buildModeTab(
+              label: 'Sign in as a participant',
+              isSelected: viewModel.mode == OnboardingMode.signInAsParticipant,
+              onTap: () => viewModel.switchMode(OnboardingMode.signInAsParticipant),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeTab({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: isSelected
+              ? Border(
+                  bottom: BorderSide(
+                    color: AppTheme.primaryPink,
+                    width: 3,
+                  ),
+                )
+              : null,
+        ),
+        child: Text(
+          label,
+          style: AppTheme.label.copyWith(
+            color: isSelected ? AppTheme.primaryPink : AppTheme.textSecondary,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+
+// ============================================================================
+// FILE: lib/features/onboarding/widgets/participant_form.dart
+// ============================================================================
+
+import 'package:flutter/material.dart';
+import '../onboarding_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
+
+class ParticipantForm extends StatelessWidget {
+  final OnboardingViewModel viewModel;
+
+  const ParticipantForm({
+    Key? key,
+    required this.viewModel,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          border: Border.all(color: AppTheme.border, width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              viewModel.editingParticipantId != null
+                  ? 'Edit Participant'
+                  : 'Add Participant',
+              style: AppTheme.h3,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Participants are individuals whose financial statements will be included in the budgeting',
+              style: AppTheme.bodySmall.copyWith(
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            _buildForm(context),
+            if (viewModel.error != null) ...[
+              const SizedBox(height: 16),
+              _buildError(),
+            ],
+            const SizedBox(height: 24),
+            _buildSubmitButton(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                label: 'First Name',
+                hint: 'Stevie',
+                isRequired: true,
+                value: viewModel.getFormValue('firstName'),
+                onChanged: (value) => viewModel.updateFormField('firstName', value),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTextField(
+                label: 'Second Name',
+                hint: 'Doe',
+                value: viewModel.getFormValue('lastName'),
+                onChanged: (value) => viewModel.updateFormField('lastName', value),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          label: 'Preferred Nickname',
+          hint: 'JohnieD',
+          value: viewModel.getFormValue('nickname'),
+          onChanged: (value) => viewModel.updateFormField('nickname', value),
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          label: 'Email',
+          hint: 'johndoe@mail.com',
+          isRequired: true,
+          keyboardType: TextInputType.emailAddress,
+          value: viewModel.getFormValue('email'),
+          onChanged: (value) => viewModel.updateFormField('email', value),
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          label: 'Password',
+          hint: '••••',
+          isRequired: true,
+          obscureText: true,
+          value: viewModel.getFormValue('password'),
+          onChanged: (value) => viewModel.updateFormField('password', value),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    bool isRequired = false,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    required String value,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: AppTheme.label.copyWith(
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            if (isRequired)
+              Text(
+                '*',
+                style: AppTheme.label.copyWith(
+                  color: AppTheme.error,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: TextEditingController(text: value)
+            ..selection = TextSelection.collapsed(offset: value.length),
+          onChanged: onChanged,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textTertiary,
+            ),
+            filled: true,
+            fillColor: AppTheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              borderSide: BorderSide(color: AppTheme.border, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              borderSide: BorderSide(color: AppTheme.primaryPink, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: AppTheme.error, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              viewModel.error!,
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton(BuildContext context) {
+    final isEditing = viewModel.editingParticipantId != null;
+
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: viewModel.isLoading
+            ? null
+            : () async {
+                final success = isEditing
+                    ? await viewModel.updateExistingParticipant()
+                    : await viewModel.createNewParticipant();
+
+                if (success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isEditing
+                            ? 'Participant updated successfully'
+                            : 'Participant created successfully',
+                      ),
+                      backgroundColor: AppTheme.success,
+                    ),
+                  );
+                }
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryPink,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          ),
+          elevation: 0,
+        ),
+        child: viewModel.isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                isEditing ? 'Update Participant' : 'Create new Participant',
+                style: AppTheme.button,
+              ),
+      ),
+    );
+  }
+}
+
+
+// ============================================================================
+// FILE: lib/features/onboarding/widgets/participant_list.dart
+// ============================================================================
+
+import 'package:flutter/material.dart';
+import '../onboarding_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/models/models.dart' as models;
+
+class ParticipantList extends StatelessWidget {
+  final OnboardingViewModel viewModel;
+
+  const ParticipantList({
+    Key? key,
+    required this.viewModel,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Participants',
+            style: AppTheme.h3,
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: viewModel.participants.isEmpty
+                ? _buildEmptyState()
+                : _buildParticipantsList(),
+          ),
+          const SizedBox(height: 16),
+          if (viewModel.canProceed()) _buildContinueButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.people_outline,
+            size: 64,
+            color: AppTheme.textTertiary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No participants yet',
+            style: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add your first participant to get started',
+            style: AppTheme.bodySmall.copyWith(
+              color: AppTheme.textTertiary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParticipantsList() {
+    return ListView.separated(
+      itemCount: viewModel.participants.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final participant = viewModel.participants[index];
+        return _buildParticipantCard(context, participant);
+      },
+    );
+  }
+
+  Widget _buildParticipantCard(
+    BuildContext context,
+    models.Participant participant,
+  ) {
+    final isEditing = viewModel.editingParticipantId == participant.participantId;
+    final isOwner = participant.role == models.Role.manager;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isEditing ? AppTheme.primaryPink.withOpacity(0.05) : Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(
+          color: isEditing ? AppTheme.primaryPink : AppTheme.border,
+          width: isEditing ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          _buildAvatar(participant),
+          const SizedBox(width: 16),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        viewModel.getDisplayName(participant),
+                        style: AppTheme.label.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isOwner) ...[
+                      const SizedBox(width: 8),
+                      _buildOwnerBadge(),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  viewModel.getFullName(participant),
+                  style: AppTheme.bodySmall.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  participant.email,
+                  style: AppTheme.caption.copyWith(
+                    color: AppTheme.textTertiary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // Actions
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: AppTheme.textSecondary),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_outlined, size: 20, color: AppTheme.info),
+                    const SizedBox(width: 12),
+                    Text('Edit', style: AppTheme.bodyMedium),
+                  ],
+                ),
+              ),
+              if (!isOwner)
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
+                      const SizedBox(width: 12),
+                      Text('Delete', style: AppTheme.bodyMedium),
+                    ],
+                  ),
+                ),
+            ],
+            onSelected: (value) {
+              if (value == 'edit') {
+                viewModel.startEditingParticipant(participant);
+              } else if (value == 'delete') {
+                _showDeleteConfirmation(context, participant);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar(models.Participant participant) {
+    final initials = _getInitials(participant);
+    final colors = [
+      AppTheme.primaryPink,
+      AppTheme.primaryBlue,
+      AppTheme.primaryPurple,
+      AppTheme.primaryTurquoise,
+    ];
+    final colorIndex = participant.participantId % colors.length;
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: colors[colorIndex],
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getInitials(models.Participant participant) {
+    final firstName = participant.firstName.isNotEmpty
+        ? participant.firstName[0].toUpperCase()
+        : '';
+    final lastName = participant.lastName?.isNotEmpty == true
+        ? participant.lastName![0].toUpperCase()
+        : '';
+    return '$firstName$lastName';
+  }
+
+  Widget _buildOwnerBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryPink.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+      ),
+      child: Text(
+        'Editor, Owner',
+        style: AppTheme.caption.copyWith(
+          color: AppTheme.primaryPink,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    models.Participant participant,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        ),
+        title: Text('Delete Participant?', style: AppTheme.h4),
+        content: Text(
+          'Are you sure you want to delete ${viewModel.getDisplayName(participant)}? This action cannot be undone.',
+          style: AppTheme.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: AppTheme.button.copyWith(color: AppTheme.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await viewModel.deleteParticipant(participant.participantId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              ),
+            ),
+            child: Text('Delete', style: AppTheme.button),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContinueButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.pushReplacementNamed(
+            context,
+            viewModel.getNextRoute(),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryBlue,
+          foregroundColor: AppTheme.textPrimary,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          ),
+          elevation: 0,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Continue to Budgeting', style: AppTheme.button),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+// ============================================================================
+// FILE: lib/features/onboarding/widgets/sign_in_form.dart
+// ============================================================================
+
+import 'package:flutter/material.dart';
+import '../onboarding_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
+
+class SignInForm extends StatefulWidget {
+  final OnboardingViewModel viewModel;
+
+  const SignInForm({
+    Key? key,
+    required this.viewModel,
+  }) : super(key: key);
+
+  @override
+  State<SignInForm> createState() => _SignInFormState();
+}
+
+class _SignInFormState extends State<SignInForm> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          border: Border.all(color: AppTheme.border, width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sign In',
+              style: AppTheme.h3,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Enter your credentials to access your account',
+              style: AppTheme.bodySmall.copyWith(
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 32),
+            _buildTextField(
+              controller: _emailController,
+              label: 'Email',
+              hint: 'johndoe@mail.com',
+              keyboardType: TextInputType.emailAddress,
+              icon: Icons.email_outlined,
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _passwordController,
+              label: 'Password',
+              hint: '••••••••',
+              obscureText: true,
+              icon: Icons.lock_outline,
+            ),
+            if (widget.viewModel.error != null) ...[
+              const SizedBox(height: 16),
+              _buildError(),
+            ],
+            const SizedBox(height: 24),
+            _buildSignInButton(),
+            const SizedBox(height: 16),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  widget.viewModel.switchMode(OnboardingMode.addParticipants);
+                },
+                child: Text(
+                  'Don\'t have an account? Add participant',
+                  style: AppTheme.bodySmall.copyWith(
+                    color: AppTheme.primaryPink,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    IconData? icon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTheme.label.copyWith(
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textTertiary,
+            ),
+            prefixIcon: icon != null
+                ? Icon(icon, color: AppTheme.textSecondary)
+                : null,
+            filled: true,
+            fillColor: AppTheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              borderSide: BorderSide(color: AppTheme.border, width: 1),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              borderSide: BorderSide(color: AppTheme.primaryPink, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: AppTheme.error, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              widget.viewModel.error!,
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSignInButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: widget.viewModel.isLoading
+            ? null
+            : () async {
+                final participant = await widget.viewModel.signInAsParticipant(
+                  _emailController.text.trim(),
+                  _passwordController.text,
+                );
+
+                if (participant != null && mounted) {
+                  // Navigate to home or budgeting page
+                  Navigator.pushReplacementNamed(
+                    context,
+                    widget.viewModel.getNextRoute(),
+                  );
+                }
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryPink,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          ),
+          elevation: 0,
+        ),
+        child: widget.viewModel.isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                'Sign In',
+                style: AppTheme.button,
+              ),
+      ),
+    );
+  }
+}
+
+
+// ============================================================================
+// FILE: lib/core/theme/app_theme.dart
+// ============================================================================
+
+import 'package:flutter/material.dart';
+
+class AppTheme {
+  // ========== Colors ==========
+
+  // Primary Colors
+  static const Color primaryPink = Color(0xFFFF6B9D);
+  static const Color primaryBlue = Color(0xFF7DD3FC);
+  static const Color primaryPurple = Color(0xFFA78BFA);
+  static const Color primaryTurquoise = Color(0xFF5EEAD4);
+
+  // Neutral Colors (Light Theme)
+  static const Color backgroundColor = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFF5F5F5);
+  static const Color border = Color(0xFFE5E5E5);
+  static const Color borderAccent = Color(0xFFC7C7C7);
+  static const Color textPrimary = Color(0xFF1F1F1F);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textTertiary = Color(0xFF9CA3AF);
+
+  // Semantic Colors
+  static const Color error = Color(0xFFEF4444);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color success = Color(0xFF10B981);
+  static const Color info = Color(0xFF3B82F6);
+
+  // ========== Border Radius ==========
+  static const double radiusXs = 4.0;
+  static const double radiusSm = 8.0;
+  static const double radiusMd = 12.0;
+  static const double radiusLg = 16.0;
+  static const double radiusXl = 20.0;
+  static const double radius2xl = 24.0;
+  static const double radiusFull = 9999.0;
+
+  // ========== Spacing ==========
+  static const double spacing2xs = 4.0;
+  static const double spacingXs = 8.0;
+  static const double spacingSm = 12.0;
+  static const double spacingMd = 16.0;
+  static const double spacingLg = 24.0;
+  static const double spacingXl = 32.0;
+  static const double spacing2xl = 48.0;
+  static const double spacing3xl = 64.0;
+
+  // ========== Typography ==========
+
+  // Headings
+  static const TextStyle h1 = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.5,
+    color: textPrimary,
+  );
+
+  static const TextStyle h2 = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.3,
+    color: textPrimary,
+  );
+
+  static const TextStyle h3 = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.2,
+    color: textPrimary,
+  );
+
+  static const TextStyle h4 = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: textPrimary,
+  );
+
+  // Body Text
+  static const TextStyle bodyLarge = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    height: 1.5,
+    color: textPrimary,
+  );
+
+  static const TextStyle bodyMedium = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 1.43,
+    color: textPrimary,
+  );
+
+  static const TextStyle bodySmall = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    height: 1.33,
+    color: textPrimary,
+  );
+
+  // UI Elements
+  static const TextStyle button = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.5,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    height: 1.27,
+    color: textSecondary,
+  );
+
+  static const TextStyle label = TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: textPrimary,
+  );
+
+  // ========== Theme Data ==========
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.light(
+        primary: primaryPink,
+        secondary: primaryBlue,
+        surface: surface,
+        background: backgroundColor,
+        error: error,
+      ),
+      scaffoldBackgroundColor: backgroundColor,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textPrimary),
+        titleTextStyle: h3,
+      ),
+      textTheme: const TextTheme(
+        displayLarge: h1,
+        displayMedium: h2,
+        displaySmall: h3,
+        headlineMedium: h4,
+        bodyLarge: bodyLarge,
+        bodyMedium: bodyMedium,
+        bodySmall: bodySmall,
+        labelLarge: button,
+        labelSmall: caption,
+      ),
+      cardTheme: CardTheme(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusXl),
+          side: const BorderSide(color: border, width: 1),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryPink,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(
+            horizontal: spacingLg,
+            vertical: spacingSm,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMd),
+          ),
+          textStyle: button,
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusSm),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusSm),
+          borderSide: const BorderSide(color: border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusSm),
+          borderSide: const BorderSide(color: primaryPink, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(radiusSm),
+          borderSide: const BorderSide(color: error, width: 1),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: spacingMd,
+          vertical: spacingSm,
+        ),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: const ColorScheme.dark(
+        primary: primaryPink,
+        secondary: primaryBlue,
+        surface: Color(0xFF1E1E1E),
+        background: Color(0xFF121212),
+        error: Color(0xFFF87171),
+      ),
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      // Add dark theme specific configurations here
+    );
+  }
+}
+
+
+// ============================================================================
+// FILE: lib/core/routing/app_router.dart (UPDATE)
+// ============================================================================
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../features/onboarding/onboarding_view.dart';
+import '../../features/onboarding/onboarding_viewmodel.dart';
+import '../services/service_locator.dart';
+
+class AppRouter {
+  static Route<dynamic> generateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case '/':
+      case '/onboarding':
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => OnboardingViewModel(
+              getIt<ParticipantService>(),
+            ),
+            child: const OnboardingView(),
+          ),
+        );
+
+      case '/budgeting':
+        // TODO: Implement budgeting page
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(
+              child: Text('Budgeting Page - Coming Soon'),
+            ),
+          ),
+        );
+
+      case '/home':
+        // TODO: Implement home page
+        return MaterialPageRoute(
+          builder: (_) => const Scaffold(
+            body: Center(
+              child: Text('Home Page - Coming Soon'),
+            ),
+          ),
+        );
+
+      default:
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: Center(
+              child: Text('No route defined for ${settings.name}'),
+            ),
+          ),
+        );
+    }
+  }
+}
+
+
+// ============================================================================
+// FILE: lib/main.dart (UPDATE)
+// ============================================================================
+
+import 'package:flutter/material.dart';
+import 'core/theme/app_theme.dart';
+import 'core/routing/app_router.dart';
+import 'core/services/service_locator.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize service locator (dependency injection)
+  await setupServiceLocator();
+
+  runApp(const BudgetAuditApp());
+}
+
+class BudgetAuditApp extends StatelessWidget {
+  const BudgetAuditApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Budget Audit',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.light,
+      initialRoute: '/onboarding',
+      onGenerateRoute: AppRouter.generateRoute,
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}

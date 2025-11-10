@@ -55,3 +55,37 @@ class Category {
     required this.colorHex,
   });
 }
+
+
+class Participant {
+  final String firstName;
+  final String? lastName;
+  final String? nickname;
+  final Role role;
+  final String email;
+  // PasswordHash is usually not exposed in the app model
+
+  Participant({
+    required this.firstName,
+    this.lastName,
+    this.nickname,
+    required this.role,
+    required this.email,
+  });
+}
+
+enum Role {
+  participant('participant'),
+  editor('editor'),
+  manager('manager');
+
+  final String value;
+  const Role(this.value);
+
+  static Role fromString(String role) {
+    return Role.values.firstWhere(
+          (r) => r.value.toLowerCase() == role.toLowerCase(),
+      orElse: () => throw ArgumentError('Invalid role: $role'),
+    );
+  }
+}
