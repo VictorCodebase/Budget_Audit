@@ -200,23 +200,22 @@ class AppDatabase extends _$AppDatabase {
 // @override
 // List<DatabaseAccessor<AppDatabase>> get uses => [ParticipantDao, ...];
 }
-
-// Boilerplate to open the database on Flutter platforms
 drift.LazyDatabase _openConnection() {
   return drift.LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'db.sqlite'));
+    // Use a reliable application data directory
+    final appSupportDir = await getApplicationSupportDirectory();
+    final dbPath = p.join(appSupportDir.path, 'budget_audit', 'db.sqlite');
 
-    // For better performance and features on mobile
+    // Ensure parent directory exists
+    await Directory(p.dirname(dbPath)).create(recursive: true);
+
+    // Optional: set SQLite temp directory
     if (Platform.isAndroid || Platform.isIOS) {
-      // Ensure the sqlite3 library is loaded
-      // This part depends on having the sqlite3_flutter_libs package
-      // install: flutter pub add sqlite3_flutter_libs
-      // await installOnWindows(); // If you need Windows support
-
-      final cachebase = (await getTemporaryDirectory()).path;
-      sqlite3.tempDirectory = cachebase;
+      final cacheBase = (await getTemporaryDirectory()).path;
+      sqlite3.tempDirectory = cacheBase;
     }
-    return NativeDatabase.createInBackground(file);
+
+    print("Opening DB at: $dbPath");
+    return NativeDatabase.createInBackground(File(dbPath));
   });
 }

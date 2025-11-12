@@ -4,7 +4,7 @@ import 'core/bootstrap/app_initialize.dart';
 import 'core/routing/app_router.dart';
 import 'core/context.dart';
 import 'core/theme/app_theme.dart';
-import 'features/onboarding/onboarding_viewmodel.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

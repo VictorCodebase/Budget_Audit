@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../../core/services/participant_service.dart';
 import '../../core/models/models.dart' as models;
 import '../../core/models/client_models.dart' as client_models;
+import 'package:logging/logging.dart';
+
 
 enum OnboardingMode {
   addParticipants,
@@ -67,6 +69,7 @@ class OnboardingViewModel extends ChangeNotifier {
   // ========== Mode Switching ==========
 
   void switchMode(OnboardingMode newMode) {
+
     _mode = newMode;
     _clearForm();
     _clearError();
@@ -100,6 +103,7 @@ class OnboardingViewModel extends ChangeNotifier {
     final password = _formData['password']?.trim() ?? '';
 
     if (firstName.isEmpty) {
+
       return 'First name is required';
     }
 
