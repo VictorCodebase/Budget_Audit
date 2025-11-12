@@ -21,6 +21,9 @@ class OnboardingViewModel extends ChangeNotifier {
   OnboardingMode _mode = OnboardingMode.addParticipants;
   OnboardingMode get mode => _mode;
 
+  bool _passwordObscured = true;
+  bool get passwordObscured => _passwordObscured;
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -65,6 +68,11 @@ class OnboardingViewModel extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  void onToggleObscure(){
+    _passwordObscured = !_passwordObscured;
+    notifyListeners();
   }
 
   // ========== Mode Switching ==========
@@ -193,6 +201,8 @@ class OnboardingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  /// Update an existing participant
   Future<bool> updateExistingParticipant() async {
     if (_editingParticipantId == null) return false;
 
@@ -219,12 +229,22 @@ class OnboardingViewModel extends ChangeNotifier {
         email: _formData['email']!.trim(),
       );
 
-      final success = await _participantService.updateParticipant(participant);
+      // Only pass password if it was actually entered
+      final newPassword = _formData['password']?.trim();
+      final passwordToUpdate = (newPassword != null && newPassword.isNotEmpty)
+          ? newPassword
+          : null;
+
+      final success = await _participantService.updateParticipant(
+        participant,
+        newPassword: passwordToUpdate,
+      );
 
       if (success) {
         await loadParticipants();
         _clearForm();
         _clearError();
+        notifyListeners(); // Ensure UI updates
         return true;
       } else {
         _setError('Failed to update participant');
@@ -237,6 +257,18 @@ class OnboardingViewModel extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  /// Cancel editing and return to add mode
+  void cancelEditing() {
+    _editingParticipantId = null;
+    _clearForm();
+    _clearError();
+    notifyListeners();
+  }
+
+  /// Check if currently in edit mode
+  bool get isEditMode => _editingParticipantId != null;
+
 
   // ========== Delete Participant ==========
 
@@ -346,4 +378,7 @@ class OnboardingViewModel extends ChangeNotifier {
     ];
     return parts.join(' ');
   }
+
+
 }
+

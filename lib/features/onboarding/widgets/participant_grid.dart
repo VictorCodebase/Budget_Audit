@@ -166,8 +166,8 @@ class ParticipantGrid extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Scroll to form or focus on form
-            // This is a visual indicator that clicking adds a new participant
+            // Exit edit mode and clear the form to add a new participant
+            viewModel.cancelEditing();
           },
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           child: Column(

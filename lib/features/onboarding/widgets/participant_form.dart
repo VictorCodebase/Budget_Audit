@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../onboarding_viewmodel.dart';
 import '../../../core/theme/app_theme.dart';
@@ -51,6 +50,42 @@ class ParticipantForm extends StatelessWidget {
     );
   }
 
+  Widget _buildEditModeHeader(OnboardingViewModel viewModel) {
+    if (!viewModel.isEditMode) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryPink.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppTheme.primaryPink.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.edit, color: AppTheme.primaryPink, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Editing participant',
+              style: AppTheme.bodyMedium.copyWith(
+                color: AppTheme.primaryPink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => viewModel.cancelEditing(),
+            child: Text(
+              'Cancel',
+              style: AppTheme.button.copyWith(color: AppTheme.primaryPink),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildForm(BuildContext context) {
     return Column(
       children: [
@@ -62,7 +97,8 @@ class ParticipantForm extends StatelessWidget {
                 hint: 'Stevie',
                 isRequired: true,
                 value: viewModel.getFormValue('firstName'),
-                onChanged: (value) => viewModel.updateFormField('firstName', value),
+                onChanged: (value) =>
+                    viewModel.updateFormField('firstName', value),
               ),
             ),
             const SizedBox(width: 16),
@@ -71,7 +107,8 @@ class ParticipantForm extends StatelessWidget {
                 label: 'Second Name',
                 hint: 'Doe',
                 value: viewModel.getFormValue('lastName'),
-                onChanged: (value) => viewModel.updateFormField('lastName', value),
+                onChanged: (value) =>
+                    viewModel.updateFormField('lastName', value),
               ),
             ),
           ],
@@ -94,11 +131,17 @@ class ParticipantForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _buildTextField(
-          label: 'Password',
-          hint: '••••',
-          isRequired: true,
-          obscureText: true,
-          value: viewModel.getFormValue('password'),
+          label: viewModel.isEditMode
+              ? 'Password (leave blank to keep current)'
+              : 'Password',
+          hint: viewModel.isEditMode
+              ? 'Enter new password or leave blank'
+              : '••••',
+          isRequired: !viewModel.isEditMode,
+          obscureText: viewModel.passwordObscured,
+          showVisibilityToggle: true,
+          onToggleObscure: viewModel.onToggleObscure,
+          value: viewModel.getFormValue('password') ?? '',
           onChanged: (value) => viewModel.updateFormField('password', value),
         ),
       ],
@@ -110,9 +153,11 @@ class ParticipantForm extends StatelessWidget {
     required String hint,
     bool isRequired = false,
     bool obscureText = false,
+    bool showVisibilityToggle = false,
     TextInputType? keyboardType,
     required String value,
     required ValueChanged<String> onChanged,
+    VoidCallback? onToggleObscure,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,6 +176,15 @@ class ParticipantForm extends StatelessWidget {
                 style: AppTheme.label.copyWith(
                   color: AppTheme.error,
                 ),
+              ),
+            if (showVisibilityToggle)
+              IconButton(
+                icon: Icon(
+                  obscureText
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                ),
+                onPressed: viewModel.onToggleObscure,
               ),
           ],
         ),
@@ -202,23 +256,23 @@ class ParticipantForm extends StatelessWidget {
         onPressed: viewModel.isLoading
             ? null
             : () async {
-          final success = isEditing
-              ? await viewModel.updateExistingParticipant()
-              : await viewModel.createNewParticipant();
+                final success = isEditing
+                    ? await viewModel.updateExistingParticipant()
+                    : await viewModel.createNewParticipant();
 
-          if (success && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  isEditing
-                      ? 'Participant updated successfully'
-                      : 'Participant created successfully',
-                ),
-                backgroundColor: AppTheme.success,
-              ),
-            );
-          }
-        },
+                if (success && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isEditing
+                            ? 'Participant updated successfully'
+                            : 'Participant created successfully',
+                      ),
+                      backgroundColor: AppTheme.success,
+                    ),
+                  );
+                }
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryPink,
           foregroundColor: Colors.white,
@@ -230,17 +284,17 @@ class ParticipantForm extends StatelessWidget {
         ),
         child: viewModel.isLoading
             ? const SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-        )
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
             : Text(
-          isEditing ? 'Update Participant' : 'Create new Participant',
-          style: AppTheme.button,
-        ),
+                isEditing ? 'Update Participant' : 'Create new Participant',
+                style: AppTheme.button,
+              ),
       ),
     );
   }

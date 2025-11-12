@@ -1,195 +1,283 @@
 import 'dart:async';
-
-import 'package:googleapis/admob/v1.dart';
 import 'package:logging/logging.dart';
-
 import '../models/models.dart' as models;
 import '../models/client_models.dart' as clientModels;
 import '../data/databases.dart';
+import 'package:drift/drift.dart' as drift;
 
-class BudgetService{
+class BudgetService {
   final TemplateService _templateService;
   final AccountService _accountService;
   final CategoryService _categoryService;
 
-  BudgetService(AppDatabase db):
-      _templateService = TemplateService(db),
-      _accountService = AccountService(db),
-      _categoryService = CategoryService(db);
+  BudgetService(AppDatabase db)
+      : _templateService = TemplateService(db),
+        _accountService = AccountService(db),
+        _categoryService = CategoryService(db);
 
+  TemplateService get templateService => _templateService;
+  AccountService get accountService => _accountService;
+  CategoryService get categoryService => _categoryService;
 }
 
 
 class TemplateService {
   final AppDatabase _appDatabase;
-  final Logger _logger = Logger("BudgetService");
+  final Logger _logger = Logger("TemplateService");
 
-  TemplateService(AppDatabase this._appDatabase);
+  TemplateService(this._appDatabase);
 
-  // See all templates. Allow flexibility for someone to check the templates and fetch related accounts
   Future<List<models.Template>> getAllTemplates() async {
-
-    _logger.warning("getAllTemplates returned a generic response for development only!");
-    return [
-      models.Template(
-        templateId: 1,
-        syncId: 1232,
-        spreadSheetId: '1234321sd2',
-        templateName: "January Template",
-        creatorParticipantId: 1,
-        dateCreated: DateTime.now(),
-        timesUsed: 2,
-      ),
-      models.Template(
-        templateId: 2,
-        syncId: 1232,
-        spreadSheetId: '1234321sd2',
-        templateName: "January Template",
-        creatorParticipantId: 1,
-        dateCreated: DateTime.now(),
-        timesUsed: 2,
-      )
-    ];
+    try {
+      final templates = await _appDatabase.select(_appDatabase.templates).get();
+      return templates
+          .map((t) => models.Template(
+        templateId: t.templateId,
+        syncId: t.syncId,
+        spreadSheetId: t.spreadSheetId,
+        templateName: t.templateName,
+        creatorParticipantId: t.creatorParticipantId,
+        dateCreated: t.dateCreated,
+        timesUsed: t.timesUsed,
+      ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe("Error fetching all templates", e, st);
+      return [];
+    }
   }
 
-  // cascade delete a template and all associated accounts
+  /// Fetch a single template by ID
+  Future<models.Template?> getTemplate(int templateId) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.templates)
+        ..where((tbl) => tbl.templateId.equals(templateId));
+      final result = await query.getSingleOrNull();
+
+      if (result == null) return null;
+
+      return models.Template(
+        templateId: result.templateId,
+        syncId: result.syncId,
+        spreadSheetId: result.spreadSheetId,
+        templateName: result.templateName,
+        creatorParticipantId: result.creatorParticipantId,
+        dateCreated: result.dateCreated,
+        timesUsed: result.timesUsed,
+      );
+    } catch (e, st) {
+      _logger.severe("Error fetching template $templateId", e, st);
+      return null;
+    }
+  }
+
+  Future<int?> createTemplate(clientModels.Template newTemplate) async {
+    const timesUsed = 0;
+    try {
+      final entry = TemplatesCompanion.insert(
+        syncId: drift.Value(newTemplate.syncId),
+        spreadSheetId: drift.Value(newTemplate.spreadSheetId),
+        templateName: newTemplate.templateName,
+        creatorParticipantId: newTemplate.creatorParticipantId,
+        dateCreated: newTemplate.dateCreated ?? DateTime.now(),
+        timesUsed: timesUsed,
+      );
+
+      final id = await _appDatabase.into(_appDatabase.templates).insert(entry);
+      _logger.info("Template created with ID: $id");
+      return id;
+    } catch (e, st) {
+      _logger.severe("Error creating template", e, st);
+      return null;
+    }
+  }
+
   Future<bool> deleteTemplate(int templateId) async {
+    try {
+      // Cascade delete accounts linked to this template
+      await (_appDatabase.delete(_appDatabase.accounts)
+        ..where((tbl) => tbl.templateId.equals(templateId)))
+          .go();
 
-    _logger.warning("deleteTemplate returned a generic TRUE response for development only!");
-    return true;
+      final deleted = await (_appDatabase.delete(_appDatabase.templates)
+        ..where((tbl) => tbl.templateId.equals(templateId)))
+          .go();
+
+      _logger.info("Deleted template $templateId ($deleted rows)");
+      return deleted > 0;
+    } catch (e, st) {
+      _logger.severe("Error deleting template $templateId", e, st);
+      return false;
+    }
   }
-
-  Future<int> createTemplate(clientModels.Template newTemplate) async {
-    final int timesUsed = 0;
-    final int templateId = 1; //TODO: actually fetch the id
-
-    _logger.warning("createTemplate returned a generic response for development only!");
-    return templateId;
-  }
-
-
 }
 
 class AccountService {
   final AppDatabase _appDatabase;
-  final Logger _logger = Logger("BudgetService");
+  final Logger _logger = Logger("AccountService");
 
-  AccountService(AppDatabase this._appDatabase);
+  AccountService(this._appDatabase);
 
-  // Get all accounts created for a template
-  Future<List<models.Account>> getTemplateAccounts(int templateId, int participantId) async {
+  Future<List<models.Account>> getTemplateAccounts(
+      int templateId, int participantId) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.accounts)
+        ..where((tbl) =>
+        tbl.templateId.equals(templateId) &
+        tbl.responsibleParticipantId.equals(participantId));
+      final results = await query.get();
 
-    _logger.warning("getTemplateAccounts returned a generic response for development only!");
-    return[
-      models.Account(
-        accountId: 1,
-        categoryId: 1,
-        templateId: 1,
-        colorHex: '#000000',
-        budgetAmount: 200.00,
-        expenditureTotal: 200.00,
-        responsibleParticipantId: 2,
-        dateCreated: DateTime.now(),
-      ),
-      models.Account(
-        accountId: 2,
-        categoryId: 2,
-        templateId: 1,
-        colorHex: '#000000',
-        budgetAmount: 200.00,
-        expenditureTotal: 200.00,
-        responsibleParticipantId: 2,
-        dateCreated: DateTime.now(),
-      ),
-      models.Account(
-        accountId: 3,
-        categoryId: 1,
-        templateId: 1,
-        colorHex: '#000000',
-        budgetAmount: 200.00,
-        expenditureTotal: 200.00,
-        responsibleParticipantId: 2,
-        dateCreated: DateTime.now(),
-      )
-    ];
+      return results
+          .map((a) => models.Account(
+        accountId: a.accountId,
+        categoryId: a.categoryId,
+        templateId: a.templateId,
+        colorHex: a.colorHex,
+        budgetAmount: a.budgetAmount,
+        expenditureTotal: a.expenditureTotal ?? 0.0,
+        responsibleParticipantId: a.responsibleParticipantId,
+        dateCreated: a.dateCreated,
+      ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe("Error fetching accounts for template $templateId", e, st);
+      return [];
+    }
   }
 
   Future<bool> modifyAccount(models.Account modifiedAccount) async {
+    try {
+      final update = AccountsCompanion(
+        categoryId: drift.Value(modifiedAccount.categoryId),
+        colorHex: drift.Value(modifiedAccount.colorHex),
+        budgetAmount: drift.Value(modifiedAccount.budgetAmount),
+        expenditureTotal: drift.Value(modifiedAccount.expenditureTotal),
+        responsibleParticipantId:
+        drift.Value(modifiedAccount.responsibleParticipantId),
+      );
 
-    // TODO: Have a mechanism to ensure an account's template id is not changed by mistake
-    _logger.warning("modifyAccount returned a generic TRUE response for development only!");
-    return true;
+      final rows = await (_appDatabase.update(_appDatabase.accounts)
+        ..where((tbl) => tbl.accountId.equals(modifiedAccount.accountId)))
+          .write(update);
+
+      return rows > 0;
+    } catch (e, st) {
+      _logger.severe("Error modifying account ${modifiedAccount.accountId}", e, st);
+      return false;
+    }
   }
 
   Future<bool> deleteAccount(int id) async {
-
-    _logger.warning("deleteAccount returned a generic TRUE response for development only!");
-    return true;
+    try {
+      final deleted = await (_appDatabase.delete(_appDatabase.accounts)
+        ..where((tbl) => tbl.accountId.equals(id)))
+          .go();
+      return deleted > 0;
+    } catch (e, st) {
+      _logger.severe("Error deleting account $id", e, st);
+      return false;
+    }
   }
 
-  Future<int> createAccount(clientModels.Account newAccount) async {
+  Future<int?> createAccount(clientModels.Account newAccount) async {
+    try {
+      final entry = AccountsCompanion.insert(
+        categoryId: newAccount.categoryId,
+        templateId: newAccount.templateId,
+        colorHex: newAccount.colorHex,
+        budgetAmount: newAccount.budgetAmount,
+        expenditureTotal: drift.Value(newAccount.expenditureTotal ?? 0.0),
+        responsibleParticipantId: newAccount.responsibleParticipantId,
+        dateCreated: newAccount.dateCreated ?? DateTime.now(),
+      );
 
-    _logger.warning("createAccount returned a generic TRUE response for development only!");
-    final accountId = 0; //TODO: this is what is returned after the recod is created
-    return accountId;
+      final id = await _appDatabase.into(_appDatabase.accounts).insert(entry);
+      _logger.info("Account created with ID: $id");
+      return id;
+    } catch (e, st) {
+      _logger.severe("Error creating account", e, st);
+      return null;
+    }
   }
-
-
-
-
 }
 
 class CategoryService {
   final AppDatabase _appDatabase;
-  final Logger _logger = Logger("BudgetService");
+  final Logger _logger = Logger("CategoryService");
 
   CategoryService(this._appDatabase);
 
-  // get all categories whose information is required to arrange accounts. This method is meant to be iteratively called.
-  Future<models.Category> getCategoryAssociatedWithAccount(int accountId) async {
+  Future<models.Category?> getCategoryAssociatedWithAccount(
+      int accountId) async {
+    try {
+      final joinQuery = _appDatabase.select(_appDatabase.categories).join([
+        drift.innerJoin(
+          _appDatabase.accounts,
+          _appDatabase.accounts.categoryId
+              .equalsExp(_appDatabase.categories.categoryId),
+        )
+      ])
+        ..where(_appDatabase.accounts.accountId.equals(accountId));
 
-    _logger.warning("getCategoryAssociatedWithAccount returned a generic response for development only!");
-    return models.Category(categoryId: 1, categoryName: "Missions and Giving", colorHex: "#213300");
+      final row = await joinQuery.getSingleOrNull();
+      if (row == null) return null;
+      final c = row.readTable(_appDatabase.categories);
+
+      return models.Category(
+        categoryId: c.categoryId,
+        categoryName: c.categoryName,
+        colorHex: c.colorHex,
+      );
+    } catch (e, st) {
+      _logger.severe("Error fetching category for account $accountId", e, st);
+      return null;
+    }
   }
 
-  // read categories
-  Future<List<models.Category>> getAllCategories(int? categoryId) async {
-  //TODO: if categoryId, retrieve the rewuested category, if no id, return all
-  _logger.warning("getAllCategories returned a generic response for development only!");
-  return [
-    models.Category(
-      categoryId: 01,
-      categoryName: "Giving and Ministry",
-      colorHex: "#234355"
-    ),
-    models.Category(
-        categoryId: 02,
-        categoryName: "Family transport",
-        colorHex: "#234155"
-    ),
-    models.Category(
-        categoryId: 03,
-        categoryName: "Trips",
-        colorHex: "#233355"
-    )
-  ];
+  Future<List<models.Category>> getAllCategories([int? categoryId]) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.categories);
+      if (categoryId != null) {
+        query.where((tbl) => tbl.categoryId.equals(categoryId));
+      }
+      final results = await query.get();
+
+      return results
+          .map((c) => models.Category(
+        categoryId: c.categoryId,
+        categoryName: c.categoryName,
+        colorHex: c.colorHex,
+      ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe("Error fetching categories", e, st);
+      return [];
+    }
   }
 
-  // create category
   Future<bool> createCategory(clientModels.Category newCategory) async {
-
-    _logger.warning("createCategory returned a generic response for development only!");
-    return true;
+    try {
+      final entry = CategoriesCompanion.insert(
+        categoryName: newCategory.categoryName,
+        colorHex: newCategory.colorHex,
+      );
+      await _appDatabase.into(_appDatabase.categories).insert(entry);
+      return true;
+    } catch (e, st) {
+      _logger.severe("Error creating category", e, st);
+      return false;
+    }
   }
 
-  // delete categpry
   Future<bool> deleteCategory(int categoryId) async {
-
-    _logger.warning("deleteCategory returned a generic TRUE response for development only!");
-    return true;
+    try {
+      final deleted = await (_appDatabase.delete(_appDatabase.categories)
+        ..where((tbl) => tbl.categoryId.equals(categoryId)))
+          .go();
+      return deleted > 0;
+    } catch (e, st) {
+      _logger.severe("Error deleting category $categoryId", e, st);
+      return false;
+    }
   }
-
 }
-
-
-

@@ -57,7 +57,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                   color: AppTheme.primaryPink.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Center(
+                child: const Center(
                   child: Text(
                     'BA',
                     style: TextStyle(

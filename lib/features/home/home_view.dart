@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/widgets/floating_menu.dart';
 import 'home_viewmodel.dart';
 
 
@@ -28,6 +29,17 @@ class HomeView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  FloatingMenu(
+                    destinations: [
+                      MenuDestination(label: 'Home', icon: Icons.home, route: '/home'),
+                      MenuDestination(
+                          label: 'Budgeting', icon: Icons.wallet, route: '/budgeting'),
+                      MenuDestination(
+                          label: 'Participants',
+                          icon: Icons.people,
+                          route: '/onboarding'),
+                    ],
+                  ),
                   // Common widgets
                   const Text(
                     'Welcome to a sample feature page!',

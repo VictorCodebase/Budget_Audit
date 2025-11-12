@@ -1,4 +1,6 @@
 
+import 'package:budget_audit/features/budgeting/budgeting_view.dart';
+import 'package:budget_audit/features/home/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../features/onboarding/onboarding_view.dart';
@@ -21,22 +23,24 @@ class AppRouter {
         );
 
       case '/budgeting':
-      // TODO: Implement budgeting page
+
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(
-              child: Text('Budgeting Page - Coming Soon'),
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => OnboardingViewModel( // TODO: remember to change this to budgeting view model. i sorry you struggled before remembering this comment :(
+              sl<ParticipantService>(),
             ),
+            child: const BudgetingView(),
           ),
         );
 
       case '/home':
       // TODO: Implement home page
         return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(
-              child: Text('Home Page - Coming Soon'),
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => OnboardingViewModel( // TODO: remember to change this to budgeting view model. i sorry you struggled before remembering this comment :(
+              sl<ParticipantService>(),
             ),
+            child: const HomeView(),
           ),
         );
 
