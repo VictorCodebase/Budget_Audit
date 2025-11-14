@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/models/models.dart' as models;
+import '../../core/models/client_models.dart' as clientModels;
 import '../../core/services/budget_service.dart';
 import '../../core/services/participant_service.dart';
 import '../../core/services/service_locator.dart';
@@ -100,6 +101,10 @@ class BudgetingViewModel extends ChangeNotifier {
 
   bool _isLoading = false;
   String? _errorMessage;
+
+  // Expose services for the view
+  AccountService get accountService => _budgetService.accountService;
+  ParticipantService get participantService => _participantService;
 
   List<CategoryData> get categories => _filteredAndSortedCategories();
   List<models.Participant> get allParticipants => _allParticipants;
@@ -348,11 +353,197 @@ class BudgetingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> adoptTemplate(models.Template template, int participantId) async {
-    // This will be implemented when you finalize the save mechanism
-    // For now, it's a placeholder
-    _errorMessage = 'Template adoption not yet implemented';
+  Future<bool> saveTemplate({
+    required String templateName,
+    required int creatorParticipantId,
+  }) async {
+    if (!canSave) {
+      _errorMessage = saveValidationMessage;
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
+    try {
+      // 1. Create the template
+      final newTemplate = clientModels.Template(
+        templateName: templateName,
+        creatorParticipantId: creatorParticipantId,
+        dateCreated: DateTime.now(),
+      );
+
+      final templateId = await _budgetService.templateService.createTemplate(newTemplate);
+      if (templateId == null) {
+        throw Exception('Failed to create template');
+      }
+
+      // 2. Create categories and accounts
+      for (var category in _categories) {
+        // Create category with templateId
+        final newCategory = clientModels.Category(
+          categoryName: category.name,
+          colorHex: _colorToHex(category.color),
+          templateId: templateId,
+        );
+
+        final categoryId = await _budgetService.categoryService.createCategory(newCategory);
+        if (categoryId == null) {
+          throw Exception('Failed to create category: ${category.name}');
+        }
+
+        // Create accounts for this category
+        for (var account in category.accounts) {
+          final newAccount = clientModels.Account(
+            categoryId: categoryId,
+            templateId: templateId,
+            colorHex: _colorToHex(account.color),
+            budgetAmount: account.budgetAmount,
+            expenditureTotal: 0.0,
+            responsibleParticipantId: account.participants.isNotEmpty
+                ? account.participants.first.participantId
+                : creatorParticipantId,
+            dateCreated: DateTime.now(),
+          );
+
+          await _budgetService.accountService.createAccount(newAccount);
+        }
+      }
+
+      // 3. Load the created template and set as current
+      final createdTemplate = await _budgetService.templateService.getTemplate(templateId);
+      if (createdTemplate != null) {
+        _templates.add(createdTemplate);
+      }
+
+      // 4. Clear the working categories
+      _categories.clear();
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to save template: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateTemplate({
+    required int templateId,
+    required String templateName,
+  }) async {
+    if (!canSave) {
+      _errorMessage = saveValidationMessage;
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // 1. Delete all existing categories and accounts for this template
+      final existingCategories = await _budgetService.categoryService.getCategoriesForTemplate(templateId);
+      for (var category in existingCategories) {
+        await _budgetService.categoryService.deleteCategory(category.categoryId);
+      }
+
+      // 2. Create new categories and accounts (same as save)
+      for (var category in _categories) {
+        final newCategory = clientModels.Category(
+          categoryName: category.name,
+          colorHex: _colorToHex(category.color),
+          templateId: templateId,
+        );
+
+        final categoryId = await _budgetService.categoryService.createCategory(newCategory);
+        if (categoryId == null) {
+          throw Exception('Failed to create category: ${category.name}');
+        }
+
+        for (var account in category.accounts) {
+          final newAccount = clientModels.Account(
+            categoryId: categoryId,
+            templateId: templateId,
+            colorHex: _colorToHex(account.color),
+            budgetAmount: account.budgetAmount,
+            expenditureTotal: 0.0,
+            responsibleParticipantId: account.participants.isNotEmpty
+                ? account.participants.first.participantId
+                : 0,
+            dateCreated: DateTime.now(),
+          );
+
+          await _budgetService.accountService.createAccount(newAccount);
+        }
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to update template: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> adoptTemplate(models.Template template, int participantId) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // 1. Load all categories for this template
+      final categories = await _budgetService.categoryService.getCategoriesForTemplate(template.templateId);
+
+      // 2. Load accounts for each category and convert to CategoryData
+      final List<CategoryData> loadedCategories = [];
+
+      for (var category in categories) {
+        final accounts = await _budgetService.accountService.getAccountsForCategory(
+          template.templateId,
+          category.categoryId,
+        );
+
+        // Convert accounts to AccountData
+        final List<AccountData> accountDataList = [];
+        for (var account in accounts) {
+          final participant = await _participantService.getParticipant(account.responsibleParticipantId);
+
+          accountDataList.add(AccountData(
+            id: account.accountId.toString(),
+            name: 'Account ${account.accountId}', // You might want to add account name to your model
+            budgetAmount: account.budgetAmount,
+            participants: participant != null ? [participant] : [],
+            color: account.color,
+          ));
+        }
+
+        loadedCategories.add(CategoryData(
+          id: category.categoryId.toString(),
+          name: category.categoryName,
+          color: category.color,
+          accounts: accountDataList,
+        ));
+      }
+
+      // 3. Set the loaded categories
+      _categories = loadedCategories;
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = 'Failed to adopt template: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> deleteTemplate(int templateId) async {
@@ -441,6 +632,10 @@ class BudgetingViewModel extends ChangeNotifier {
       (hslColor.lightness + 0.15).clamp(0.0, 1.0),
     );
     return lighterHsl.toColor();
+  }
+
+  String _colorToHex(Color color) {
+    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
   }
 
   void _validateCategories() {

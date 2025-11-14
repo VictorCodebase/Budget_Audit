@@ -145,6 +145,59 @@ class AccountService {
     }
   }
 
+  /// Get all accounts for a specific category in a template
+  Future<List<models.Account>> getAccountsForCategory(
+      int templateId, int categoryId) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.accounts)
+        ..where((tbl) =>
+        tbl.templateId.equals(templateId) &
+        tbl.categoryId.equals(categoryId));
+      final results = await query.get();
+
+      return results
+          .map((a) => models.Account(
+        accountId: a.accountId,
+        categoryId: a.categoryId,
+        templateId: a.templateId,
+        colorHex: a.colorHex,
+        budgetAmount: a.budgetAmount,
+        expenditureTotal: a.expenditureTotal ?? 0.0,
+        responsibleParticipantId: a.responsibleParticipantId,
+        dateCreated: a.dateCreated,
+      ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe("Error fetching accounts for category $categoryId", e, st);
+      return [];
+    }
+  }
+
+  /// Get all accounts for a template (all categories)
+  Future<List<models.Account>> getAllAccountsForTemplate(int templateId) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.accounts)
+        ..where((tbl) => tbl.templateId.equals(templateId));
+      final results = await query.get();
+
+      return results
+          .map((a) => models.Account(
+        accountId: a.accountId,
+        categoryId: a.categoryId,
+        templateId: a.templateId,
+        colorHex: a.colorHex,
+        budgetAmount: a.budgetAmount,
+        expenditureTotal: a.expenditureTotal ?? 0.0,
+        responsibleParticipantId: a.responsibleParticipantId,
+        dateCreated: a.dateCreated,
+      ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe("Error fetching all accounts for template $templateId", e, st);
+      return [];
+    }
+  }
+
   Future<bool> modifyAccount(models.Account modifiedAccount) async {
     try {
       final update = AccountsCompanion(
@@ -257,26 +310,56 @@ class CategoryService {
     }
   }
 
-  Future<bool> createCategory(clientModels.Category newCategory) async {
+  /// Get all categories for a specific template
+  Future<List<models.Category>> getCategoriesForTemplate(int templateId) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.categories)
+        ..where((tbl) => tbl.templateId.equals(templateId));
+      final results = await query.get();
+
+      return results
+          .map((c) => models.Category(
+        categoryId: c.categoryId,
+        templateId: c.templateId,
+        categoryName: c.categoryName,
+        colorHex: c.colorHex,
+      ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe("Error fetching categories for template $templateId", e, st);
+      return [];
+    }
+  }
+
+  Future<int?> createCategory(clientModels.Category newCategory) async {
     try {
       final entry = CategoriesCompanion.insert(
         categoryName: newCategory.categoryName,
         templateId: newCategory.templateId,
         colorHex: newCategory.colorHex,
       );
-      await _appDatabase.into(_appDatabase.categories).insert(entry);
-      return true;
+      final id = await _appDatabase.into(_appDatabase.categories).insert(entry);
+      _logger.info("Category created with ID: $id");
+      return id;
     } catch (e, st) {
       _logger.severe("Error creating category", e, st);
-      return false;
+      return null;
     }
   }
 
   Future<bool> deleteCategory(int categoryId) async {
     try {
+      // First, delete all accounts in this category
+      await (_appDatabase.delete(_appDatabase.accounts)
+        ..where((tbl) => tbl.categoryId.equals(categoryId)))
+          .go();
+
+      // Then delete the category
       final deleted = await (_appDatabase.delete(_appDatabase.categories)
         ..where((tbl) => tbl.categoryId.equals(categoryId)))
           .go();
+
+      _logger.info("Deleted category $categoryId and its accounts");
       return deleted > 0;
     } catch (e, st) {
       _logger.severe("Error deleting category $categoryId", e, st);
