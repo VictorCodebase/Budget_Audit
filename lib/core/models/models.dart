@@ -42,6 +42,7 @@ enum Role {
 // 1.2. Categories Model
 class Category {
   final int categoryId;
+  final int templateId;
   final String categoryName;
   final String colorHex;
 
@@ -49,6 +50,7 @@ class Category {
 
   Category({
     required this.categoryId,
+    required this.templateId,
     required this.categoryName,
     required this.colorHex,
   });

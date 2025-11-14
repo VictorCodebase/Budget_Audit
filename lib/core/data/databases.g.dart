@@ -404,247 +404,6 @@ class ParticipantsCompanion extends drift.UpdateCompanion<Participant> {
   }
 }
 
-class $CategoriesTable extends Categories
-    with drift.TableInfo<$CategoriesTable, Category> {
-  @override
-  final drift.GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $CategoriesTable(this.attachedDatabase, [this._alias]);
-  static const drift.VerificationMeta _categoryIdMeta =
-      const drift.VerificationMeta('categoryId');
-  @override
-  late final drift.GeneratedColumn<int> categoryId = drift.GeneratedColumn<int>(
-      'category_id', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const drift.VerificationMeta _categoryNameMeta =
-      const drift.VerificationMeta('categoryName');
-  @override
-  late final drift.GeneratedColumn<String> categoryName =
-      drift.GeneratedColumn<String>('category_name', aliasedName, false,
-          additionalChecks: GeneratedColumn.checkTextLength(
-              minTextLength: 1, maxTextLength: 100),
-          type: DriftSqlType.string,
-          requiredDuringInsert: true,
-          defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
-  static const drift.VerificationMeta _colorHexMeta =
-      const drift.VerificationMeta('colorHex');
-  @override
-  late final drift.GeneratedColumn<String> colorHex =
-      drift.GeneratedColumn<String>(
-          'color_hex', aliasedName, false,
-          additionalChecks: GeneratedColumn.checkTextLength(
-              minTextLength: 7, maxTextLength: 7),
-          type: DriftSqlType.string,
-          requiredDuringInsert: true);
-  @override
-  List<drift.GeneratedColumn> get $columns =>
-      [categoryId, categoryName, colorHex];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'categories';
-  @override
-  drift.VerificationContext validateIntegrity(
-      drift.Insertable<Category> instance,
-      {bool isInserting = false}) {
-    final context = drift.VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('category_id')) {
-      context.handle(
-          _categoryIdMeta,
-          categoryId.isAcceptableOrUnknown(
-              data['category_id']!, _categoryIdMeta));
-    }
-    if (data.containsKey('category_name')) {
-      context.handle(
-          _categoryNameMeta,
-          categoryName.isAcceptableOrUnknown(
-              data['category_name']!, _categoryNameMeta));
-    } else if (isInserting) {
-      context.missing(_categoryNameMeta);
-    }
-    if (data.containsKey('color_hex')) {
-      context.handle(_colorHexMeta,
-          colorHex.isAcceptableOrUnknown(data['color_hex']!, _colorHexMeta));
-    } else if (isInserting) {
-      context.missing(_colorHexMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<drift.GeneratedColumn> get $primaryKey => {categoryId};
-  @override
-  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Category(
-      categoryId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}category_id'])!,
-      categoryName: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}category_name'])!,
-      colorHex: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}color_hex'])!,
-    );
-  }
-
-  @override
-  $CategoriesTable createAlias(String alias) {
-    return $CategoriesTable(attachedDatabase, alias);
-  }
-}
-
-class Category extends drift.DataClass implements drift.Insertable<Category> {
-  final int categoryId;
-  final String categoryName;
-  final String colorHex;
-  const Category(
-      {required this.categoryId,
-      required this.categoryName,
-      required this.colorHex});
-  @override
-  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
-    final map = <String, drift.Expression>{};
-    map['category_id'] = drift.Variable<int>(categoryId);
-    map['category_name'] = drift.Variable<String>(categoryName);
-    map['color_hex'] = drift.Variable<String>(colorHex);
-    return map;
-  }
-
-  CategoriesCompanion toCompanion(bool nullToAbsent) {
-    return CategoriesCompanion(
-      categoryId: drift.Value(categoryId),
-      categoryName: drift.Value(categoryName),
-      colorHex: drift.Value(colorHex),
-    );
-  }
-
-  factory Category.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
-    return Category(
-      categoryId: serializer.fromJson<int>(json['categoryId']),
-      categoryName: serializer.fromJson<String>(json['categoryName']),
-      colorHex: serializer.fromJson<String>(json['colorHex']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'categoryId': serializer.toJson<int>(categoryId),
-      'categoryName': serializer.toJson<String>(categoryName),
-      'colorHex': serializer.toJson<String>(colorHex),
-    };
-  }
-
-  Category copyWith(
-          {int? categoryId, String? categoryName, String? colorHex}) =>
-      Category(
-        categoryId: categoryId ?? this.categoryId,
-        categoryName: categoryName ?? this.categoryName,
-        colorHex: colorHex ?? this.colorHex,
-      );
-  Category copyWithCompanion(CategoriesCompanion data) {
-    return Category(
-      categoryId:
-          data.categoryId.present ? data.categoryId.value : this.categoryId,
-      categoryName: data.categoryName.present
-          ? data.categoryName.value
-          : this.categoryName,
-      colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Category(')
-          ..write('categoryId: $categoryId, ')
-          ..write('categoryName: $categoryName, ')
-          ..write('colorHex: $colorHex')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(categoryId, categoryName, colorHex);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Category &&
-          other.categoryId == this.categoryId &&
-          other.categoryName == this.categoryName &&
-          other.colorHex == this.colorHex);
-}
-
-class CategoriesCompanion extends drift.UpdateCompanion<Category> {
-  final drift.Value<int> categoryId;
-  final drift.Value<String> categoryName;
-  final drift.Value<String> colorHex;
-  const CategoriesCompanion({
-    this.categoryId = const drift.Value.absent(),
-    this.categoryName = const drift.Value.absent(),
-    this.colorHex = const drift.Value.absent(),
-  });
-  CategoriesCompanion.insert({
-    this.categoryId = const drift.Value.absent(),
-    required String categoryName,
-    required String colorHex,
-  })  : categoryName = drift.Value(categoryName),
-        colorHex = drift.Value(colorHex);
-  static drift.Insertable<Category> custom({
-    drift.Expression<int>? categoryId,
-    drift.Expression<String>? categoryName,
-    drift.Expression<String>? colorHex,
-  }) {
-    return drift.RawValuesInsertable({
-      if (categoryId != null) 'category_id': categoryId,
-      if (categoryName != null) 'category_name': categoryName,
-      if (colorHex != null) 'color_hex': colorHex,
-    });
-  }
-
-  CategoriesCompanion copyWith(
-      {drift.Value<int>? categoryId,
-      drift.Value<String>? categoryName,
-      drift.Value<String>? colorHex}) {
-    return CategoriesCompanion(
-      categoryId: categoryId ?? this.categoryId,
-      categoryName: categoryName ?? this.categoryName,
-      colorHex: colorHex ?? this.colorHex,
-    );
-  }
-
-  @override
-  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
-    final map = <String, drift.Expression>{};
-    if (categoryId.present) {
-      map['category_id'] = drift.Variable<int>(categoryId.value);
-    }
-    if (categoryName.present) {
-      map['category_name'] = drift.Variable<String>(categoryName.value);
-    }
-    if (colorHex.present) {
-      map['color_hex'] = drift.Variable<String>(colorHex.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('CategoriesCompanion(')
-          ..write('categoryId: $categoryId, ')
-          ..write('categoryName: $categoryName, ')
-          ..write('colorHex: $colorHex')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $SyncLogTable extends SyncLog
     with drift.TableInfo<$SyncLogTable, SyncLogEntry> {
   @override
@@ -1419,6 +1178,297 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
           ..write('creatorParticipantId: $creatorParticipantId, ')
           ..write('dateCreated: $dateCreated, ')
           ..write('timesUsed: $timesUsed')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CategoriesTable extends Categories
+    with drift.TableInfo<$CategoriesTable, Category> {
+  @override
+  final drift.GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CategoriesTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _categoryIdMeta =
+      const drift.VerificationMeta('categoryId');
+  @override
+  late final drift.GeneratedColumn<int> categoryId = drift.GeneratedColumn<int>(
+      'category_id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const drift.VerificationMeta _templateIdMeta =
+      const drift.VerificationMeta('templateId');
+  @override
+  late final drift.GeneratedColumn<int> templateId = drift.GeneratedColumn<int>(
+      'template_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES templates (template_id)'));
+  static const drift.VerificationMeta _categoryNameMeta =
+      const drift.VerificationMeta('categoryName');
+  @override
+  late final drift.GeneratedColumn<String> categoryName =
+      drift.GeneratedColumn<String>('category_name', aliasedName, false,
+          additionalChecks: GeneratedColumn.checkTextLength(
+              minTextLength: 1, maxTextLength: 100),
+          type: DriftSqlType.string,
+          requiredDuringInsert: true,
+          defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const drift.VerificationMeta _colorHexMeta =
+      const drift.VerificationMeta('colorHex');
+  @override
+  late final drift.GeneratedColumn<String> colorHex =
+      drift.GeneratedColumn<String>(
+          'color_hex', aliasedName, false,
+          additionalChecks: GeneratedColumn.checkTextLength(
+              minTextLength: 7, maxTextLength: 7),
+          type: DriftSqlType.string,
+          requiredDuringInsert: true);
+  @override
+  List<drift.GeneratedColumn> get $columns =>
+      [categoryId, templateId, categoryName, colorHex];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'categories';
+  @override
+  drift.VerificationContext validateIntegrity(
+      drift.Insertable<Category> instance,
+      {bool isInserting = false}) {
+    final context = drift.VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('category_id')) {
+      context.handle(
+          _categoryIdMeta,
+          categoryId.isAcceptableOrUnknown(
+              data['category_id']!, _categoryIdMeta));
+    }
+    if (data.containsKey('template_id')) {
+      context.handle(
+          _templateIdMeta,
+          templateId.isAcceptableOrUnknown(
+              data['template_id']!, _templateIdMeta));
+    } else if (isInserting) {
+      context.missing(_templateIdMeta);
+    }
+    if (data.containsKey('category_name')) {
+      context.handle(
+          _categoryNameMeta,
+          categoryName.isAcceptableOrUnknown(
+              data['category_name']!, _categoryNameMeta));
+    } else if (isInserting) {
+      context.missing(_categoryNameMeta);
+    }
+    if (data.containsKey('color_hex')) {
+      context.handle(_colorHexMeta,
+          colorHex.isAcceptableOrUnknown(data['color_hex']!, _colorHexMeta));
+    } else if (isInserting) {
+      context.missing(_colorHexMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<drift.GeneratedColumn> get $primaryKey => {categoryId};
+  @override
+  List<Set<drift.GeneratedColumn>> get uniqueKeys => [
+        {templateId, categoryName},
+      ];
+  @override
+  Category map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Category(
+      categoryId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}category_id'])!,
+      templateId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}template_id'])!,
+      categoryName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category_name'])!,
+      colorHex: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}color_hex'])!,
+    );
+  }
+
+  @override
+  $CategoriesTable createAlias(String alias) {
+    return $CategoriesTable(attachedDatabase, alias);
+  }
+}
+
+class Category extends drift.DataClass implements drift.Insertable<Category> {
+  final int categoryId;
+  final int templateId;
+  final String categoryName;
+  final String colorHex;
+  const Category(
+      {required this.categoryId,
+      required this.templateId,
+      required this.categoryName,
+      required this.colorHex});
+  @override
+  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
+    final map = <String, drift.Expression>{};
+    map['category_id'] = drift.Variable<int>(categoryId);
+    map['template_id'] = drift.Variable<int>(templateId);
+    map['category_name'] = drift.Variable<String>(categoryName);
+    map['color_hex'] = drift.Variable<String>(colorHex);
+    return map;
+  }
+
+  CategoriesCompanion toCompanion(bool nullToAbsent) {
+    return CategoriesCompanion(
+      categoryId: drift.Value(categoryId),
+      templateId: drift.Value(templateId),
+      categoryName: drift.Value(categoryName),
+      colorHex: drift.Value(colorHex),
+    );
+  }
+
+  factory Category.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
+    return Category(
+      categoryId: serializer.fromJson<int>(json['categoryId']),
+      templateId: serializer.fromJson<int>(json['templateId']),
+      categoryName: serializer.fromJson<String>(json['categoryName']),
+      colorHex: serializer.fromJson<String>(json['colorHex']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'categoryId': serializer.toJson<int>(categoryId),
+      'templateId': serializer.toJson<int>(templateId),
+      'categoryName': serializer.toJson<String>(categoryName),
+      'colorHex': serializer.toJson<String>(colorHex),
+    };
+  }
+
+  Category copyWith(
+          {int? categoryId,
+          int? templateId,
+          String? categoryName,
+          String? colorHex}) =>
+      Category(
+        categoryId: categoryId ?? this.categoryId,
+        templateId: templateId ?? this.templateId,
+        categoryName: categoryName ?? this.categoryName,
+        colorHex: colorHex ?? this.colorHex,
+      );
+  Category copyWithCompanion(CategoriesCompanion data) {
+    return Category(
+      categoryId:
+          data.categoryId.present ? data.categoryId.value : this.categoryId,
+      templateId:
+          data.templateId.present ? data.templateId.value : this.templateId,
+      categoryName: data.categoryName.present
+          ? data.categoryName.value
+          : this.categoryName,
+      colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Category(')
+          ..write('categoryId: $categoryId, ')
+          ..write('templateId: $templateId, ')
+          ..write('categoryName: $categoryName, ')
+          ..write('colorHex: $colorHex')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(categoryId, templateId, categoryName, colorHex);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Category &&
+          other.categoryId == this.categoryId &&
+          other.templateId == this.templateId &&
+          other.categoryName == this.categoryName &&
+          other.colorHex == this.colorHex);
+}
+
+class CategoriesCompanion extends drift.UpdateCompanion<Category> {
+  final drift.Value<int> categoryId;
+  final drift.Value<int> templateId;
+  final drift.Value<String> categoryName;
+  final drift.Value<String> colorHex;
+  const CategoriesCompanion({
+    this.categoryId = const drift.Value.absent(),
+    this.templateId = const drift.Value.absent(),
+    this.categoryName = const drift.Value.absent(),
+    this.colorHex = const drift.Value.absent(),
+  });
+  CategoriesCompanion.insert({
+    this.categoryId = const drift.Value.absent(),
+    required int templateId,
+    required String categoryName,
+    required String colorHex,
+  })  : templateId = drift.Value(templateId),
+        categoryName = drift.Value(categoryName),
+        colorHex = drift.Value(colorHex);
+  static drift.Insertable<Category> custom({
+    drift.Expression<int>? categoryId,
+    drift.Expression<int>? templateId,
+    drift.Expression<String>? categoryName,
+    drift.Expression<String>? colorHex,
+  }) {
+    return drift.RawValuesInsertable({
+      if (categoryId != null) 'category_id': categoryId,
+      if (templateId != null) 'template_id': templateId,
+      if (categoryName != null) 'category_name': categoryName,
+      if (colorHex != null) 'color_hex': colorHex,
+    });
+  }
+
+  CategoriesCompanion copyWith(
+      {drift.Value<int>? categoryId,
+      drift.Value<int>? templateId,
+      drift.Value<String>? categoryName,
+      drift.Value<String>? colorHex}) {
+    return CategoriesCompanion(
+      categoryId: categoryId ?? this.categoryId,
+      templateId: templateId ?? this.templateId,
+      categoryName: categoryName ?? this.categoryName,
+      colorHex: colorHex ?? this.colorHex,
+    );
+  }
+
+  @override
+  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
+    final map = <String, drift.Expression>{};
+    if (categoryId.present) {
+      map['category_id'] = drift.Variable<int>(categoryId.value);
+    }
+    if (templateId.present) {
+      map['template_id'] = drift.Variable<int>(templateId.value);
+    }
+    if (categoryName.present) {
+      map['category_name'] = drift.Variable<String>(categoryName.value);
+    }
+    if (colorHex.present) {
+      map['color_hex'] = drift.Variable<String>(colorHex.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CategoriesCompanion(')
+          ..write('categoryId: $categoryId, ')
+          ..write('templateId: $templateId, ')
+          ..write('categoryName: $categoryName, ')
+          ..write('colorHex: $colorHex')
           ..write(')'))
         .toString();
   }
@@ -4294,9 +4344,9 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ParticipantsTable participants = $ParticipantsTable(this);
-  late final $CategoriesTable categories = $CategoriesTable(this);
   late final $SyncLogTable syncLog = $SyncLogTable(this);
   late final $TemplatesTable templates = $TemplatesTable(this);
+  late final $CategoriesTable categories = $CategoriesTable(this);
   late final $AccountsTable accounts = $AccountsTable(this);
   late final $VendorsTable vendors = $VendorsTable(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
@@ -4315,9 +4365,9 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   @override
   List<drift.DatabaseSchemaEntity> get allSchemaEntities => [
         participants,
-        categories,
         syncLog,
         templates,
+        categories,
         accounts,
         vendors,
         transactions,
@@ -5200,230 +5250,6 @@ typedef $$ParticipantsTableProcessedTableManager = drift.ProcessedTableManager<
         bool vendorPreferencesRefs,
         bool participantIncomesRefs,
         bool templateParticipantsRefs})>;
-typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
-  drift.Value<int> categoryId,
-  required String categoryName,
-  required String colorHex,
-});
-typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
-  drift.Value<int> categoryId,
-  drift.Value<String> categoryName,
-  drift.Value<String> colorHex,
-});
-
-final class $$CategoriesTableReferences
-    extends drift.BaseReferences<_$AppDatabase, $CategoriesTable, Category> {
-  $$CategoriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static drift.MultiTypedResultKey<$AccountsTable, List<Account>>
-      _accountsRefsTable(_$AppDatabase db) =>
-          drift.MultiTypedResultKey.fromTable(db.accounts,
-              aliasName: drift.$_aliasNameGenerator(
-                  db.categories.categoryId, db.accounts.categoryId));
-
-  $$AccountsTableProcessedTableManager get accountsRefs {
-    final manager = $$AccountsTableTableManager($_db, $_db.accounts).filter(
-        (f) => f.categoryId.categoryId
-            .sqlEquals($_itemColumn<int>('category_id')!));
-
-    final cache = $_typedResult.readTableOrNull(_accountsRefsTable($_db));
-    return drift.ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
-  }
-}
-
-class $$CategoriesTableFilterComposer
-    extends drift.Composer<_$AppDatabase, $CategoriesTable> {
-  $$CategoriesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.ColumnFilters<int> get categoryId => $composableBuilder(
-      column: $table.categoryId,
-      builder: (column) => drift.ColumnFilters(column));
-
-  drift.ColumnFilters<String> get categoryName => $composableBuilder(
-      column: $table.categoryName,
-      builder: (column) => drift.ColumnFilters(column));
-
-  drift.ColumnFilters<String> get colorHex => $composableBuilder(
-      column: $table.colorHex,
-      builder: (column) => drift.ColumnFilters(column));
-
-  drift.Expression<bool> accountsRefs(
-      drift.Expression<bool> Function($$AccountsTableFilterComposer f) f) {
-    final $$AccountsTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.categoryId,
-        referencedTable: $db.accounts,
-        getReferencedColumn: (t) => t.categoryId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$AccountsTableFilterComposer(
-              $db: $db,
-              $table: $db.accounts,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-}
-
-class $$CategoriesTableOrderingComposer
-    extends drift.Composer<_$AppDatabase, $CategoriesTable> {
-  $$CategoriesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.ColumnOrderings<int> get categoryId => $composableBuilder(
-      column: $table.categoryId,
-      builder: (column) => drift.ColumnOrderings(column));
-
-  drift.ColumnOrderings<String> get categoryName => $composableBuilder(
-      column: $table.categoryName,
-      builder: (column) => drift.ColumnOrderings(column));
-
-  drift.ColumnOrderings<String> get colorHex => $composableBuilder(
-      column: $table.colorHex,
-      builder: (column) => drift.ColumnOrderings(column));
-}
-
-class $$CategoriesTableAnnotationComposer
-    extends drift.Composer<_$AppDatabase, $CategoriesTable> {
-  $$CategoriesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.GeneratedColumn<int> get categoryId => $composableBuilder(
-      column: $table.categoryId, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get categoryName => $composableBuilder(
-      column: $table.categoryName, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get colorHex =>
-      $composableBuilder(column: $table.colorHex, builder: (column) => column);
-
-  drift.Expression<T> accountsRefs<T extends Object>(
-      drift.Expression<T> Function($$AccountsTableAnnotationComposer a) f) {
-    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.categoryId,
-        referencedTable: $db.accounts,
-        getReferencedColumn: (t) => t.categoryId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$AccountsTableAnnotationComposer(
-              $db: $db,
-              $table: $db.accounts,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return f(composer);
-  }
-}
-
-class $$CategoriesTableTableManager extends drift.RootTableManager<
-    _$AppDatabase,
-    $CategoriesTable,
-    Category,
-    $$CategoriesTableFilterComposer,
-    $$CategoriesTableOrderingComposer,
-    $$CategoriesTableAnnotationComposer,
-    $$CategoriesTableCreateCompanionBuilder,
-    $$CategoriesTableUpdateCompanionBuilder,
-    (Category, $$CategoriesTableReferences),
-    Category,
-    drift.PrefetchHooks Function({bool accountsRefs})> {
-  $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
-      : super(drift.TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$CategoriesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$CategoriesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$CategoriesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            drift.Value<int> categoryId = const drift.Value.absent(),
-            drift.Value<String> categoryName = const drift.Value.absent(),
-            drift.Value<String> colorHex = const drift.Value.absent(),
-          }) =>
-              CategoriesCompanion(
-            categoryId: categoryId,
-            categoryName: categoryName,
-            colorHex: colorHex,
-          ),
-          createCompanionCallback: ({
-            drift.Value<int> categoryId = const drift.Value.absent(),
-            required String categoryName,
-            required String colorHex,
-          }) =>
-              CategoriesCompanion.insert(
-            categoryId: categoryId,
-            categoryName: categoryName,
-            colorHex: colorHex,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (
-                    e.readTable(table),
-                    $$CategoriesTableReferences(db, table, e)
-                  ))
-              .toList(),
-          prefetchHooksCallback: ({accountsRefs = false}) {
-            return drift.PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (accountsRefs) db.accounts],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (accountsRefs)
-                    await drift.$_getPrefetchedData<Category, $CategoriesTable,
-                            Account>(
-                        currentTable: table,
-                        referencedTable:
-                            $$CategoriesTableReferences._accountsRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $$CategoriesTableReferences(db, table, p0)
-                                .accountsRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems
-                                .where((e) => e.categoryId == item.categoryId),
-                        typedResults: items)
-                ];
-              },
-            );
-          },
-        ));
-}
-
-typedef $$CategoriesTableProcessedTableManager = drift.ProcessedTableManager<
-    _$AppDatabase,
-    $CategoriesTable,
-    Category,
-    $$CategoriesTableFilterComposer,
-    $$CategoriesTableOrderingComposer,
-    $$CategoriesTableAnnotationComposer,
-    $$CategoriesTableCreateCompanionBuilder,
-    $$CategoriesTableUpdateCompanionBuilder,
-    (Category, $$CategoriesTableReferences),
-    Category,
-    drift.PrefetchHooks Function({bool accountsRefs})>;
 typedef $$SyncLogTableCreateCompanionBuilder = SyncLogCompanion Function({
   drift.Value<int> syncId,
   required String syncDirection,
@@ -5821,6 +5647,22 @@ final class $$TemplatesTableReferences
         manager.$state.copyWith(prefetchedData: [item]));
   }
 
+  static drift.MultiTypedResultKey<$CategoriesTable, List<Category>>
+      _categoriesRefsTable(_$AppDatabase db) =>
+          drift.MultiTypedResultKey.fromTable(db.categories,
+              aliasName: drift.$_aliasNameGenerator(
+                  db.templates.templateId, db.categories.templateId));
+
+  $$CategoriesTableProcessedTableManager get categoriesRefs {
+    final manager = $$CategoriesTableTableManager($_db, $_db.categories).filter(
+        (f) => f.templateId.templateId
+            .sqlEquals($_itemColumn<int>('template_id')!));
+
+    final cache = $_typedResult.readTableOrNull(_categoriesRefsTable($_db));
+    return drift.ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
   static drift.MultiTypedResultKey<$AccountsTable, List<Account>>
       _accountsRefsTable(_$AppDatabase db) =>
           drift.MultiTypedResultKey.fromTable(db.accounts,
@@ -5941,6 +5783,27 @@ class $$TemplatesTableFilterComposer
                   $removeJoinBuilderFromRootComposer,
             ));
     return composer;
+  }
+
+  drift.Expression<bool> categoriesRefs(
+      drift.Expression<bool> Function($$CategoriesTableFilterComposer f) f) {
+    final $$CategoriesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.categories,
+        getReferencedColumn: (t) => t.templateId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CategoriesTableFilterComposer(
+              $db: $db,
+              $table: $db.categories,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
   }
 
   drift.Expression<bool> accountsRefs(
@@ -6144,6 +6007,27 @@ class $$TemplatesTableAnnotationComposer
     return composer;
   }
 
+  drift.Expression<T> categoriesRefs<T extends Object>(
+      drift.Expression<T> Function($$CategoriesTableAnnotationComposer a) f) {
+    final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.categories,
+        getReferencedColumn: (t) => t.templateId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CategoriesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.categories,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
   drift.Expression<T> accountsRefs<T extends Object>(
       drift.Expression<T> Function($$AccountsTableAnnotationComposer a) f) {
     final $$AccountsTableAnnotationComposer composer = $composerBuilder(
@@ -6226,6 +6110,7 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
     drift.PrefetchHooks Function(
         {bool syncId,
         bool creatorParticipantId,
+        bool categoriesRefs,
         bool accountsRefs,
         bool templateParticipantsRefs,
         bool chartSnapshotsRefs})> {
@@ -6284,12 +6169,14 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
           prefetchHooksCallback: (
               {syncId = false,
               creatorParticipantId = false,
+              categoriesRefs = false,
               accountsRefs = false,
               templateParticipantsRefs = false,
               chartSnapshotsRefs = false}) {
             return drift.PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
+                if (categoriesRefs) db.categories,
                 if (accountsRefs) db.accounts,
                 if (templateParticipantsRefs) db.templateParticipants,
                 if (chartSnapshotsRefs) db.chartSnapshots
@@ -6333,6 +6220,19 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
               },
               getPrefetchedDataCallback: (items) async {
                 return [
+                  if (categoriesRefs)
+                    await drift.$_getPrefetchedData<Template, $TemplatesTable,
+                            Category>(
+                        currentTable: table,
+                        referencedTable:
+                            $$TemplatesTableReferences._categoriesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$TemplatesTableReferences(db, table, p0)
+                                .categoriesRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.templateId == item.templateId),
+                        typedResults: items),
                   if (accountsRefs)
                     await drift.$_getPrefetchedData<Template, $TemplatesTable,
                             Account>(
@@ -6393,9 +6293,341 @@ typedef $$TemplatesTableProcessedTableManager = drift.ProcessedTableManager<
     drift.PrefetchHooks Function(
         {bool syncId,
         bool creatorParticipantId,
+        bool categoriesRefs,
         bool accountsRefs,
         bool templateParticipantsRefs,
         bool chartSnapshotsRefs})>;
+typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
+  drift.Value<int> categoryId,
+  required int templateId,
+  required String categoryName,
+  required String colorHex,
+});
+typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
+  drift.Value<int> categoryId,
+  drift.Value<int> templateId,
+  drift.Value<String> categoryName,
+  drift.Value<String> colorHex,
+});
+
+final class $$CategoriesTableReferences
+    extends drift.BaseReferences<_$AppDatabase, $CategoriesTable, Category> {
+  $$CategoriesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $TemplatesTable _templateIdTable(_$AppDatabase db) =>
+      db.templates.createAlias(drift.$_aliasNameGenerator(
+          db.categories.templateId, db.templates.templateId));
+
+  $$TemplatesTableProcessedTableManager get templateId {
+    final $_column = $_itemColumn<int>('template_id')!;
+
+    final manager = $$TemplatesTableTableManager($_db, $_db.templates)
+        .filter((f) => f.templateId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_templateIdTable($_db));
+    if (item == null) return manager;
+    return drift.ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static drift.MultiTypedResultKey<$AccountsTable, List<Account>>
+      _accountsRefsTable(_$AppDatabase db) =>
+          drift.MultiTypedResultKey.fromTable(db.accounts,
+              aliasName: drift.$_aliasNameGenerator(
+                  db.categories.categoryId, db.accounts.categoryId));
+
+  $$AccountsTableProcessedTableManager get accountsRefs {
+    final manager = $$AccountsTableTableManager($_db, $_db.accounts).filter(
+        (f) => f.categoryId.categoryId
+            .sqlEquals($_itemColumn<int>('category_id')!));
+
+    final cache = $_typedResult.readTableOrNull(_accountsRefsTable($_db));
+    return drift.ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$CategoriesTableFilterComposer
+    extends drift.Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.ColumnFilters<int> get categoryId => $composableBuilder(
+      column: $table.categoryId,
+      builder: (column) => drift.ColumnFilters(column));
+
+  drift.ColumnFilters<String> get categoryName => $composableBuilder(
+      column: $table.categoryName,
+      builder: (column) => drift.ColumnFilters(column));
+
+  drift.ColumnFilters<String> get colorHex => $composableBuilder(
+      column: $table.colorHex,
+      builder: (column) => drift.ColumnFilters(column));
+
+  $$TemplatesTableFilterComposer get templateId {
+    final $$TemplatesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.templates,
+        getReferencedColumn: (t) => t.templateId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TemplatesTableFilterComposer(
+              $db: $db,
+              $table: $db.templates,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  drift.Expression<bool> accountsRefs(
+      drift.Expression<bool> Function($$AccountsTableFilterComposer f) f) {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.categoryId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.categoryId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableFilterComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$CategoriesTableOrderingComposer
+    extends drift.Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.ColumnOrderings<int> get categoryId => $composableBuilder(
+      column: $table.categoryId,
+      builder: (column) => drift.ColumnOrderings(column));
+
+  drift.ColumnOrderings<String> get categoryName => $composableBuilder(
+      column: $table.categoryName,
+      builder: (column) => drift.ColumnOrderings(column));
+
+  drift.ColumnOrderings<String> get colorHex => $composableBuilder(
+      column: $table.colorHex,
+      builder: (column) => drift.ColumnOrderings(column));
+
+  $$TemplatesTableOrderingComposer get templateId {
+    final $$TemplatesTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.templates,
+        getReferencedColumn: (t) => t.templateId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TemplatesTableOrderingComposer(
+              $db: $db,
+              $table: $db.templates,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$CategoriesTableAnnotationComposer
+    extends drift.Composer<_$AppDatabase, $CategoriesTable> {
+  $$CategoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.GeneratedColumn<int> get categoryId => $composableBuilder(
+      column: $table.categoryId, builder: (column) => column);
+
+  drift.GeneratedColumn<String> get categoryName => $composableBuilder(
+      column: $table.categoryName, builder: (column) => column);
+
+  drift.GeneratedColumn<String> get colorHex =>
+      $composableBuilder(column: $table.colorHex, builder: (column) => column);
+
+  $$TemplatesTableAnnotationComposer get templateId {
+    final $$TemplatesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.templateId,
+        referencedTable: $db.templates,
+        getReferencedColumn: (t) => t.templateId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TemplatesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.templates,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  drift.Expression<T> accountsRefs<T extends Object>(
+      drift.Expression<T> Function($$AccountsTableAnnotationComposer a) f) {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.categoryId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.categoryId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$CategoriesTableTableManager extends drift.RootTableManager<
+    _$AppDatabase,
+    $CategoriesTable,
+    Category,
+    $$CategoriesTableFilterComposer,
+    $$CategoriesTableOrderingComposer,
+    $$CategoriesTableAnnotationComposer,
+    $$CategoriesTableCreateCompanionBuilder,
+    $$CategoriesTableUpdateCompanionBuilder,
+    (Category, $$CategoriesTableReferences),
+    Category,
+    drift.PrefetchHooks Function({bool templateId, bool accountsRefs})> {
+  $$CategoriesTableTableManager(_$AppDatabase db, $CategoriesTable table)
+      : super(drift.TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CategoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CategoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CategoriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            drift.Value<int> categoryId = const drift.Value.absent(),
+            drift.Value<int> templateId = const drift.Value.absent(),
+            drift.Value<String> categoryName = const drift.Value.absent(),
+            drift.Value<String> colorHex = const drift.Value.absent(),
+          }) =>
+              CategoriesCompanion(
+            categoryId: categoryId,
+            templateId: templateId,
+            categoryName: categoryName,
+            colorHex: colorHex,
+          ),
+          createCompanionCallback: ({
+            drift.Value<int> categoryId = const drift.Value.absent(),
+            required int templateId,
+            required String categoryName,
+            required String colorHex,
+          }) =>
+              CategoriesCompanion.insert(
+            categoryId: categoryId,
+            templateId: templateId,
+            categoryName: categoryName,
+            colorHex: colorHex,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$CategoriesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({templateId = false, accountsRefs = false}) {
+            return drift.PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (accountsRefs) db.accounts],
+              addJoins: <
+                  T extends drift.TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (templateId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.templateId,
+                    referencedTable:
+                        $$CategoriesTableReferences._templateIdTable(db),
+                    referencedColumn: $$CategoriesTableReferences
+                        ._templateIdTable(db)
+                        .templateId,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (accountsRefs)
+                    await drift.$_getPrefetchedData<Category, $CategoriesTable,
+                            Account>(
+                        currentTable: table,
+                        referencedTable:
+                            $$CategoriesTableReferences._accountsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$CategoriesTableReferences(db, table, p0)
+                                .accountsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.categoryId == item.categoryId),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$CategoriesTableProcessedTableManager = drift.ProcessedTableManager<
+    _$AppDatabase,
+    $CategoriesTable,
+    Category,
+    $$CategoriesTableFilterComposer,
+    $$CategoriesTableOrderingComposer,
+    $$CategoriesTableAnnotationComposer,
+    $$CategoriesTableCreateCompanionBuilder,
+    $$CategoriesTableUpdateCompanionBuilder,
+    (Category, $$CategoriesTableReferences),
+    Category,
+    drift.PrefetchHooks Function({bool templateId, bool accountsRefs})>;
 typedef $$AccountsTableCreateCompanionBuilder = AccountsCompanion Function({
   drift.Value<int> accountId,
   required int categoryId,
@@ -9659,12 +9891,12 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$ParticipantsTableTableManager get participants =>
       $$ParticipantsTableTableManager(_db, _db.participants);
-  $$CategoriesTableTableManager get categories =>
-      $$CategoriesTableTableManager(_db, _db.categories);
   $$SyncLogTableTableManager get syncLog =>
       $$SyncLogTableTableManager(_db, _db.syncLog);
   $$TemplatesTableTableManager get templates =>
       $$TemplatesTableTableManager(_db, _db.templates);
+  $$CategoriesTableTableManager get categories =>
+      $$CategoriesTableTableManager(_db, _db.categories);
   $$AccountsTableTableManager get accounts =>
       $$AccountsTableTableManager(_db, _db.accounts);
   $$VendorsTableTableManager get vendors =>

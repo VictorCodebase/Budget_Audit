@@ -1,8 +1,10 @@
 
+import 'package:budget_audit/core/services/budget_service.dart';
 import 'package:budget_audit/features/budgeting/budgeting_view.dart';
 import 'package:budget_audit/features/home/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../features/budgeting/budgeting_viewmodel.dart';
 import '../../features/onboarding/onboarding_view.dart';
 import '../../features/onboarding/onboarding_viewmodel.dart';
 import '../services/participant_service.dart';
@@ -26,7 +28,8 @@ class AppRouter {
 
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => OnboardingViewModel( // TODO: remember to change this to budgeting view model. i sorry you struggled before remembering this comment :(
+            create: (_) => BudgetingViewModel( // TODO: remember to change this to budgeting view model. i sorry you struggled before remembering this comment :(
+              sl<BudgetService>(),
               sl<ParticipantService>(),
             ),
             child: const BudgetingView(),

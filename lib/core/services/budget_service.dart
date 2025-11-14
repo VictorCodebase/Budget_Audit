@@ -225,6 +225,7 @@ class CategoryService {
 
       return models.Category(
         categoryId: c.categoryId,
+        templateId: c.templateId,
         categoryName: c.categoryName,
         colorHex: c.colorHex,
       );
@@ -245,6 +246,7 @@ class CategoryService {
       return results
           .map((c) => models.Category(
         categoryId: c.categoryId,
+        templateId: c.templateId,
         categoryName: c.categoryName,
         colorHex: c.colorHex,
       ))
@@ -259,6 +261,7 @@ class CategoryService {
     try {
       final entry = CategoriesCompanion.insert(
         categoryName: newCategory.categoryName,
+        templateId: newCategory.templateId,
         colorHex: newCategory.colorHex,
       );
       await _appDatabase.into(_appDatabase.categories).insert(entry);

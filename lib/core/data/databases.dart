@@ -28,9 +28,14 @@ class Participants extends drift.Table {
 @drift.DataClassName('Category')
 class Categories extends drift.Table {
   drift.IntColumn get categoryId => integer().autoIncrement()();
+  drift.IntColumn get templateId => integer().references(Templates, #templateId)();
   drift.TextColumn get categoryName => text().withLength(min: 1, max: 100).unique()();
   drift.TextColumn get colorHex => text().withLength(min: 7, max: 7)();
 
+  @override
+  List<Set<drift.Column>> get uniqueKeys => [
+    {templateId, categoryName}, // Unique per template
+  ];
   //@override
   //Set<drift.Column> get primaryKey => {categoryId};
 }

@@ -47,12 +47,14 @@ class Template {
 class Category {
   final String categoryName;
   final String colorHex;
+  final int templateId;
 
   Color get color => Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
   Category({
     required this.categoryName,
     required this.colorHex,
+    required this.templateId,
   });
 }
 

@@ -1,4 +1,4 @@
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -115,6 +115,72 @@ class AppTheme {
     fontWeight: FontWeight.w500,
     color: textPrimary,
   );
+
+  // ========== Glass Morphism ==========
+
+  /// Creates a glass morphism decoration
+  /// 
+  /// Parameters:
+  /// - [color]: Base color for the glass effect
+  /// - [opacity]: Opacity of the base color (0.0 - 1.0)
+  /// - [borderRadius]: Border radius for the container
+  /// - [borderColor]: Color of the border
+  /// - [borderWidth]: Width of the border
+  static BoxDecoration glassDecoration({
+    Color color = Colors.white,
+    double opacity = 0.7,
+    BorderRadius? borderRadius,
+    Color? borderColor,
+    double borderWidth = 1.5,
+  }) {
+    return BoxDecoration(
+      color: color.withOpacity(opacity),
+      borderRadius: borderRadius ?? BorderRadius.circular(radiusXl),
+      border: Border.all(
+        color: borderColor ?? Colors.white.withOpacity(0.2),
+        width: borderWidth,
+      ),
+    );
+  }
+
+  /// Wraps a widget with glass morphism effect
+  /// 
+  /// Parameters:
+  /// - [child]: The widget to wrap
+  /// - [color]: Base color for the glass effect
+  /// - [opacity]: Opacity of the base color
+  /// - [blurAmount]: Amount of backdrop blur
+  /// - [borderRadius]: Border radius for the container
+  static Widget glassContainer({
+    required Widget child,
+    Color color = Colors.white,
+    double opacity = 0.7,
+    double blurAmount = 10.0,
+    BorderRadius? borderRadius,
+    Color? borderColor,
+    EdgeInsets? padding,
+    double? width,
+    double? height,
+  }) {
+    return ClipRRect(
+      borderRadius: borderRadius ?? BorderRadius.circular(radiusXl),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
+        child: Container(
+          width: width,
+          height: height,
+          padding: padding,
+          decoration: glassDecoration(
+            color: color,
+            opacity: opacity,
+            borderRadius: borderRadius,
+            borderColor: borderColor,
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
 
   // ========== Theme Data ==========
   static ThemeData get lightTheme {
