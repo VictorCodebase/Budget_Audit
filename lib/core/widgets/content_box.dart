@@ -50,6 +50,10 @@ class ContentBox extends StatefulWidget {
   /// Optional fixed width for the box
   final double? width;
 
+  /// Optional maximized dimensions
+  final double? maxHeight;
+  final double? maxWidth;
+
   /// Spacing between preview widgets when minimized
   final double previewSpacing;
 
@@ -67,6 +71,8 @@ class ContentBox extends StatefulWidget {
     this.controls = const [],
     this.minimizedHeight = 60.0,
     this.width,
+    this.maxWidth,
+    this.maxHeight,
     this.previewSpacing = 60.0,
     this.initiallyMinimized = false,
     this.contentPadding = const EdgeInsets.all(16.0),
@@ -219,63 +225,130 @@ class _ContentBoxState extends State<ContentBox> with SingleTickerProviderStateM
       return control;
     }).toList();
 
-    return Positioned(
-      top: 12,
-      left: 12,
-      child: Row(
-        children: [
-          for (int i = 0; i < activeControls.length; i++) ...[
-            _buildControlIcon(activeControls[i]),
-            if (i < activeControls.length - 1) const SizedBox(width: 6),
-          ],
+    return Row(
+      children: [
+        for (int i = 0; i < activeControls.length; i++) ...[
+          _buildControlIcon(activeControls[i]),
+          if (i < activeControls.length - 1) const SizedBox(width: 6),
         ],
-      ),
+      ],
     );
   }
 
   Widget _buildMinimizedContent() {
     final previewsToShow = widget.previewWidgets.take(4).toList();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: [
-          for (int i = 0; i < previewsToShow.length; i++) ...[
-            previewsToShow[i],
-            if (i < previewsToShow.length - 1)
-              SizedBox(width: widget.previewSpacing),
-          ],
-        ],
+    return SizedBox(
+      height: widget.minimizedHeight,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Check if we have enough space for horizontal layout
+            final hasSpaceForHorizontal = constraints.maxWidth > 600;
+
+            if (hasSpaceForHorizontal) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Preview widgets - centered vertically
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < previewsToShow.length; i++) ...[
+                            previewsToShow[i],
+                            if (i < previewsToShow.length - 1)
+                              SizedBox(width: widget.previewSpacing),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Controls - centered vertically
+                  if (widget.controls.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    _buildControls(),
+                  ],
+                ],
+              );
+            } else {
+              // Stack vertically on smaller screens
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (int i = 0; i < previewsToShow.length; i++) ...[
+                          previewsToShow[i],
+                          if (i < previewsToShow.length - 1)
+                            SizedBox(width: widget.previewSpacing),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (widget.controls.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    _buildControls(),
+                  ],
+                ],
+              );
+            }
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildMaximizedContent() {
+  Widget _buildMaximizedContent(BuildContext context) {
+    // Determine the max height for the scrollable area
+    final double defaultMaxHeight = MediaQuery.of(context).size.height * 0.8;
+    final double maxBoxHeight = widget.maxHeight ?? defaultMaxHeight;
+
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header widgets
-        if (widget.headerWidgets.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 8),
-            child: Row(
-              children: [
-                for (int i = 0; i < widget.headerWidgets.take(2).length; i++) ...[
-                  Flexible(child: widget.headerWidgets[i]),
-                  if (i == 0 && widget.headerWidgets.length > 1)
-                    const SizedBox(width: 16),
-                ],
-              ],
-            ),
-          )
-        else
-          const SizedBox(height: 40), // Space for controls
+        // Header and controls at the same level
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header widgets
+              if (widget.headerWidgets.isNotEmpty)
+                Expanded(
+                  child: Row(
+                    children: [
+                      for (int i = 0; i < widget.headerWidgets.take(2).length; i++) ...[
+                        Flexible(child: widget.headerWidgets[i]),
+                        if (i == 0 && widget.headerWidgets.length > 1)
+                          const SizedBox(width: 16),
+                      ],
+                    ],
+                  ),
+                )
+              else
+                const Spacer(),
+              // Controls
+              if (widget.controls.isNotEmpty) _buildControls(),
+            ],
+          ),
+        ),
 
-        // Main content
-        Expanded(
-          child: Padding(
-            padding: widget.contentPadding,
-            child: widget.content,
+        // Main content area (scrollable if too tall)
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxBoxHeight - 64), // Adjusted for header height
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: widget.contentPadding,
+              child: widget.content,
+            ),
           ),
         ),
       ],
@@ -286,40 +359,32 @@ class _ContentBoxState extends State<ContentBox> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return SizedBox(
       width: widget.width,
-      child: AnimatedBuilder(
-        animation: _heightAnimation,
-        builder: (context, child) {
-          return Container(
-            height: _isMinimized
-                ? widget.minimizedHeight
-                : null,
-            constraints: _isMinimized
-                ? BoxConstraints(
-              minHeight: widget.minimizedHeight,
-              maxHeight: widget.minimizedHeight,
-            )
-                : null,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFFFF),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFFC7C7C7),
-                width: 1,
-              ),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: Container(
+          height: _isMinimized ? widget.minimizedHeight : null,
+          constraints: _isMinimized
+              ? BoxConstraints(
+            minHeight: widget.minimizedHeight,
+            maxHeight: widget.minimizedHeight,
+          )
+              : null,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFC7C7C7),
+              width: 1,
             ),
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: _isMinimized
-                      ? _buildMinimizedContent()
-                      : _buildMaximizedContent(),
-                ),
-                if (widget.controls.isNotEmpty) _buildControls(),
-              ],
-            ),
-          );
-        },
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: _isMinimized
+                ? _buildMinimizedContent()
+                : _buildMaximizedContent(context),
+          ),
+        ),
       ),
     );
   }
