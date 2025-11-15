@@ -1,4 +1,3 @@
-
 import 'package:budget_audit/core/services/budget_service.dart';
 import 'package:budget_audit/features/budgeting/budgeting_view.dart';
 import 'package:budget_audit/features/home/home_view.dart';
@@ -9,6 +8,7 @@ import '../../features/onboarding/onboarding_view.dart';
 import '../../features/onboarding/onboarding_viewmodel.dart';
 import '../services/participant_service.dart';
 import '../services/service_locator.dart';
+import '../context.dart';
 
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -16,19 +16,17 @@ class AppRouter {
       case '/':
       case '/onboarding':
         return MaterialPageRoute(
-          builder: (_) => ChangeNotifierProvider(
-            create: (_) => OnboardingViewModel(
-              sl<ParticipantService>(),
-            ),
+          builder: (context) => ChangeNotifierProvider(
+            create: (_) => OnboardingViewModel(sl<ParticipantService>(),
+                Provider.of<AppContext>(context, listen: false)),
             child: const OnboardingView(),
           ),
         );
 
       case '/budgeting':
-
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => BudgetingViewModel( // TODO: remember to change this to budgeting view model. i sorry you struggled before remembering this comment :(
+            create: (_) => BudgetingViewModel(
               sl<BudgetService>(),
               sl<ParticipantService>(),
             ),
@@ -37,11 +35,13 @@ class AppRouter {
         );
 
       case '/home':
-      // TODO: Implement home page
+        // TODO: Implement home page
         return MaterialPageRoute(
           builder: (_) => ChangeNotifierProvider(
-            create: (_) => OnboardingViewModel( // TODO: remember to change this to budgeting view model. i sorry you struggled before remembering this comment :(
+            create: (context) => OnboardingViewModel(
+              // TODO: remember to change this to home view model. i sorry you struggled before remembering this comment :(
               sl<ParticipantService>(),
+              Provider.of<AppContext>(context, listen: false),
             ),
             child: const HomeView(),
           ),

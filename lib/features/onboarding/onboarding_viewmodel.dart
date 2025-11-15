@@ -1,11 +1,10 @@
-
 import 'package:flutter/foundation.dart';
 import '../../core/services/participant_service.dart';
 import '../../core/models/models.dart' as models;
 import '../../core/models/client_models.dart' as client_models;
 import '../../core/services/service_locator.dart';
 import 'package:logging/logging.dart';
-
+import '../../core/context.dart';
 
 enum OnboardingMode {
   addParticipants,
@@ -14,8 +13,10 @@ enum OnboardingMode {
 
 class OnboardingViewModel extends ChangeNotifier {
   final ParticipantService _participantService;
+  final AppContext _appContext;
+  final Logger _logger = Logger("OnboardingViewModel");
 
-  OnboardingViewModel(this._participantService);
+  OnboardingViewModel(this._participantService, this._appContext);
 
   // State management
   OnboardingMode _mode = OnboardingMode.addParticipants;
@@ -64,13 +65,14 @@ class OnboardingViewModel extends ChangeNotifier {
       _participants = await _participantService.getAllParticipants();
       _clearError();
     } catch (e) {
+      _logger.severe('Failed to load participants', e);
       _setError('Failed to load participants: $e');
     } finally {
       _setLoading(false);
     }
   }
 
-  void onToggleObscure(){
+  void onToggleObscure() {
     _passwordObscured = !_passwordObscured;
     notifyListeners();
   }
@@ -78,7 +80,6 @@ class OnboardingViewModel extends ChangeNotifier {
   // ========== Mode Switching ==========
 
   void switchMode(OnboardingMode newMode) {
-
     _mode = newMode;
     _clearForm();
     _clearError();
@@ -112,7 +113,6 @@ class OnboardingViewModel extends ChangeNotifier {
     final password = _formData['password']?.trim() ?? '';
 
     if (firstName.isEmpty) {
-
       return 'First name is required';
     }
 
@@ -126,7 +126,7 @@ class OnboardingViewModel extends ChangeNotifier {
       return 'Please enter a valid email address';
     }
 
-    // Password validation (for now, just check if not empty)
+    // Password validation
     if (password.isEmpty) {
       return 'Password is required';
     }
@@ -166,13 +166,14 @@ class OnboardingViewModel extends ChangeNotifier {
         email: _formData['email']!.trim(),
       );
 
-      // TODO: Hash password before storing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      // Password hashing is now handled by the service
       final participantId = await _participantService.addParticipant(
         participant,
         _formData['password']!,
       );
 
       if (participantId > 0) {
+        _logger.info('Successfully created participant with ID: $participantId');
         await loadParticipants();
         _clearForm();
         _clearError();
@@ -182,6 +183,7 @@ class OnboardingViewModel extends ChangeNotifier {
         return false;
       }
     } catch (e) {
+      _logger.severe('Error creating participant', e);
       _setError('Error creating participant: $e');
       return false;
     } finally {
@@ -200,7 +202,6 @@ class OnboardingViewModel extends ChangeNotifier {
     _formData['password'] = ''; // Don't populate password for security
     notifyListeners();
   }
-
 
   /// Update an existing participant
   Future<bool> updateExistingParticipant() async {
@@ -235,22 +236,25 @@ class OnboardingViewModel extends ChangeNotifier {
           ? newPassword
           : null;
 
+      // Password hashing is handled by the service
       final success = await _participantService.updateParticipant(
         participant,
         newPassword: passwordToUpdate,
       );
 
       if (success) {
+        _logger.info('Successfully updated participant: $_editingParticipantId');
         await loadParticipants();
         _clearForm();
         _clearError();
-        notifyListeners(); // Ensure UI updates
+        notifyListeners();
         return true;
       } else {
         _setError('Failed to update participant');
         return false;
       }
     } catch (e) {
+      _logger.severe('Error updating participant', e);
       _setError('Error updating participant: $e');
       return false;
     } finally {
@@ -269,11 +273,9 @@ class OnboardingViewModel extends ChangeNotifier {
   /// Check if currently in edit mode
   bool get isEditMode => _editingParticipantId != null;
 
-
   // ========== Delete Participant ==========
 
   Future<bool> removeParticipant(int participantId) async {
-    _setLoading(true);
     // Prevent deleting the manager/owner
     final participant = _participants.firstWhere(
           (p) => p.participantId == participantId,
@@ -286,18 +288,24 @@ class OnboardingViewModel extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      _participantService.deleteParticipant(participant);
-      _participants.removeWhere((p) => p.participantId == participantId);
+      final success = await _participantService.deleteParticipant(participant);
 
-      // If we were editing this participant, clear the edit state
-      if (_editingParticipantId == participantId) {
-        _clearForm();
+      if (success) {
+        _logger.info('Successfully deleted participant: $participantId');
+        // If we were editing this participant, clear the edit state
+        if (_editingParticipantId == participantId) {
+          _clearForm();
+        }
+        await loadParticipants();
+        _clearError();
+        notifyListeners();
+        return true;
+      } else {
+        _setError('Failed to delete participant');
+        return false;
       }
-      await loadParticipants();
-      _clearError();
-      notifyListeners();
-      return true;
     } catch (e) {
+      _logger.severe('Error deleting participant', e);
       _setError('Error deleting participant: $e');
       return false;
     } finally {
@@ -307,27 +315,40 @@ class OnboardingViewModel extends ChangeNotifier {
 
   // ========== Sign In ==========
 
-  Future<models.Participant?> signInAsParticipant(
-      String email,
-      String password,
-      ) async {
+  /// Sign in as a participant using email and password
+  /// Uses the service to verify credentials and updates app context on success
+  Future<bool> signInAsParticipant(String email, String password) async {
+    if (email.trim().isEmpty || password.isEmpty) {
+      _setError('Email and password are required');
+      return false;
+    }
+
     _setLoading(true);
     try {
-      // Find participant by email
+      // Use the service to verify the participant credentials
+      final isValid = await _participantService.verifyParticipant(email, password);
+
+      if (!isValid) {
+        _setError('Invalid email or password');
+        return false;
+      }
+
+      // Fetch the participant by email to get full details
       final participant = _participants.firstWhere(
-            (p) => p.email.toLowerCase() == email.toLowerCase(),
+            (p) => p.email.toLowerCase() == email.trim().toLowerCase(),
         orElse: () => throw Exception('Participant not found'),
       );
 
-      // TODO: Verify password hash
-      // For now, we'll just return the participant
-      // You need to implement proper password verification
+      // Update the app context with the signed-in participant
+      _appContext.setParticipant(participant);
 
+      _logger.info('Successfully signed in participant: ${participant.email}');
       _clearError();
-      return participant;
+      return true;
     } catch (e) {
+      _logger.severe('Error during sign in', e);
       _setError('Invalid email or password');
-      return null;
+      return false;
     } finally {
       _setLoading(false);
     }
@@ -378,7 +399,4 @@ class OnboardingViewModel extends ChangeNotifier {
     ];
     return parts.join(' ');
   }
-
-
 }
-

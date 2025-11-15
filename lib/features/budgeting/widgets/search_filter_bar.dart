@@ -14,7 +14,7 @@ class SearchFilterBar extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(AppTheme.spacingMd),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: AppTheme.backgroundColor,
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
             border: Border.all(color: AppTheme.border, width: 1),
           ),

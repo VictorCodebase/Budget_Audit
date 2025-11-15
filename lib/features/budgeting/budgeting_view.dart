@@ -86,7 +86,7 @@ class _BudgetingViewState extends State<BudgetingView> {
             children: [
               const Text(
                 'Create a Budget Template to start',
-                style: AppTheme.h2,
+                style: AppTheme.bodyLarge,
               ),
               const SizedBox(height: AppTheme.spacingXs),
               Container(
@@ -172,7 +172,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                 label: Text(
                   'Learn how budgeting works in the Budget Audit',
                   style: AppTheme.bodySmall.copyWith(
-                    color: AppTheme.primaryPink,
+                    color: AppTheme.primaryBlue,
                     decoration: TextDecoration.underline,
                   ),
                 ),
@@ -203,35 +203,29 @@ class _BudgetingViewState extends State<BudgetingView> {
           // Add category button
           InkWell(
             onTap: () => viewModel.addCategory(),
-            child: Container(
-              padding: const EdgeInsets.all(AppTheme.spacingMd),
-              decoration: BoxDecoration(
-                border: Border.all(
+            borderRadius: BorderRadius.circular(8),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.add_box_outlined,
+                  size: 22,
                   color: AppTheme.primaryPink,
-                  width: 2,
-                  style: BorderStyle.solid,
                 ),
-                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.add_circle_outline,
+                SizedBox(width: 6),
+                Text(
+                  "Add Category",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                     color: AppTheme.primaryPink,
                   ),
-                  const SizedBox(width: AppTheme.spacingXs),
-                  Text(
-                    'Add Category',
-                    style: AppTheme.bodyMedium.copyWith(
-                      color: AppTheme.primaryPink,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+
+
 
           const SizedBox(height: AppTheme.spacing2xl),
 
@@ -317,7 +311,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                   ),
                   side: BorderSide(
                     color: viewModel.canSave
-                        ? AppTheme.primaryPink
+                        ? AppTheme.primaryBlue
                         : AppTheme.border,
                   ),
                 ),

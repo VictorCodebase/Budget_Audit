@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../onboarding_viewmodel.dart';
 import '../../../core/theme/app_theme.dart';
@@ -177,18 +176,20 @@ class _SignInFormState extends State<SignInForm> {
         onPressed: widget.viewModel.isLoading
             ? null
             : () async {
-          final participant = await widget.viewModel.signInAsParticipant(
+          // signInAsParticipant now returns bool, not Participant?
+          final success = await widget.viewModel.signInAsParticipant(
             _emailController.text.trim(),
             _passwordController.text,
           );
 
-          if (participant != null && mounted) {
+          if (success && mounted) {
             // Navigate to home or budgeting page
             Navigator.pushReplacementNamed(
               context,
               widget.viewModel.getNextRoute(),
             );
           }
+          // If success is false, the error is already displayed via viewModel.error
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryPink,
@@ -208,7 +209,7 @@ class _SignInFormState extends State<SignInForm> {
             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
           ),
         )
-            : Text(
+            : const Text(
           'Sign In',
           style: AppTheme.button,
         ),
