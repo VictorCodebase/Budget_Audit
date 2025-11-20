@@ -340,7 +340,7 @@ class OnboardingViewModel extends ChangeNotifier {
       );
 
       // Update the app context with the signed-in participant
-      _appContext.setParticipant(participant);
+      await _appContext.setParticipant(participant);
 
       _logger.info('Successfully signed in participant: ${participant.email}');
       _clearError();

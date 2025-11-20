@@ -25,14 +25,22 @@ class AppRouter {
 
       case '/budgeting':
         return MaterialPageRoute(
-          builder: (_) => ChangeNotifierProvider(
-            create: (context) => BudgetingViewModel(
-              sl<BudgetService>(),
-              sl<ParticipantService>(),
-              Provider.of<AppContext>(context, listen: false),
-            ),
-            child: const BudgetingView(),
-          ),
+          builder: (context) {
+            final appContext = Provider.of<AppContext>(context, listen: false);
+
+            if (!appContext.hasValidSession) {
+              return const OnboardingView();
+            }
+
+            return ChangeNotifierProvider(
+              create: (_) => BudgetingViewModel(
+                sl<BudgetService>(),
+                sl<ParticipantService>(),
+                Provider.of<AppContext>(context, listen: false),
+              ),
+              child: const BudgetingView(),
+            );
+          },
         );
 
       case '/home':

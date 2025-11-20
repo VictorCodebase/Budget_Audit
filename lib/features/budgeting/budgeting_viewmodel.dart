@@ -515,7 +515,7 @@ class BudgetingViewModel extends ChangeNotifier {
   }
 
   Future<void> setNewTemplateAsCurrent(models.Template template) async {
-    _appContext.setCurrentTemplate(template);
+    await _appContext.setCurrentTemplate(template);
 
     _templates.removeWhere((t) => t.templateId == template.templateId);
     _templates.add(template);
@@ -607,7 +607,7 @@ class BudgetingViewModel extends ChangeNotifier {
     try {
       _categories.clear();
       await _loadTemplateForEditing(template);
-      _appContext.setCurrentTemplate(template);
+      await _appContext.setCurrentTemplate(template);
     } catch (e) {
       _errorMessage = 'Failed to adopt template: $e';
       _isLoading = false;
