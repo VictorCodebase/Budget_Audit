@@ -825,8 +825,8 @@ class $TemplatesTable extends Templates
       const drift.VerificationMeta('timesUsed');
   @override
   late final drift.GeneratedColumn<int> timesUsed = drift.GeneratedColumn<int>(
-      'times_used', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
+      'times_used', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<drift.GeneratedColumn> get $columns => [
         templateId,
@@ -891,8 +891,6 @@ class $TemplatesTable extends Templates
     if (data.containsKey('times_used')) {
       context.handle(_timesUsedMeta,
           timesUsed.isAcceptableOrUnknown(data['times_used']!, _timesUsedMeta));
-    } else if (isInserting) {
-      context.missing(_timesUsedMeta);
     }
     return context;
   }
@@ -916,7 +914,7 @@ class $TemplatesTable extends Templates
       dateCreated: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date_created'])!,
       timesUsed: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}times_used'])!,
+          .read(DriftSqlType.int, data['${effectivePrefix}times_used']),
     );
   }
 
@@ -933,7 +931,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
   final String templateName;
   final int creatorParticipantId;
   final DateTime dateCreated;
-  final int timesUsed;
+  final int? timesUsed;
   const Template(
       {required this.templateId,
       this.syncId,
@@ -941,7 +939,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       required this.templateName,
       required this.creatorParticipantId,
       required this.dateCreated,
-      required this.timesUsed});
+      this.timesUsed});
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
@@ -955,7 +953,9 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
     map['template_name'] = drift.Variable<String>(templateName);
     map['creator_participant_id'] = drift.Variable<int>(creatorParticipantId);
     map['date_created'] = drift.Variable<DateTime>(dateCreated);
-    map['times_used'] = drift.Variable<int>(timesUsed);
+    if (!nullToAbsent || timesUsed != null) {
+      map['times_used'] = drift.Variable<int>(timesUsed);
+    }
     return map;
   }
 
@@ -971,7 +971,9 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       templateName: drift.Value(templateName),
       creatorParticipantId: drift.Value(creatorParticipantId),
       dateCreated: drift.Value(dateCreated),
-      timesUsed: drift.Value(timesUsed),
+      timesUsed: timesUsed == null && nullToAbsent
+          ? const drift.Value.absent()
+          : drift.Value(timesUsed),
     );
   }
 
@@ -986,7 +988,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       creatorParticipantId:
           serializer.fromJson<int>(json['creatorParticipantId']),
       dateCreated: serializer.fromJson<DateTime>(json['dateCreated']),
-      timesUsed: serializer.fromJson<int>(json['timesUsed']),
+      timesUsed: serializer.fromJson<int?>(json['timesUsed']),
     );
   }
   @override
@@ -999,7 +1001,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       'templateName': serializer.toJson<String>(templateName),
       'creatorParticipantId': serializer.toJson<int>(creatorParticipantId),
       'dateCreated': serializer.toJson<DateTime>(dateCreated),
-      'timesUsed': serializer.toJson<int>(timesUsed),
+      'timesUsed': serializer.toJson<int?>(timesUsed),
     };
   }
 
@@ -1010,7 +1012,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
           String? templateName,
           int? creatorParticipantId,
           DateTime? dateCreated,
-          int? timesUsed}) =>
+          drift.Value<int?> timesUsed = const drift.Value.absent()}) =>
       Template(
         templateId: templateId ?? this.templateId,
         syncId: syncId.present ? syncId.value : this.syncId,
@@ -1019,7 +1021,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
         templateName: templateName ?? this.templateName,
         creatorParticipantId: creatorParticipantId ?? this.creatorParticipantId,
         dateCreated: dateCreated ?? this.dateCreated,
-        timesUsed: timesUsed ?? this.timesUsed,
+        timesUsed: timesUsed.present ? timesUsed.value : this.timesUsed,
       );
   Template copyWithCompanion(TemplatesCompanion data) {
     return Template(
@@ -1078,7 +1080,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
   final drift.Value<String> templateName;
   final drift.Value<int> creatorParticipantId;
   final drift.Value<DateTime> dateCreated;
-  final drift.Value<int> timesUsed;
+  final drift.Value<int?> timesUsed;
   const TemplatesCompanion({
     this.templateId = const drift.Value.absent(),
     this.syncId = const drift.Value.absent(),
@@ -1095,11 +1097,10 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
     required String templateName,
     required int creatorParticipantId,
     required DateTime dateCreated,
-    required int timesUsed,
+    this.timesUsed = const drift.Value.absent(),
   })  : templateName = drift.Value(templateName),
         creatorParticipantId = drift.Value(creatorParticipantId),
-        dateCreated = drift.Value(dateCreated),
-        timesUsed = drift.Value(timesUsed);
+        dateCreated = drift.Value(dateCreated);
   static drift.Insertable<Template> custom({
     drift.Expression<int>? templateId,
     drift.Expression<int>? syncId,
@@ -1128,7 +1129,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
       drift.Value<String>? templateName,
       drift.Value<int>? creatorParticipantId,
       drift.Value<DateTime>? dateCreated,
-      drift.Value<int>? timesUsed}) {
+      drift.Value<int?>? timesUsed}) {
     return TemplatesCompanion(
       templateId: templateId ?? this.templateId,
       syncId: syncId ?? this.syncId,
@@ -5653,7 +5654,7 @@ typedef $$TemplatesTableCreateCompanionBuilder = TemplatesCompanion Function({
   required String templateName,
   required int creatorParticipantId,
   required DateTime dateCreated,
-  required int timesUsed,
+  drift.Value<int?> timesUsed,
 });
 typedef $$TemplatesTableUpdateCompanionBuilder = TemplatesCompanion Function({
   drift.Value<int> templateId,
@@ -5662,7 +5663,7 @@ typedef $$TemplatesTableUpdateCompanionBuilder = TemplatesCompanion Function({
   drift.Value<String> templateName,
   drift.Value<int> creatorParticipantId,
   drift.Value<DateTime> dateCreated,
-  drift.Value<int> timesUsed,
+  drift.Value<int?> timesUsed,
 });
 
 final class $$TemplatesTableReferences
@@ -6183,7 +6184,7 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
             drift.Value<String> templateName = const drift.Value.absent(),
             drift.Value<int> creatorParticipantId = const drift.Value.absent(),
             drift.Value<DateTime> dateCreated = const drift.Value.absent(),
-            drift.Value<int> timesUsed = const drift.Value.absent(),
+            drift.Value<int?> timesUsed = const drift.Value.absent(),
           }) =>
               TemplatesCompanion(
             templateId: templateId,
@@ -6201,7 +6202,7 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
             required String templateName,
             required int creatorParticipantId,
             required DateTime dateCreated,
-            required int timesUsed,
+            drift.Value<int?> timesUsed = const drift.Value.absent(),
           }) =>
               TemplatesCompanion.insert(
             templateId: templateId,

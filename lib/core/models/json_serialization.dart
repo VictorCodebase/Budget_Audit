@@ -55,7 +55,6 @@ extension TemplateJson on Template {
       templateName: json['templateName'] as String,
       creatorParticipantId: json['creatorParticipantId'] as int,
       dateCreated: DateTime.parse(json['dateCreated'] as String),
-      timesUsed: json['timesUsed'] as int,
     );
   }
 }

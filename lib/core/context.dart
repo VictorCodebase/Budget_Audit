@@ -67,6 +67,7 @@ class AppContext extends ChangeNotifier {
         _currentTemplate = TemplateJson.fromJson(templateMap);
       } catch (e) {
         debugPrint('Failed to load template: $e');
+        print("The template in question: $templateJson");
         _currentTemplate = null;
       }
     }

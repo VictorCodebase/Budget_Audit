@@ -72,7 +72,7 @@ class TemplateService {
   }
 
   Future<int?> createTemplate(clientModels.Template newTemplate) async {
-    const timesUsed = 0;
+    const int? timesUsed = 0;
     try {
       final entry = TemplatesCompanion.insert(
         syncId: drift.Value(newTemplate.syncId),
@@ -80,7 +80,7 @@ class TemplateService {
         templateName: newTemplate.templateName,
         creatorParticipantId: newTemplate.creatorParticipantId,
         dateCreated: newTemplate.dateCreated ?? DateTime.now(),
-        timesUsed: timesUsed,
+        timesUsed: const drift.Value(timesUsed),
       );
 
       final id = await _appDatabase.into(_appDatabase.templates).insert(entry);

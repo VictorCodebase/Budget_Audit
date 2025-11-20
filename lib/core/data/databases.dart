@@ -73,7 +73,7 @@ class Templates extends drift.Table {
 
   drift.DateTimeColumn get dateCreated => dateTime()();
 
-  drift.IntColumn get timesUsed => integer()();
+  drift.IntColumn get timesUsed => integer().nullable()();
 
 //@override
 //Set<drift.Column> get primaryKey => {templateId};
@@ -287,7 +287,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -338,6 +338,20 @@ class AppDatabase extends _$AppDatabase {
               // you must give existing rows a default value.
               await customStatement(
                 'UPDATE accounts SET account_name = \'Unnamed Account\' WHERE account_name IS NULL',
+              );
+              break;
+
+            case 4: // Migrating from v4 to v5
+            // Use the alterTable function to apply the column change.
+            // drift will automatically generate the ALTER TABLE statement
+            // to make 'times_used' nullable.
+              await m.alterTable(
+                TableMigration(
+                  templates,
+                  columnTransformer: {
+                    templates.timesUsed: templates.timesUsed,
+                  },
+                ),
               );
               break;
           }

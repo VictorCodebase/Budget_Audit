@@ -64,7 +64,7 @@ class Template {
   final String templateName;
   final int creatorParticipantId;
   final DateTime dateCreated;
-  final int timesUsed;
+  final int? timesUsed;
 
   Template({
     required this.templateId,
@@ -73,7 +73,7 @@ class Template {
     required this.templateName,
     required this.creatorParticipantId,
     required this.dateCreated,
-    required this.timesUsed,
+    this.timesUsed,
   });
 }
 
