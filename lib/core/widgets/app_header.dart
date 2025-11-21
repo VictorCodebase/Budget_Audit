@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../../features/menu/menu.dart';
 
 /// Reusable header component with logo and subtitle
 /// Used across multiple screens for consistent branding
@@ -8,7 +9,7 @@ class AppHeader extends StatelessWidget {
   final double logoHeight;
   final EdgeInsets padding;
 
-  const AppHeader({
+  AppHeader({
     Key? key,
     this.subtitle,
     this.logoHeight = 200,
@@ -17,49 +18,58 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      child: Column(
-        children: [
-          // Logo
-          Image.asset(
-            'assets/images/logo.png',
-            height: logoHeight,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
+    return Stack(
+      children: [
+        Container(
+          padding: padding,
+          child: Column(
+            children: [
+              // Logo
+              Image.asset(
+                'assets/images/logo.png',
                 height: logoHeight,
-                width: logoHeight,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryPink.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                  child: Text(
-                    'BA',
-                    style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryPink,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: logoHeight,
+                    width: logoHeight,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryPink.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-
-          if (subtitle != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              subtitle!,
-              style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.textSecondary,
+                    child: const Center(
+                      child: Text(
+                        'BA',
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryPink,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
-      ),
+              const SizedBox(height: 16),
+
+              if (subtitle != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  subtitle!,
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: AppTheme.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
+          ),
+        ),
+        Positioned(
+          top: padding.top / 2, // Adjust position to be vertically centered in the padding area
+          left: padding.right, // Align with the left edge of the padding
+          child: const Menu(),
+        ),
+      ],
     );
   }
 }

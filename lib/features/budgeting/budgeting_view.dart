@@ -52,7 +52,7 @@ class _BudgetingViewState extends State<BudgetingView> {
 
             return Column(
               children: [
-                const AppHeader(
+                AppHeader(
                   subtitle: 'Create and manage your budget templates',
                 ),
                 Expanded(

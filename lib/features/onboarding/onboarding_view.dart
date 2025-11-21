@@ -31,7 +31,7 @@ class _OnboardingViewState extends State<OnboardingView> {
       body: SafeArea(
         child: Column(
           children: [
-            const AppHeader(),
+            AppHeader(),
             Expanded(
               child: _buildContent(),
             ),

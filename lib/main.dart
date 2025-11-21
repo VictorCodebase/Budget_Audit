@@ -1,3 +1,4 @@
+import 'package:budget_audit/features/menu/menu_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:googleapis/admob/v1.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,14 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        // 1. Provide AppContext first
         ChangeNotifierProvider.value(value: appContext),
+        // 2. Provide NavigationViewModel, injecting the AppContext instance
+        ChangeNotifierProvider(
+          create: (context) => MenuViewModel(
+            Provider.of<AppContext>(context, listen: false),
+          ),
+        ),
       ],
       child: BudgetAudit(appContext: appContext),
     ),

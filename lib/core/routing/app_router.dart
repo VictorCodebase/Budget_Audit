@@ -76,7 +76,7 @@ class AppRouter {
                 ),
               )..loadTables(),
               child: const DevView(),
-            ),
+            );
           }
         );
 
