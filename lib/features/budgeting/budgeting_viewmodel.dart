@@ -11,79 +11,7 @@ enum FilterType { name, totalBudget, participant, color }
 
 enum SortOrder { asc, desc }
 
-class CategoryData {
-  String id;
-  String name;
-  Color color;
-  List<AccountData> accounts;
-  String? validationError;
 
-  CategoryData({
-    required this.id,
-    required this.name,
-    required this.color,
-    List<AccountData>? accounts,
-    this.validationError,
-  }) : accounts = accounts ?? [];
-
-  double get totalBudget =>
-      accounts.fold(0.0, (sum, account) => sum + account.budgetAmount);
-
-  Set<models.Participant> get allParticipants =>
-      accounts.expand((a) => a.participants).toSet();
-
-  CategoryData copyWith({
-    String? id,
-    String? name,
-    Color? color,
-    List<AccountData>? accounts,
-    String? validationError,
-  }) {
-    return CategoryData(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      color: color ?? this.color,
-      accounts: accounts ?? this.accounts,
-      validationError: validationError,
-    );
-  }
-}
-
-class AccountData {
-  String id;
-  String name;
-  double budgetAmount;
-  List<models.Participant> participants;
-  Color color;
-  String? validationError;
-
-  AccountData({
-    required this.id,
-    required this.name,
-    required this.budgetAmount,
-    List<models.Participant>? participants,
-    required this.color,
-    this.validationError,
-  }) : participants = participants ?? [];
-
-  AccountData copyWith({
-    String? id,
-    String? name,
-    double? budgetAmount,
-    List<models.Participant>? participants,
-    Color? color,
-    String? validationError,
-  }) {
-    return AccountData(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      budgetAmount: budgetAmount ?? this.budgetAmount,
-      participants: participants ?? this.participants,
-      color: color ?? this.color,
-      validationError: validationError,
-    );
-  }
-}
 
 class BudgetingViewModel extends ChangeNotifier {
   final BudgetService _budgetService;
@@ -96,7 +24,7 @@ class BudgetingViewModel extends ChangeNotifier {
     this._appContext,
   );
 
-  List<CategoryData> _categories = [];
+  List<clientModels.CategoryData> _categories = [];
   List<models.Participant> _allParticipants = [];
   List<models.Template> _templates = [];
 
@@ -114,7 +42,7 @@ class BudgetingViewModel extends ChangeNotifier {
 
   ParticipantService get participantService => _participantService;
 
-  List<CategoryData> get categories => _filteredAndSortedCategories();
+  List<clientModels.CategoryData> get categories => _filteredAndSortedCategories();
 
   List<models.Participant> get allParticipants => _allParticipants;
 
@@ -207,7 +135,11 @@ class BudgetingViewModel extends ChangeNotifier {
       final activeTemplate = _appContext.currentTemplate;
       if (activeTemplate != null) {
         // If there's an active template, load its data for editing.
+        debugPrint("Active template found: ${activeTemplate.templateName}");
         await _loadTemplateForEditing(activeTemplate);
+      }else {
+        // Clear categories if no active template
+        _categories = [];
       }
     } catch (e) {
       _errorMessage = 'Failed to load data: $e';
@@ -218,54 +150,59 @@ class BudgetingViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadTemplateForEditing(models.Template template) async {
-    // 1. Load all categories for this template
-    final categoriesFromDb = await _budgetService.categoryService
-        .getCategoriesForTemplate(template.templateId);
+    try{
+      // 1. Load all categories for this template
+      debugPrint("Loading categories for template: ${template.templateName}");
+      final categoriesFromDb = await _budgetService.categoryService
+          .getCategoriesForTemplate(template.templateId);
+      debugPrint("Categories from db (0th): ${categoriesFromDb[0]}");
 
-    // 2. Load accounts for each category and convert to local CategoryData
-    final List<CategoryData> loadedCategories = [];
+      // 2. Load accounts for each category and convert to local CategoryData
+      final List<clientModels.CategoryData> loadedCategories = [];
 
-    for (var category in categoriesFromDb) {
-      final accountsFromDb = await _budgetService.accountService
-          .getAccountsForCategory(
-          template.templateId,
-          category.categoryId
-      );
+      for (var category in categoriesFromDb) {
+        final accountsFromDb = await _budgetService.accountService
+            .getAccountsForCategory(
+            template.templateId,
+            category.categoryId
+        );
+        // Convert database accounts to local AccountData
+        final List<clientModels.AccountData> accountDataList = [];
+        for (var account in accountsFromDb) {
+          final participant = await _participantService
+              .getParticipant(account.responsibleParticipantId);
 
-      // Convert database accounts to local AccountData
-      final List<AccountData> accountDataList = [];
-      for (var account in accountsFromDb) {
-        final participant = await _participantService
-            .getParticipant(account.responsibleParticipantId);
+          accountDataList.add(clientModels.AccountData(
+            // Use the real database ID for editing
+            id: account.accountId.toString(),
+            name: account.accountName,
+            budgetAmount: account.budgetAmount,
+            participants: participant != null ? [participant] : [],
+            color: hexToColor(account.colorHex),
+          ));
+        }
 
-        accountDataList.add(AccountData(
+        loadedCategories.add(clientModels.CategoryData(
           // Use the real database ID for editing
-          id: account.accountId.toString(),
-          // ASSUMPTION: Your models.Account has an 'accountName' field
-          name: account.accountName, // Make sure your db model has this
-          budgetAmount: account.budgetAmount,
-          participants: participant != null ? [participant] : [],
-          color: hexToColor(account.colorHex),
+          id: category.categoryId.toString(),
+          name: category.categoryName,
+          color: hexToColor(category.colorHex),
+          accounts: accountDataList,
         ));
       }
+      debugPrint("Loaded categories (1st): ${loadedCategories[0]}");
+      // 3. Set the loaded categories as the current working state
+      _categories = loadedCategories;
 
-      loadedCategories.add(CategoryData(
-        // Use the real database ID for editing
-        id: category.categoryId.toString(),
-        name: category.categoryName,
-        color: hexToColor(category.colorHex),
-        accounts: accountDataList,
-      ));
+      // Note: We don't call notifyListeners() here because the calling method will do it.
+    } catch (e){
+      _errorMessage = 'Failed to load template data: $e';
     }
 
-    // 3. Set the loaded categories as the current working state
-    _categories = loadedCategories;
-
-    // Note: We don't call notifyListeners() here because the calling method will do it.
   }
 
   void addCategory() {
-    final newCategory = CategoryData(
+    final newCategory = clientModels.CategoryData(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: 'CATEGORY NAME',
       color: _generateRandomColor(),
@@ -309,7 +246,7 @@ class BudgetingViewModel extends ChangeNotifier {
     final index = _categories.indexWhere((c) => c.id == categoryId);
     if (index != -1) {
       final category = _categories[index];
-      final newAccount = AccountData(
+      final newAccount = clientModels.AccountData(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: 'Account name',
         budgetAmount: 0.0,
@@ -520,7 +457,8 @@ class BudgetingViewModel extends ChangeNotifier {
     _templates.removeWhere((t) => t.templateId == template.templateId);
     _templates.add(template);
 
-    _categories.clear();
+    //_categories.clear();
+    await _loadTemplateForEditing(template);
 
     // Notify listeners to rebuild the UI with the cleared state
     notifyListeners();
@@ -605,9 +543,12 @@ class BudgetingViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _categories.clear();
+      //_categories.clear();
       await _loadTemplateForEditing(template);
       await _appContext.setCurrentTemplate(template);
+
+      _isLoading = false;
+      notifyListeners();
     } catch (e) {
       _errorMessage = 'Failed to adopt template: $e';
       _isLoading = false;
@@ -631,7 +572,7 @@ class BudgetingViewModel extends ChangeNotifier {
 
   // Private helper methods
 
-  List<CategoryData> _filteredAndSortedCategories() {
+  List<clientModels.CategoryData> _filteredAndSortedCategories() {
     var filtered = _categories.where((category) {
       // Search filter
       if (_searchQuery.isNotEmpty) {

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:logging/logging.dart';
 import '../models/models.dart' as models;
 import '../models/client_models.dart' as clientModels;
@@ -316,11 +317,13 @@ class CategoryService {
 
   /// Get all categories for a specific template
   Future<List<models.Category>> getCategoriesForTemplate(int templateId) async {
+    debugPrint("Fetching categories for template $templateId");
     try {
       final query = _appDatabase.select(_appDatabase.categories)
         ..where((tbl) => tbl.templateId.equals(templateId));
       final results = await query.get();
-
+      debugPrint("Fetched categories: ${results.length}");
+      debugPrint("Sampled category: ${results[0]}");
       return results
           .map((c) => models.Category(
         categoryId: c.categoryId,

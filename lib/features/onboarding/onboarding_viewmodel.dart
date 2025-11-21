@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import '../../core/services/participant_service.dart';
 import '../../core/models/models.dart' as models;
 import '../../core/models/client_models.dart' as client_models;
-import '../../core/services/service_locator.dart';
 import 'package:logging/logging.dart';
 import '../../core/context.dart';
 

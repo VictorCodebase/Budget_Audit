@@ -323,19 +323,13 @@ class AppDatabase extends _$AppDatabase {
           switch (version) {
             case 2: // Migrating from v2 to v3
               await m.addColumn(categories, categories.templateId);
-              // Since the new column is NOT NULL, you must give existing rows
-              // a default value. I'm using '1' as a placeholder.
-              //
-              // IMPORTANT: Change '1' to a real, valid template ID that exists
-              // in your database, or handle this case more gracefully.
               await customStatement(
                 'UPDATE categories SET template_id = 1 WHERE template_id IS NULL',
               );
               break;
             case 3: // Migrating from v3 to v4
               await m.addColumn(accounts, accounts.accountName);
-              // Since accountName is NOT NULL and has a min length of 1,
-              // you must give existing rows a default value.
+
               await customStatement(
                 'UPDATE accounts SET account_name = \'Unnamed Account\' WHERE account_name IS NULL',
               );

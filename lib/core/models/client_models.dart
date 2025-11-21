@@ -1,5 +1,5 @@
 import 'package:flutter/painting.dart'; // For Color
-
+import './models.dart' as models;
 
 class Account {
   final int categoryId;
@@ -90,6 +90,80 @@ enum Role {
     return Role.values.firstWhere(
           (r) => r.value.toLowerCase() == role.toLowerCase(),
       orElse: () => throw ArgumentError('Invalid role: $role'),
+    );
+  }
+}
+
+class CategoryData {
+  String id;
+  String name;
+  Color color;
+  List<AccountData> accounts;
+  String? validationError;
+
+  CategoryData({
+    required this.id,
+    required this.name,
+    required this.color,
+    List<AccountData>? accounts,
+    this.validationError,
+  }) : accounts = accounts ?? [];
+
+  double get totalBudget =>
+      accounts.fold(0.0, (sum, account) => sum + account.budgetAmount);
+
+  Set<models.Participant> get allParticipants =>
+      accounts.expand((a) => a.participants).toSet();
+
+  CategoryData copyWith({
+    String? id,
+    String? name,
+    Color? color,
+    List<AccountData>? accounts,
+    String? validationError,
+  }) {
+    return CategoryData(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      accounts: accounts ?? this.accounts,
+      validationError: validationError,
+    );
+  }
+}
+
+class AccountData {
+  String id;
+  String name;
+  double budgetAmount;
+  List<models.Participant> participants;
+  Color color;
+  String? validationError;
+
+  AccountData({
+    required this.id,
+    required this.name,
+    required this.budgetAmount,
+    List<models.Participant>? participants,
+    required this.color,
+    this.validationError,
+  }) : participants = participants ?? [];
+
+  AccountData copyWith({
+    String? id,
+    String? name,
+    double? budgetAmount,
+    List<models.Participant>? participants,
+    Color? color,
+    String? validationError,
+  }) {
+    return AccountData(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      budgetAmount: budgetAmount ?? this.budgetAmount,
+      participants: participants ?? this.participants,
+      color: color ?? this.color,
+      validationError: validationError,
     );
   }
 }

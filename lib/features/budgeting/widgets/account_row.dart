@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/models/client_models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/models/models.dart' as models;
 import '../budgeting_viewmodel.dart';

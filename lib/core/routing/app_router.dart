@@ -4,8 +4,12 @@ import 'package:budget_audit/features/home/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../features/budgeting/budgeting_viewmodel.dart';
+import '../../features/dev/dev_view.dart';
+import '../../features/dev/dev_viewmodel.dart';
 import '../../features/onboarding/onboarding_view.dart';
 import '../../features/onboarding/onboarding_viewmodel.dart';
+import '../data/databases.dart';
+import '../services/dev_service.dart';
 import '../services/participant_service.dart';
 import '../services/service_locator.dart';
 import '../context.dart';
@@ -55,6 +59,20 @@ class AppRouter {
             child: const HomeView(),
           ),
         );
+
+      case '/dev':
+        return MaterialPageRoute(
+          builder: (_) => ChangeNotifierProvider(
+            create: (_) => DevViewModel(
+              DevService(
+                sl<AppDatabase>(),
+                Provider.of<AppContext>(_, listen: false),
+              ),
+            )..loadTables(),
+            child: const DevView(),
+          ),
+        );
+
 
       default:
         return MaterialPageRoute(

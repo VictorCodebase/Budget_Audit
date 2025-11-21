@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
+import '../../../core/models/client_models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/content_box.dart';
 import '../budgeting_viewmodel.dart';

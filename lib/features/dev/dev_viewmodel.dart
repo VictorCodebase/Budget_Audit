@@ -1,0 +1,61 @@
+import 'package:flutter/material.dart';
+import 'package:budget_audit/core/services/dev_service.dart';
+
+class DevViewModel extends ChangeNotifier {
+  final DevService _devService;
+
+  DevViewModel(this._devService);
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  List<String> _allTables = [];
+  List<String> get allTables => _allTables;
+
+  String _output = "";
+  String get output => _output;
+
+  Future<void> loadTables() async {
+    _allTables = _devService.listTables();
+    notifyListeners();
+  }
+
+  Future<void> resetAllTables() async {
+    await _run(() => _devService.resetAllTables(), "All tables reset");
+  }
+
+  Future<void> resetSingleTable(String name) async {
+    await _run(() => _devService.resetSingleTable(name), "$name reset");
+  }
+
+  Future<void> clearTable(String name) async {
+    await _run(() => _devService.clearTableRecords(name), "$name cleared");
+  }
+
+  Future<void> logTable(String name) async {
+    final data = await _devService.getTableDump(name);
+    _output = "TABLE: $name\n${data.toString()}";
+    notifyListeners();
+  }
+
+  Future<void> logContext() async {
+    final ctx = _devService.dumpContext();
+    _output = "APP CONTEXT:\n$ctx";
+    notifyListeners();
+  }
+
+  Future<void> _run(Future<void> Function() action, String msg) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await action();
+      _output = msg;
+    } catch (e) {
+      _output = "ERROR: $e";
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+}
