@@ -1,4 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../context.dart' as context;
 import 'package:syncfusion_flutter_core/core.dart';
 import 'package:logging/logging.dart';
 
@@ -12,7 +13,6 @@ Future<void> initializeApp() async {
   await dotenv.load(fileName: ".env");
   await setupServiceLocator();
 
-  // Supperss unwanted errors
   FlutterError.onError = (FlutterErrorDetails details) {
     // Filter out the mouse tracker assertion
     if (details.toString().contains('_debugDuringDeviceUpdate')) {
@@ -28,6 +28,11 @@ Future<void> initializeApp() async {
   } else {
     _logger.warning("⚠️ Syncfusion license not found in .env");
   }
+
+  /// application development state
+  final env = dotenv.env['ENV'] ?? 'PRODUCTION';
+  final isProduction = env.toUpperCase() == 'PRODUCTION';
+  context.AppContext().setProduction(isProduction);
 
   await _setupLogging();
 }

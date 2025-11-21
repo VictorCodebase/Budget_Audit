@@ -62,15 +62,22 @@ class AppRouter {
 
       case '/dev':
         return MaterialPageRoute(
-          builder: (_) => ChangeNotifierProvider(
-            create: (_) => DevViewModel(
-              DevService(
-                sl<AppDatabase>(),
-                Provider.of<AppContext>(_, listen: false),
-              ),
-            )..loadTables(),
-            child: const DevView(),
-          ),
+          builder: (context)  {
+            final appContext = Provider.of<AppContext>(context, listen: false);
+            if (!appContext.isProduction){
+              debugPrint("Not in production, redirecting to onboarding");
+              return const OnboardingView();
+            }
+            return ChangeNotifierProvider(
+              create: (_) => DevViewModel(
+                DevService(
+                  sl<AppDatabase>(),
+                  Provider.of<AppContext>(_, listen: false),
+                ),
+              )..loadTables(),
+              child: const DevView(),
+            ),
+          }
         );
 
 

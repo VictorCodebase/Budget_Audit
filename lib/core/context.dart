@@ -10,6 +10,7 @@ class AppContext extends ChangeNotifier {
   static const String _keyCurrentParticipant = 'current_participant';
   static const String _keyCurrentTemplate = 'current_template';
   static const String _keyIsSignedIn = 'is_signed_in';
+  static const String _keyIsProduction = 'is_production';
 
   SharedPreferences? _prefs;
 
@@ -17,11 +18,14 @@ class AppContext extends ChangeNotifier {
   Template? _currentTemplate;
   bool _isSignedIn = false;
   bool _isInitialized = false;
+  bool _isProduction = true;
 
   Participant? get currentParticipant => _currentParticipant;
   Template? get currentTemplate => _currentTemplate;
   bool get isSignedIn => _isSignedIn;
   bool get isInitialized => _isInitialized;
+  bool get isProduction => _isProduction;
+
 
   /// Initialize the context by loading persisted data
   /// Call this once at app startup before using the context
@@ -71,6 +75,24 @@ class AppContext extends ChangeNotifier {
         _currentTemplate = null;
       }
     }
+
+    //load production state
+    _isProduction = _prefs!.getBool(_keyIsProduction) ?? true;
+  }
+
+  /// Set production state
+  Future<void> setProduction(bool state) async{
+    _isProduction = state;
+
+    if (_prefs != null) {
+      try {
+        await _prefs!.setBool(_keyIsProduction, state);
+        debugPrint("set production: $_isProduction");
+      } catch (e) {
+        debugPrint('Failed to persist production state: $e');
+      }
+    }
+
   }
 
   /// Set the current participant and persist to storage

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart';
 import 'dart:io';
+import '../context.dart' as context;
 
 //import '../models/models.dart';
 
@@ -293,8 +294,9 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration {
     // Read the ENV variable from the loaded dotenv configuration.
     // Default to 'PRODUCTION' for safety if it's not set.
-    final env = dotenv.env['ENV'] ?? 'PRODUCTION';
-    final isProduction = env.toUpperCase() == 'PRODUCTION';
+    final isProduction = context.AppContext().isProduction;
+
+
 
     return MigrationStrategy(
       onCreate: (Migrator m) async {
