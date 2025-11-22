@@ -7,6 +7,7 @@ import '../../../core/widgets/content_box.dart';
 import '../budgeting_viewmodel.dart';
 import 'account_row.dart';
 import 'participant_avatar.dart';
+import 'inline_editable_text.dart';
 
 class CategoryWidget extends StatelessWidget {
   final CategoryData category;
@@ -20,13 +21,27 @@ class CategoryWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = context.read<BudgetingViewModel>();
 
+    final isExpanded = viewModel.expandedCategoryId == category.id;
+
     return ContentBox(
       minimizedHeight: 60,
-      initiallyMinimized: false,
+      initiallyMinimized: !isExpanded,
+      // We need to key the ContentBox to force rebuild when expansion state changes externally
+      // or rely on didUpdateWidget in ContentBox if it supports it.
+      // Since ContentBox uses initiallyMinimized in initState, we might need to force a rebuild
+      // if we want it to react to external changes, OR update ContentBox to handle updates.
+      // For now, let's try passing a key that includes the expanded state,
+      // BUT that might lose internal state like scroll position.
+      // Better: Update ContentBox to respect external state changes if possible,
+      // or just let the user toggle it.
+      // The user wants: "only the focused category is maximized".
+      // So we should probably handle the toggle here.
       controls: [
         ContentBoxControl(
-          action: ContentBoxAction.minimize,
-          onPressed: () {},
+          action: isExpanded
+              ? ContentBoxAction.minimize
+              : ContentBoxAction.maximize,
+          onPressed: () => viewModel.setExpandedCategory(category.id),
         ),
         ContentBoxControl(
           action: ContentBoxAction.delete,
@@ -66,6 +81,15 @@ class CategoryWidget extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
+        // Incomplete status
+        if (category.name == 'CATEGORY NAME' || category.totalBudget == 0)
+          Text(
+            'Incomplete',
+            style: AppTheme.bodySmall.copyWith(
+              color: AppTheme.warning,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         // Participants (if any)
         if (category.allParticipants.isNotEmpty)
           Row(
@@ -103,7 +127,8 @@ class CategoryWidget extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: AppTheme.error, size: 16),
+                  const Icon(Icons.error_outline,
+                      color: AppTheme.error, size: 16),
                   const SizedBox(width: AppTheme.spacingXs),
                   Expanded(
                     child: Text(
@@ -219,35 +244,28 @@ class CategoryWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryNameEditor(BuildContext context, BudgetingViewModel viewModel) {
-    return InkWell(
-      onTap: () => _showNameEditor(context, viewModel),
-      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spacingSm,
-          vertical: 6,
+  Widget _buildCategoryNameEditor(
+      BuildContext context, BudgetingViewModel viewModel) {
+    final isNew = viewModel.newlyAddedCategoryId == category.id;
+    if (isNew) {
+      // Clear the flag after a short delay to ensure focus is requested
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        viewModel.clearNewlyAddedIds();
+      });
+    }
+
+    return Container(
+      width: 200, // Give it some width
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: InlineEditableText(
+        text: category.name,
+        style: AppTheme.bodyMedium.copyWith(
+          fontWeight: FontWeight.w600,
         ),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.border, width: 1),
-          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                category.name,
-                style: AppTheme.bodyMedium.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: AppTheme.spacing2xs),
-            const Icon(Icons.edit, size: 14, color: AppTheme.textSecondary),
-          ],
-        ),
+        isNew: isNew,
+        onSubmitted: (value) {
+          viewModel.updateCategoryName(category.id, value);
+        },
       ),
     );
   }
@@ -280,48 +298,6 @@ class CategoryWidget extends StatelessWidget {
                 Navigator.of(context).pop();
               },
               child: const Text('Select'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showNameEditor(BuildContext context, BudgetingViewModel viewModel) {
-    final controller = TextEditingController(text: category.name);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Category Name'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Category Name',
-              hintText: 'Enter category name',
-            ),
-            autofocus: true,
-            onSubmitted: (value) {
-              if (value.trim().isNotEmpty) {
-                viewModel.updateCategoryName(category.id, value.trim());
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (controller.text.trim().isNotEmpty) {
-                  viewModel.updateCategoryName(category.id, controller.text.trim());
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('Save'),
             ),
           ],
         );

@@ -82,7 +82,8 @@ class ContentBox extends StatefulWidget {
   State<ContentBox> createState() => _ContentBoxState();
 }
 
-class _ContentBoxState extends State<ContentBox> with SingleTickerProviderStateMixin {
+class _ContentBoxState extends State<ContentBox>
+    with SingleTickerProviderStateMixin {
   late bool _isMinimized;
   late AnimationController _animationController;
   late Animation<double> _heightAnimation;
@@ -96,20 +97,6 @@ class _ContentBoxState extends State<ContentBox> with SingleTickerProviderStateM
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
-    _heightAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    );
-
-    if (!_isMinimized) {
-      _animationController.value = 1.0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
     super.dispose();
   }
 
@@ -325,7 +312,9 @@ class _ContentBoxState extends State<ContentBox> with SingleTickerProviderStateM
                 Expanded(
                   child: Row(
                     children: [
-                      for (int i = 0; i < widget.headerWidgets.take(2).length; i++) ...[
+                      for (int i = 0;
+                          i < widget.headerWidgets.take(2).length;
+                          i++) ...[
                         Flexible(child: widget.headerWidgets[i]),
                         if (i == 0 && widget.headerWidgets.length > 1)
                           const SizedBox(width: 16),
@@ -343,7 +332,8 @@ class _ContentBoxState extends State<ContentBox> with SingleTickerProviderStateM
 
         // Main content area (scrollable if too tall)
         ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxBoxHeight - 64), // Adjusted for header height
+          constraints: BoxConstraints(
+              maxHeight: maxBoxHeight - 64), // Adjusted for header height
           child: SingleChildScrollView(
             child: Padding(
               padding: widget.contentPadding,
@@ -366,9 +356,9 @@ class _ContentBoxState extends State<ContentBox> with SingleTickerProviderStateM
           height: _isMinimized ? widget.minimizedHeight : null,
           constraints: _isMinimized
               ? BoxConstraints(
-            minHeight: widget.minimizedHeight,
-            maxHeight: widget.minimizedHeight,
-          )
+                  minHeight: widget.minimizedHeight,
+                  maxHeight: widget.minimizedHeight,
+                )
               : null,
           decoration: BoxDecoration(
             color: const Color(0xFFFFFFFF),

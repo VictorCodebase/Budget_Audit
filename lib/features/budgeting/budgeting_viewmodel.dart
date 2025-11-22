@@ -11,8 +11,6 @@ enum FilterType { name, totalBudget, participant, color }
 
 enum SortOrder { asc, desc }
 
-
-
 class BudgetingViewModel extends ChangeNotifier {
   final BudgetService _budgetService;
   final ParticipantService _participantService;
@@ -42,7 +40,8 @@ class BudgetingViewModel extends ChangeNotifier {
 
   ParticipantService get participantService => _participantService;
 
-  List<clientModels.CategoryData> get categories => _filteredAndSortedCategories();
+  List<clientModels.CategoryData> get categories =>
+      _filteredAndSortedCategories();
 
   List<models.Participant> get allParticipants => _allParticipants;
 
@@ -61,6 +60,18 @@ class BudgetingViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   String? get errorMessage => _errorMessage;
+
+  String? _newlyAddedCategoryId;
+  String? _newlyAddedAccountId;
+
+  String? get newlyAddedCategoryId => _newlyAddedCategoryId;
+  String? get newlyAddedAccountId => _newlyAddedAccountId;
+
+  void clearNewlyAddedIds() {
+    _newlyAddedCategoryId = null;
+    _newlyAddedAccountId = null;
+    // No notifyListeners needed here as this is usually called after build or during focus change
+  }
 
   bool get hasUnsavedChanges => _categories.isNotEmpty;
 
@@ -137,7 +148,7 @@ class BudgetingViewModel extends ChangeNotifier {
         // If there's an active template, load its data for editing.
         debugPrint("Active template found: ${activeTemplate.templateName}");
         await _loadTemplateForEditing(activeTemplate);
-      }else {
+      } else {
         // Clear categories if no active template
         _categories = [];
       }
@@ -150,7 +161,7 @@ class BudgetingViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadTemplateForEditing(models.Template template) async {
-    try{
+    try {
       // 1. Load all categories for this template
       debugPrint("Loading categories for template: ${template.templateName}");
       final categoriesFromDb = await _budgetService.categoryService
@@ -162,10 +173,7 @@ class BudgetingViewModel extends ChangeNotifier {
 
       for (var category in categoriesFromDb) {
         final accountsFromDb = await _budgetService.accountService
-            .getAccountsForCategory(
-            template.templateId,
-            category.categoryId
-        );
+            .getAccountsForCategory(template.templateId, category.categoryId);
         // Convert database accounts to local AccountData
         final List<clientModels.AccountData> accountDataList = [];
         for (var account in accountsFromDb) {
@@ -195,10 +203,9 @@ class BudgetingViewModel extends ChangeNotifier {
       _categories = loadedCategories;
 
       // Note: We don't call notifyListeners() here because the calling method will do it.
-    } catch (e){
+    } catch (e) {
       _errorMessage = 'Failed to load template data: $e';
     }
-
   }
 
   void addCategory() {
@@ -208,6 +215,8 @@ class BudgetingViewModel extends ChangeNotifier {
       color: _generateRandomColor(),
     );
     _categories.add(newCategory);
+    _newlyAddedCategoryId = newCategory.id;
+    _expandedCategoryId = newCategory.id;
     notifyListeners();
   }
 
@@ -255,6 +264,7 @@ class BudgetingViewModel extends ChangeNotifier {
 
       final updatedAccounts = [...category.accounts, newAccount];
       _categories[index] = category.copyWith(accounts: updatedAccounts);
+      _newlyAddedAccountId = newAccount.id;
       notifyListeners();
     }
   }
@@ -521,8 +531,9 @@ class BudgetingViewModel extends ChangeNotifier {
 
       _isLoading = false;
 
-      final updatedTemplate = await _budgetService.templateService.getTemplate(templateId);
-      if(updatedTemplate != null){
+      final updatedTemplate =
+          await _budgetService.templateService.getTemplate(templateId);
+      if (updatedTemplate != null) {
         await _loadTemplateForEditing(updatedTemplate);
       }
 
@@ -603,6 +614,16 @@ class BudgetingViewModel extends ChangeNotifier {
 
     // Sort
     filtered.sort((a, b) {
+      // Always put the newly added category at the end if we are sorting by name
+      // and the name is still the default "CATEGORY NAME"
+      if (_currentFilter == FilterType.name) {
+        final isANew = a.id == _newlyAddedCategoryId;
+        final isBNew = b.id == _newlyAddedCategoryId;
+
+        if (isANew && !isBNew) return 1;
+        if (!isANew && isBNew) return -1;
+      }
+
       int comparison;
       switch (_currentFilter) {
         case FilterType.name:
@@ -624,6 +645,20 @@ class BudgetingViewModel extends ChangeNotifier {
     });
 
     return filtered;
+  }
+
+  String? _expandedCategoryId;
+  String? get expandedCategoryId => _expandedCategoryId;
+
+  void setExpandedCategory(String? categoryId) {
+    // If clicking the already expanded one, collapse it (pass null or handle in UI)
+    // But usually we want to toggle. Here we just set it.
+    if (_expandedCategoryId == categoryId) {
+      _expandedCategoryId = null;
+    } else {
+      _expandedCategoryId = categoryId;
+    }
+    notifyListeners();
   }
 
   Color _generateRandomColor() {
