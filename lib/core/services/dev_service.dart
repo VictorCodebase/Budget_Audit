@@ -32,8 +32,25 @@ class DevService {
 
   /// Logs entire table content as a list of rows (Map<String, dynamic>)
   Future<List<Map<String, Object?>>> getTableDump(String tableName) async {
-    final result = await _db.customSelect("SELECT * FROM $tableName").get();
-    return result.map((r) => r.data).toList();
+    try {
+      // Find the table info object that matches the requested name
+      final table = _db.allTables.firstWhere(
+        (t) => t.actualTableName == tableName,
+        orElse: () => throw Exception("Table $tableName not found"),
+      );
+
+      // Use Drift's select API which is safer and returns typed data classes
+      final result = await _db.select(table).get();
+
+      // Convert data classes to JSON maps
+      // Drift generated classes have a toJson() method
+      return result
+          .map((row) => (row as dynamic).toJson() as Map<String, Object?>)
+          .toList();
+    } catch (e) {
+      print("Error dumping table $tableName: $e");
+      return [];
+    }
   }
 
   /// Dump ALL application context

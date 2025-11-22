@@ -34,13 +34,17 @@ class DevViewModel extends ChangeNotifier {
 
   Future<void> logTable(String name) async {
     final data = await _devService.getTableDump(name);
-    _output = "TABLE: $name\n${data.toString()}";
+    final logMsg = "TABLE: $name\n${data.toString()}";
+    debugPrint(logMsg);
+    _output = "Table $name logged to debug console.";
     notifyListeners();
   }
 
   Future<void> logContext() async {
     final ctx = _devService.dumpContext();
-    _output = "APP CONTEXT:\n$ctx";
+    final logMsg = "APP CONTEXT:\n$ctx";
+    debugPrint(logMsg);
+    _output = "App Context logged to debug console.";
     notifyListeners();
   }
 
