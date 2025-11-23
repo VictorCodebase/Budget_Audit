@@ -13,7 +13,7 @@ import 'package:budget_audit/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const BudgetAudit());
+    await tester.pumpWidget(const BudgetAudit(appContext: AppContext()));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

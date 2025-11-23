@@ -339,6 +339,7 @@ class CategoryService {
   }
 
   Future<int?> createCategory(clientModels.Category newCategory) async {
+    print("Attempting to create category. Details:\n Name: ${newCategory.categoryName} \n Template ID: ${newCategory.templateId} \n Color: ${newCategory.colorHex}");
     try {
       final entry = CategoriesCompanion.insert(
         categoryName: newCategory.categoryName,

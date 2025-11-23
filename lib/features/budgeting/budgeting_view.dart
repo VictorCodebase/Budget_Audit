@@ -290,7 +290,7 @@ class _BudgetingViewState extends State<BudgetingView> {
           const SizedBox(height: AppTheme.spacing2xl),
 
           // Save/Update buttons
-          _buildActionButtons(context, viewModel),
+          _buildActionButtons(context, viewModel, appContext),
         ],
       ),
     );
@@ -375,8 +375,8 @@ class _BudgetingViewState extends State<BudgetingView> {
     );
   }
 
-  Widget _buildActionButtons(
-      BuildContext context, BudgetingViewModel viewModel) {
+  Widget _buildActionButtons(BuildContext context, BudgetingViewModel viewModel,
+      AppContext appContext) {
     final validationMessage = viewModel.saveValidationMessage;
 
     return Column(
@@ -424,29 +424,30 @@ class _BudgetingViewState extends State<BudgetingView> {
                   ),
                 ),
                 child: Text(
-                  'Save Template',
+                  'Save As New Template',
                   style: AppTheme.button.copyWith(
                     color: viewModel.canSave
-                        ? AppTheme.primaryPink
+                        ? AppTheme.primaryBlue
                         : AppTheme.textTertiary,
                   ),
                 ),
               ),
             ),
             const SizedBox(width: AppTheme.spacingMd),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: viewModel.canSave
-                    ? () => _handleUpdate(context, viewModel)
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppTheme.spacingMd,
+            if (appContext.currentTemplate != null)
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: viewModel.canSave
+                      ? () => _handleUpdate(context, viewModel)
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppTheme.spacingMd,
+                    ),
                   ),
+                  child: const Text('Update The Current Template'),
                 ),
-                child: const Text('Update Template'),
               ),
-            ),
           ],
         ),
       ],
