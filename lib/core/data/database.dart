@@ -12,7 +12,7 @@ import '../context.dart' as context;
 
 //import '../models/models.dart';
 
-part 'databases.g.dart'; // generated db
+part 'database.g.dart'; // generated db
 
 @drift.DataClassName('Participant')
 class Participants extends drift.Table {
@@ -51,7 +51,7 @@ class Categories extends drift.Table {
 
   @override
   List<Set<drift.Column>> get uniqueKeys => [
-        {templateId, categoryName}, // Unique per template
+        {templateId, categoryName}, 
       ];
 //@override
 //Set<drift.Column> get primaryKey => {categoryId};

@@ -8,7 +8,7 @@ import '../../features/dev/dev_view.dart';
 import '../../features/dev/dev_viewmodel.dart';
 import '../../features/onboarding/onboarding_view.dart';
 import '../../features/onboarding/onboarding_viewmodel.dart';
-import '../data/databases.dart';
+import '../data/database.dart';
 import '../services/dev_service.dart';
 import '../services/participant_service.dart';
 import '../services/service_locator.dart';

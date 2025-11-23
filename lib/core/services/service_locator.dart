@@ -1,5 +1,5 @@
 import 'package:get_it/get_it.dart';
-import '../data/databases.dart';
+import '../data/database.dart';
 import 'participant_service.dart';
 import 'budget_service.dart';
 

@@ -3,7 +3,7 @@ import 'package:drift/drift.dart' as drift;
 
 import '../models/models.dart' as models;
 import '../models/client_models.dart' as clientModels;
-import '../data/databases.dart' as db;
+import '../data/database.dart' as db;
 import '../utils/password_utils.dart';
 
 class ParticipantService {
