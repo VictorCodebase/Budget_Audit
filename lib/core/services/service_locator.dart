@@ -16,3 +16,5 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => BudgetService(sl<AppDatabase>()));
   sl.registerLazySingleton(() => DocumentService());
 }
+
+//
