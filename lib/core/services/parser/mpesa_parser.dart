@@ -10,6 +10,8 @@ class MPesaParser implements StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.mpesa;
 
+  static const String _separator = r'\s+';
+
   /// Regex to parse a transaction line based on the Image provided.
   /// Matches: [Receipt] [Date Time] [Details] [Status] [Paid In] [Withdrawn] [Balance]
   ///
@@ -19,18 +21,29 @@ class MPesaParser implements StatementParser {
   /// Group 4: Paid In (Amount)
   /// Group 5: Withdrawn (Amount)
   static final RegExp _transactionRowPattern = RegExp(
-    // Date: YYYY-MM-DD HH:MM:SS
-    r'(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})\s+'
-    // Details: Non-greedy match until we hit the status
-    r'(.+?)\s+'
-    // Status
-    r'(COMPLETED|FAILED)\s+'
-    // Paid In (allow commas and decimals)
-    r'([\d,]+\.\d{2})\s+'
-    // Withdrawn (allow commas and decimals)
-    r'([\d,]+\.\d{2})\s+'
-    // Balance (trailing)
+    // 0. Skip Receipt No (e.g., TKDATA1A7V)
+    r'.*?'
+    // 1. Date: YYYY-MM-DD HH:MM:SS
+    r'(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})'
+    r'\s+'
+    // 2. Details: Non-greedy, allowing newlines until Status
+    r'(.+?)'
+    r'\s+'
+    // 3. Status
+    r'(COMPLETED|FAILED)'
+    r'\s+'
+    // 4. Paid In
+    r'([\d,]+\.\d{2})'
+    r'\s+'
+    // 5. Withdrawn
+    r'([\d,]+\.\d{2})'
+    r'\s+'
+    // 6. Balance
     r'([\d,]+\.\d{2})',
+
+    // and DOT ALL (s) flag to allow . to match newlines within the details.
+    multiLine: true,
+    dotAll: true,
   );
 
   @override
@@ -101,62 +114,66 @@ class MPesaParser implements StatementParser {
       document = PdfDocument(
           inputBytes: pdfFile.readAsBytesSync(), password: password);
 
-      // Extract all text. For multi-page statements, we iterate.
-      // Syncfusion extracts text page-by-page.
+      // Extract all text. The dotAll: true flag in the regex will handle multi-line parsing.
       String fullText = PdfTextExtractor(document).extractText();
-
-      // Split into lines for processing
-      final lines = fullText.split('\n');
       final uuid = const Uuid();
 
-      for (var line in lines) {
-        line = line.trim();
+      // 🛑 DEBUGGING: Use this to confirm the text is extracted.
+      // print('--- RAW PDF EXTRACTED TEXT START ---');
+      // print(fullText);
+      // print('--- RAW PDF EXTRACTED TEXT END ---');
+      int times = 2;
 
-        // Skip irrelevant lines
-        if (line.isEmpty ||
-            line.contains("DETAILED STATEMENT") ||
-            line.contains("Receipt No")) {
+      // 🏆 NEW LOGIC: Iterate over all matches found in the entire document text (fullText).
+      // The multi-line and dotAll flags allow a single transaction to span multiple lines.
+      for (final match in _transactionRowPattern.allMatches(fullText)) {
+        final rawDate = match.group(1)!;
+        final rawDetails = match.group(2)!;
+        final status = match.group(3)!;
+        final rawPaidIn = match.group(4)!;
+        final rawWithdrawn = match.group(5)!;
+
+        final transactionDate = parseDate(rawDate);
+
+        // Skip non-completed transactions
+        if (status.toUpperCase() != 'COMPLETED') continue;
+
+        // Parse Amounts
+        double paidIn = parseAmount(rawPaidIn) ?? 0.0;
+        double withdrawn = parseAmount(rawWithdrawn) ?? 0.0;
+
+        // Determine final amount (Income vs Expense)
+        double finalAmount = 0.0;
+
+        if (paidIn > 0) {
+          finalAmount = paidIn;
+        } else if (withdrawn > 0) {
+          finalAmount = -withdrawn; // Negate expenses
+        } else {
+          // Skip zero-value transactions
           continue;
         }
 
-        // Apply Regex
-        final match = _transactionRowPattern.firstMatch(line);
-        if (match != null) {
-          final rawDate = match.group(1)!;
-          final rawDetails = match.group(2)!;
-          final status = match.group(3)!;
-          final rawPaidIn = match.group(4)!;
-          final rawWithdrawn = match.group(5)!;
+        if (transactionDate == null) {
+          print("Transaction parse error: date not found");
 
-          // Requirement 1: Only include Completed transactions
-          if (status.toUpperCase() != 'COMPLETED') continue;
-
-          // Parse Amounts
-          double paidIn = parseAmount(rawPaidIn) ?? 0.0;
-          double withdrawn = parseAmount(rawWithdrawn) ?? 0.0;
-
-          // Determine final amount (Income vs Expense)
-          // Income = Positive, Expense = Negative
-          double finalAmount = 0.0;
-
-          if (paidIn > 0) {
-            finalAmount = paidIn;
-          } else if (withdrawn > 0) {
-            finalAmount = -withdrawn; // Negate expenses
-          } else {
-            // Skip zero-value transactions (e.g. failed or purely informational)
-            continue;
-          }
-
-          transactions.add(ParsedTransaction(
-            id: uuid.v4(),
-            date: parseDate(rawDate) ?? DateTime.now(),
-            vendorName: normalizeVendorName(rawDetails),
-            amount: finalAmount,
-            originalDescription: rawDetails,
-            useMemory: false, // Default for new parsing
-          ));
+          continue;
         }
+
+        transactions.add(ParsedTransaction(
+          id: uuid.v4(),
+          date: transactionDate,
+          vendorName: normalizeVendorName(rawDetails),
+          amount: finalAmount,
+          originalDescription: rawDetails,
+          useMemory: false,
+        ));
+        //? Uncomment to sample output
+        // if (times > 0) { 
+        //   print(
+        //       "test transactions picked: \n Date: $transactionDate\n VendorName: ${normalizeVendorName(rawDetails)} \n Amount: $finalAmount \n OriginalDescription: $rawDetails");
+        //       times -= 1;
+        // }
       }
 
       return ParseResult(
@@ -165,6 +182,7 @@ class MPesaParser implements StatementParser {
         document: documentMetadata,
       );
     } catch (e) {
+      // If the PDF library throws an error, or parsing fails completely.
       return ParseResult(
         success: false,
         errorMessage: "Error parsing M-PESA PDF: $e",
@@ -176,40 +194,46 @@ class MPesaParser implements StatementParser {
     }
   }
 
-@override
+  @override
   String normalizeVendorName(String rawVendor) {
     // 1. Handle Special Cases FIRST (Bundles, Overdrafts, etc.)
     // These need specific naming regardless of what follows the dash.
-    
+
     // Pattern: "OD Loan Repayment to..." -> "M-PESA Overdraft"
     if (rawVendor.contains("OD Loan Repayment")) {
       return "M-PESA Overdraft";
     }
 
     // Pattern: "Customer Bundle Purchase..." -> "Safaricom Data Bundles"
-    if (rawVendor.contains("Bundle Purchase") || rawVendor.contains("DATA BUNDLES")) {
+    if (rawVendor.contains("Bundle Purchase") ||
+        rawVendor.contains("DATA BUNDLES")) {
       return "Safaricom Data Bundles";
     }
-    
+
     // 2. Handle Generic "Name - Number" or "Type Number - Name" patterns
     // Example: "Customer Payment to Small Business to 0716***929 - ALICE NJERI"
     if (rawVendor.contains(" - ")) {
       final parts = rawVendor.split(" - ");
       if (parts.length > 1) {
         // Return the part after the dash (the actual name)
-        return parts.last.trim(); 
+        return parts.last.trim();
       }
     }
 
     // 3. Fallback cleanup if no dash was found
     // Remove common prefixes
     var cleaned = rawVendor
-        .replaceAll(RegExp(r'(Customer Transfer of Funds Charge)'), 'M-PESA Charge')
-        .replaceAll(RegExp(r'Sent to |Received from |Paid to |Withdraw from |Deposit to '), '')
+        .replaceAll(
+            RegExp(r'(Customer Transfer of Funds Charge)'), 'M-PESA Charge')
+        .replaceAll(
+            RegExp(
+                r'Sent to |Received from |Paid to |Withdraw from |Deposit to '),
+            '')
         .trim();
 
     return cleaned;
   }
+
   @override
   DateTime? parseDate(String dateString) {
     // Format based on Image: YYYY-MM-DD HH:MM:SS

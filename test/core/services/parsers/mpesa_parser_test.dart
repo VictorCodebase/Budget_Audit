@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:budget_audit/core/models/client_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:budget_audit/core/services/parser/mpesa_parser.dart';
 
@@ -70,16 +71,20 @@ void main() {
         return;
       }
 
+      const FinancialInstitution institution = FinancialInstitution.mpesa;
+
       final metadata = UploadedDocument(
         id: '1', 
         fileName: 'test.pdf', 
-        uploadDate: DateTime.now(),
-        path: file.path,
-        size: 0,
+        filePath: "./sample/path",
+        ownerParticipantId: 1,
+        institution: institution,
+        uploadedAt: DateTime.now(),
+        
       );
 
       // 2. ACT
-      final result = await parser.parseDocument(file);
+      final result = await parser.parseDocument(file, metadata);
 
       // 3. ASSERT
       expect(result.success, isTrue);
@@ -104,4 +109,67 @@ void main() {
       expect(incomeTx.amount, equals(1100.00)); // Should be positive
     });
   });
+
+  group('MPesaParser - Full Document Parsing', () {
+    test('parseDocument extracts income and expense correctly', () async {
+      // 1. ARRANGE
+      // Update this path and filename to match your exact setup!
+      final file = File(
+          'test/resources/Statement_All_Transactions_20251101_20251125[1].pdf');
+
+      if (!file.existsSync()) {
+        // This message ensures the test runner knows why we skipped
+        fail('Skipping PDF test: Test file not found at ${file.path}');
+      }
+
+      const FinancialInstitution institution = FinancialInstitution.mpesa;
+
+      final metadata = UploadedDocument(
+        id: '1',
+        fileName: 'test.pdf',
+        filePath: "./sample/path",
+        ownerParticipantId: 1,
+        institution: institution,
+        uploadedAt: DateTime.now(),
+      );
+      // 2. ACT
+      final result = await parser.parseDocument(file, metadata);
+
+      // 3. ASSERTIONS
+
+      // A. Check for overall success and quantity
+      expect(result.success, isTrue,
+          reason: 'Parser should report successful extraction');
+      expect(result.transactions, isNotEmpty,
+          reason: 'Should find at least one transaction');
+      expect(result.transactions.length, greaterThanOrEqualTo(2),
+          reason: 'Should find multiple transactions in the sample');
+
+      // B. Verify the specific EXPENSE transaction (M-PESA Charge)
+      final expenseTx = result.transactions.firstWhere(
+        (t) => t.vendorName == 'M-PESA Charge',
+        orElse: () => throw Exception("M-PESA Charge transaction not found"),
+      );
+
+      // Assert that the amount is correctly negated (expense)
+      expect(expenseTx.amount, equals(-7.0),
+          reason: 'Expense amount must be negative and correct.');
+      expect(expenseTx.date.year, equals(2025));
+
+      // C. Verify a specific INCOME transaction (from your raw data snippet,
+      // let's assume one is 1,100.00 from Equity as seen in the screenshot)
+      final incomeTx = result.transactions.firstWhere(
+        (t) =>
+            t.amount > 0 &&
+            t.originalDescription!.contains('Business Payment from 300600'),
+        orElse: () => throw Exception("Income transaction (Equity) not found"),
+      );
+
+      // Assert that the amount is correctly positive (income)
+      expect(incomeTx.amount, equals(1100.00),
+          reason: 'Income amount must be positive and correct.');
+    });
+  });
+
 }
+
