@@ -22,29 +22,25 @@ class HomeView extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: Stack(
+          child: Stack(children: [
+        Column(
           children: [
-            Column(
-            children: [
-              const AppHeader(
-                subtitle: 'Document Analysis & Transaction Extraction',
-              ),
-              Expanded(
-                child: isWideScreen
-                    ? _buildWideScreenLayout(context, viewModel)
-                    : _buildNarrowScreenLayout(context, viewModel),
-              ),
-            ],
-          ),
-          const Positioned(
-            top: 12, // Align with AppHeader padding
-            left: 24,
-            child: Menu(),
-          ),
-          ]
-        )
-        
-      ),
+            const AppHeader(
+              subtitle: 'Document Analysis & Transaction Extraction',
+            ),
+            Expanded(
+              child: isWideScreen
+                  ? _buildWideScreenLayout(context, viewModel)
+                  : _buildNarrowScreenLayout(context, viewModel),
+            ),
+          ],
+        ),
+        const Positioned(
+          top: 12, // Align with AppHeader padding
+          left: 24,
+          child: Menu(),
+        ),
+      ])),
     );
   }
 
@@ -62,9 +58,8 @@ class HomeView extends StatelessWidget {
         ),
         // Side panel
         Container(
-          width: 350,
+          width: MediaQuery.of(context).size.width * 0.25,
           decoration: BoxDecoration(
-            color: AppTheme.surface,
             border: Border(
               left: BorderSide(color: AppTheme.border, width: 1),
             ),

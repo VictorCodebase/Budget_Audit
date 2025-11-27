@@ -82,13 +82,7 @@ class _InlineEditableTextState extends State<InlineEditableText> {
   }
 
   void _handleFocusChange() {
-    if (_focusNode.hasFocus) {
-      // Select all text when focused
-      _controller.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _controller.text.length,
-      );
-    } else {
+    if (!_focusNode.hasFocus) {
       // Save on blur
       _submit();
     }
@@ -141,6 +135,9 @@ class _InlineEditableTextState extends State<InlineEditableText> {
         if (widget.nextFocusNode != null) {
           widget.nextFocusNode!.requestFocus();
         }
+      },
+      onTapOutside: (event) {
+        _focusNode.unfocus();
       },
     );
   }

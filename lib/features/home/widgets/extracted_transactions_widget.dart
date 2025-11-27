@@ -27,7 +27,7 @@ class ExtractedTransactionsWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Verify extracted details',
                 style: AppTheme.h3,
               ),

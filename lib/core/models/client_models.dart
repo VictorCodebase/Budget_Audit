@@ -74,6 +74,7 @@ class ParsedTransaction extends Equatable {
   final DateTime date;
   final String vendorName;
   final double amount;
+  final String? originalDescription;
   final String? category;
   final String? account;
   final String? reason;
@@ -84,6 +85,7 @@ class ParsedTransaction extends Equatable {
     required this.date,
     required this.vendorName,
     required this.amount,
+    this.originalDescription,
     this.category,
     this.account,
     this.reason,
@@ -95,6 +97,7 @@ class ParsedTransaction extends Equatable {
     DateTime? date,
     String? vendorName,
     double? amount,
+    String? originalDescription,
     String? category,
     String? account,
     String? reason,
@@ -105,6 +108,7 @@ class ParsedTransaction extends Equatable {
       date: date ?? this.date,
       vendorName: vendorName ?? this.vendorName,
       amount: amount ?? this.amount,
+      originalDescription: originalDescription ?? this.originalDescription,
       category: category ?? this.category,
       account: account ?? this.account,
       reason: reason ?? this.reason,
@@ -119,6 +123,7 @@ class ParsedTransaction extends Equatable {
         vendorName,
         amount,
         category,
+        originalDescription,
         account,
         reason,
         useMemory,

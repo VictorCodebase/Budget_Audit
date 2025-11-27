@@ -1,5 +1,7 @@
 // lib/features/home/home_viewmodel.dart
 
+import 'package:budget_audit/core/models/client_models.dart';
+import 'package:budget_audit/core/models/client_models.dart' as client_models;
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import '../../core/context.dart';
@@ -48,7 +50,8 @@ class HomeViewModel extends ChangeNotifier {
   bool get hasDocuments => _uploadedDocuments.isNotEmpty;
   bool get hasTransactions => _extractedTransactions.isNotEmpty;
 
-  int? get currentParticipantId => _appContext.currentParticipant?.participantId;
+  int? get currentParticipantId =>
+      _appContext.currentParticipant?.participantId;
 
   Future<void> _initialize() async {
     await loadParticipants();
@@ -250,6 +253,49 @@ class HomeViewModel extends ChangeNotifier {
       _logger.severe('Error deleting template', e, st);
       _errorMessage = 'Failed to delete template: $e';
       notifyListeners();
+    }
+  }
+
+  /// Fetches full details (categories and accounts) for a specific template
+  Future<List<client_models.CategoryData>> getTemplateDetails(int templateId) async {
+    try {
+      // 1. Get all categories for this template
+      final categories = await _budgetService.categoryService
+          .getCategoriesForTemplate(templateId);
+
+      // 2. Get all accounts for this template
+      final accounts = await _budgetService.accountService
+          .getAllAccountsForTemplate(templateId);
+
+      // 3. Map accounts to their categories
+      return categories.map((category) {
+        final categoryAccounts = accounts
+            .where((a) => a.categoryId == category.categoryId)
+            .map((a) => client_models.AccountData(
+                  id: a.accountId.toString(),
+                  name: a.accountName,
+                  budgetAmount: a.budgetAmount,
+                  color: a.color,
+                  // We don't need participants for read-only preview usually,
+                  // but if needed we'd fetch them. For now leaving empty or fetching if critical.
+                  // The Account model has responsibleParticipantId, we could map it if we had the list.
+                  participants: _participants
+                      .where(
+                          (p) => p.participantId == a.responsibleParticipantId)
+                      .toList(),
+                ))
+            .toList();
+
+        return client_models.CategoryData(
+          id: category.categoryId.toString(),
+          name: category.categoryName,
+          color: category.color,
+          accounts: categoryAccounts,
+        );
+      }).toList();
+    } catch (e, st) {
+      _logger.severe('Error fetching template details for $templateId', e, st);
+      return [];
     }
   }
 

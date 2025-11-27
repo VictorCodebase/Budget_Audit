@@ -256,7 +256,10 @@ class _BudgetingViewState extends State<BudgetingView> {
             ...viewModel.categories.map((category) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: AppTheme.spacingMd),
-                child: CategoryWidget(category: category),
+                child: CategoryWidget(
+                  key: ValueKey(category.id),
+                  category: category,
+                ),
               );
             }),
 

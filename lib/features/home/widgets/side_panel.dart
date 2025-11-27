@@ -1,10 +1,10 @@
-// lib/features/home/widgets/side_panel.dart
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/content_box.dart';
 import '../home_viewmodel.dart';
+import 'read_only_category_widget.dart';
 
 class SidePanel extends StatelessWidget {
   const SidePanel({Key? key}) : super(key: key);
@@ -27,7 +27,7 @@ class SidePanel extends StatelessWidget {
           const SizedBox(height: AppTheme.spacingXl),
 
           // Template History Section
-          _buildTemplateHistorySection(viewModel),
+          _buildTemplateHistorySection(context, viewModel),
         ],
       ),
     );
@@ -194,35 +194,20 @@ class SidePanel extends StatelessWidget {
     );
   }
 
-  Widget _buildTemplateHistorySection(HomeViewModel viewModel) {
+  Widget _buildTemplateHistorySection(
+      BuildContext context, HomeViewModel viewModel) {
+    // Take at most 6 latest templates
+    final templates = viewModel.templateHistory.take(6).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Template History',
-              style: AppTheme.h4,
-            ),
-            OutlinedButton(
-              onPressed: () {
-                // TODO: Adopt template functionality
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primaryBlue,
-                side: BorderSide(color: AppTheme.primaryBlue, width: 1),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppTheme.spacingSm,
-                  vertical: AppTheme.spacingXs,
-                ),
-              ),
-              child: const Text('Adopt Template'),
-            ),
-          ],
+        Text(
+          'Template History',
+          style: AppTheme.h4,
         ),
         const SizedBox(height: AppTheme.spacingMd),
-        if (viewModel.templateHistory.isEmpty)
+        if (templates.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spacingLg),
@@ -235,145 +220,208 @@ class SidePanel extends StatelessWidget {
             ),
           )
         else
-          ...viewModel.templateHistory.map((template) {
-            return _buildTemplateCard(viewModel, template);
+          ...templates.map((template) {
+            return _buildTemplateContentBox(context, viewModel, template);
           }).toList(),
       ],
     );
   }
 
-  Widget _buildTemplateCard(
+  Widget _buildTemplateContentBox(
+    BuildContext context,
     HomeViewModel viewModel,
     template,
   ) {
-    final dateStr = DateFormat('dd/MM/yy').format(template.dateCreated);
-    // Mock budget amount - replace with actual data
-    final budgetAmount = '\$65012';
+    // TODO: Get actual budget amount if available in template model or fetch it
+    // For now using a placeholder or 0 if not available
+    final budgetAmount = '\$0.00';
+    final isCurrent = false; // TODO: Determine if current
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingMd),
-      padding: const EdgeInsets.all(AppTheme.spacingMd),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppTheme.border, width: 1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with controls
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Date Created: $dateStr',
-                      style: AppTheme.bodySmall,
-                    ),
-                    Text(
-                      'Budgeted: $budgetAmount',
-                      style: AppTheme.bodySmall.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: () => _showPreview(template),
-                    icon: const Icon(Icons.visibility_outlined, size: 18),
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Preview',
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      // TODO: Implement minimize
-                    },
-                    icon: const Icon(Icons.remove, size: 18),
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Minimize',
-                  ),
-                  IconButton(
-                    onPressed: () =>
-                        _confirmDeleteTemplate(viewModel, template),
-                    icon: Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: AppTheme.error,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Delete',
-                  ),
-                ],
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppTheme.spacingMd),
+      child: ContentBox(
+        minimizedHeight: 60,
+        initiallyMinimized: true,
+        controls: [
+          ContentBoxControl(
+            action: ContentBoxAction.preview,
+            onPressed: () => _showPreview(context, viewModel, template),
           ),
-          const SizedBox(height: AppTheme.spacingXs),
-
-          // Status indicator
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppTheme.success,
-                  shape: BoxShape.circle,
-                ),
+          ContentBoxControl(
+            action: ContentBoxAction.minimize,
+            // ContentBox handles toggle internally if we don't override onPressed,
+            // but we want to be explicit or let it handle it.
+            // If we pass onPressed, we might need to manage state.
+            // ContentBox default behavior for minimize/maximize is good.
+            // But we need to pass it to show the icon.
+          ),
+          ContentBoxControl(
+            action: ContentBoxAction.delete,
+            onPressed: () =>
+                _confirmDeleteTemplate(context, viewModel, template),
+          ),
+        ],
+        previewWidgets: [
+          // Template Name
+          Flexible(
+            child: Text(
+              template.templateName,
+              style: AppTheme.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: AppTheme.spacingXs),
-              Text(
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          // Budget Amount or Current Status
+          if (isCurrent)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppTheme.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
                 'Current',
                 style: AppTheme.caption.copyWith(
                   color: AppTheme.success,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
-          ),
+            )
+          else
+            Text(
+              budgetAmount,
+              style: AppTheme.bodySmall.copyWith(
+                color: AppTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
         ],
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Created: ${DateFormat('MMM d, yyyy').format(template.dateCreated)}',
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: AppTheme.spacingMd),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: Implement adopt template
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryBlue,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Adopt Template'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _showPreview(template) {
-    // Get the context from the widget tree
-    // This is a simplified version - you'll need to pass context properly
-    // showDialog(
-    //   context: context,
-    //   builder: (context) => AlertDialog(
-    //     title: const Text('Template Preview'),
-    //     content: const Text('Preview goes here'),
-    //     actions: [
-    //       TextButton(
-    //         onPressed: () => Navigator.pop(context),
-    //         child: const Text('Close'),
-    //       ),
-    //     ],
-    //   ),
-    // );
+  void _showPreview(BuildContext context, HomeViewModel viewModel, template) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: BoxDecoration(
+            color: AppTheme.backgroundColor,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.all(AppTheme.spacingLg),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Preview: ${template.templateName}',
+                      style: AppTheme.h3,
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Content
+              Expanded(
+                child: FutureBuilder(
+                  future: viewModel.getTemplateDetails(template.templateId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'Error loading template details',
+                          style: AppTheme.bodyMedium
+                              .copyWith(color: AppTheme.error),
+                        ),
+                      );
+                    }
+
+                    final categories = snapshot.data as List;
+
+                    if (categories.isEmpty) {
+                      return const Center(
+                          child: Text('No categories in this template'));
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(AppTheme.spacingLg),
+                      itemCount: categories.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: AppTheme.spacingMd),
+                      itemBuilder: (context, index) {
+                        return ReadOnlyCategoryWidget(
+                            category: categories[index]);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  void _confirmDeleteTemplate(HomeViewModel viewModel, template) {
-    // Similar to above - needs context
-    // showDialog to confirm deletion
+  void _confirmDeleteTemplate(
+      BuildContext context, HomeViewModel viewModel, template) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Template'),
+        content:
+            Text('Are you sure you want to delete "${template.templateName}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              viewModel.deleteTemplate(template.templateId);
+              Navigator.pop(context);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 }
