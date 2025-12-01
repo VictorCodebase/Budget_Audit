@@ -53,6 +53,7 @@ enum FinancialInstitution {
         return 'Custom';
     }
   }
+
   String get logoPath {
     switch (this) {
       case FinancialInstitution.hsbc:
@@ -67,6 +68,12 @@ enum FinancialInstitution {
   }
 }
 
+enum MatchStatus {
+  critical, // No match found
+  potential, // Fuzzy match found
+  ambiguous, // Multiple accounts found
+  confident, // Single account found
+}
 
 /// Represents a transaction extracted from a PDF but not yet saved to database
 class ParsedTransaction extends Equatable {
@@ -79,6 +86,9 @@ class ParsedTransaction extends Equatable {
   final String? account;
   final String? reason;
   final bool useMemory; // Maps to "Use Memory" checkbox
+  final MatchStatus matchStatus;
+  final List<String> potentialMatches;
+  final AccountData? suggestedAccount;
 
   const ParsedTransaction({
     required this.id,
@@ -90,6 +100,9 @@ class ParsedTransaction extends Equatable {
     this.account,
     this.reason,
     this.useMemory = false,
+    this.matchStatus = MatchStatus.critical,
+    this.potentialMatches = const [],
+    this.suggestedAccount,
   });
 
   ParsedTransaction copyWith({
@@ -102,6 +115,9 @@ class ParsedTransaction extends Equatable {
     String? account,
     String? reason,
     bool? useMemory,
+    MatchStatus? matchStatus,
+    List<String>? potentialMatches,
+    AccountData? suggestedAccount,
   }) {
     return ParsedTransaction(
       id: id ?? this.id,
@@ -113,6 +129,9 @@ class ParsedTransaction extends Equatable {
       account: account ?? this.account,
       reason: reason ?? this.reason,
       useMemory: useMemory ?? this.useMemory,
+      matchStatus: matchStatus ?? this.matchStatus,
+      potentialMatches: potentialMatches ?? this.potentialMatches,
+      suggestedAccount: suggestedAccount ?? this.suggestedAccount,
     );
   }
 
@@ -127,10 +146,11 @@ class ParsedTransaction extends Equatable {
         account,
         reason,
         useMemory,
+        matchStatus,
+        potentialMatches,
+        suggestedAccount,
       ];
 }
-
-
 
 /// Result of parsing a document
 class ParseResult extends Equatable {
@@ -178,7 +198,6 @@ class ValidationResult extends Equatable {
   List<Object?> get props => [canParse, errorMessage, missingCheckpoints];
 }
 
-
 class Account {
   final int categoryId;
   final int templateId;
@@ -192,8 +211,8 @@ class Account {
   // Calculated Field from NOTE:
   double get balance => budgetAmount - expenditureTotal;
 
-  Color get color => Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
-
+  Color get color =>
+      Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
   Account({
     required this.categoryId,
@@ -229,7 +248,8 @@ class Category {
   final String colorHex;
   final int templateId;
 
-  Color get color => Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
+  Color get color =>
+      Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
   Category({
     required this.categoryName,
@@ -237,7 +257,6 @@ class Category {
     required this.templateId,
   });
 }
-
 
 class Participant {
   final String firstName;
@@ -266,7 +285,7 @@ enum Role {
 
   static Role fromString(String role) {
     return Role.values.firstWhere(
-          (r) => r.value.toLowerCase() == role.toLowerCase(),
+      (r) => r.value.toLowerCase() == role.toLowerCase(),
       orElse: () => throw ArgumentError('Invalid role: $role'),
     );
   }

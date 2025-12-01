@@ -2,27 +2,54 @@
 
 import 'dart:io';
 import 'package:uuid/uuid.dart';
+import 'package:meta/meta.dart';
 import '../../models/client_models.dart';
 import 'parser_interface.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
+
+/**
+ * ! Issue breakdown for when I puck up later:
+ * 
+ * The pdf reading mechanism is concatenating  different columns into a single mess that is difficult to 
+ * uderstand without using very brittle key word matching ie: DatePaymenttypeanddetailsPaidoutPaidinBalance
+ * There needs a way to understand spacing in between columns at pdf reading level
+ * 
+ * Im thiking of finally using syncfusion's text extraction with letter mapping
+ * I tried prompting claude for this, The solution feels half baked. More like a suggestio of what could happen
+ * Replace th parser with one that anderstands position
+ * 
+ * ! Detects Column Boundaries
+ * _detectColumnBoundaries() // Finds "Date", "Paid out", "Paid in" X positions
+ * 
+ * 
+ * ! Assigns Text to Columns by X Position
+ * if (x >= _descriptionStart && x < _descriptionEnd) {
+     description += text;
+   } else if (x >= _paidOutStart && x < _paidOutEnd) {
+     paidOut = text;
+   }
+ */
 
 class HSBCParser extends StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.hsbc;
 
-  // Pattern to find detailed transaction lines, relying on consistent column spacing.
-  // The line usually starts with a three-letter code (VIS, DD, TR, BP, etc.) followed by the amount columns.
-  // This pattern targets the "Details/Description" line, which contains the amounts.
+  // Single pattern that handles both old and new HSBC formats
+  // The key insight: both formats have the same structure, just different spacing
   static final RegExp _transactionRowPattern = RegExp(
-    r'^(?:[A-Z]{2,3}|\>\>\>|\s*)\s*' // Transaction Type (VIS, DD, TR, BP, OBP, >>>, or just empty space)
-    r'(.+?)' // Group 1: Details (Non-greedy, captures the full description)
-    r'(?:\s{2,})' // Separator: At least two spaces before the Paid Out column
-    r'([\d,\.]*)' // Group 2: Paid Out (Expense - may be empty, or contain X,XXX.XX)
-    r'(?:\s{2,})' // Separator: At least two spaces before the Paid In column
-    r'([\d,\.]*)' // Group 3: Paid In (Income - may be empty, or contain X,XXX.XX)
-    r'(?:\s{2,})' // Separator: At least two spaces before the Balance column
-    r'([\d,\.]+)?$', // Group 4 (Optional): Balance (not used for transaction, but anchors the line)
+    r'(?:^|\s)' // Start of line or whitespace
+    r'(?:(VIS|DD|TR|TFR|BP|OBP|CHQ|CR|\)\)\))\s+)?' // Group 1: Transaction Type (optional)
+    r'(.+?)' // Group 2: Description (non-greedy)
+    r'\s{2,}' // At least 2 spaces separator
+    r'([\d,\.]*)\s*' // Group 3: Paid Out (may be empty)
+    r'\s{2,}' // At least 2 spaces separator
+    r'([\d,\.]*)\s*' // Group 4: Paid In (may be empty)
+    r'(?:\s{2,}([\d,\.]+\s*[DC]?))?$', // Group 5: Balance (optional, may have D/C)
+    multiLine: false,
   );
+
+  @visibleForTesting
+  static RegExp get transactionRowPattern => _transactionRowPattern;
 
   @override
   Future<ValidationResult> validateDocument(
@@ -30,7 +57,6 @@ class HSBCParser extends StatementParser {
     String? password,
   }) async {
     try {
-      // Try to unlock the PDF first
       final canUnlock = await unlockPdf(pdfFile, password);
       if (!canUnlock) {
         return const ValidationResult(
@@ -40,7 +66,6 @@ class HSBCParser extends StatementParser {
         );
       }
 
-      // Extract text and check for HSBC markers
       final document = PdfDocument(
         inputBytes: pdfFile.readAsBytesSync(),
         password: password,
@@ -51,23 +76,29 @@ class HSBCParser extends StatementParser {
 
       final missingCheckpoints = <String>[];
 
-      // Check for HSBC-specific markers
+      print("\n\n ------ FULL TEXT -----");
+      print(fullText);
+      print("------ END FULL TEXT -----\n\n");
+
       if (!containsInstitutionMarkers(fullText)) {
         missingCheckpoints.add('HSBC institution markers');
       }
 
-      // Check for expected column headers
-      if (!fullText.contains('Paid out') && !fullText.contains('£ Paid out')) {
-        missingCheckpoints.add('Paid out column header');
-      }
-      if (!fullText.contains('Paid in') && !fullText.contains('£ Paid in')) {
-        missingCheckpoints.add('Paid in column header');
-      }
-      if (!fullText.contains('Balance') && !fullText.contains('£ Balance')) {
-        missingCheckpoints.add('Balance column header');
-      }
+      // Check for column headers (flexible matching for OCR variations)
+      final hasPaidOut = fullText.contains('Paid out') ||
+          fullText.contains('£ Paid out') ||
+          fullText.contains('Paid o ut');
+      final hasPaidIn = fullText.contains('Paid in') ||
+          fullText.contains('£ Paid in') ||
+          fullText.contains('Paid i n');
+      final hasBalance =
+          fullText.contains('Balance') || fullText.contains('£ Balance');
 
-      // Check for date pattern (e.g., "12 Jun 25")
+      if (!hasPaidOut) missingCheckpoints.add('Paid out column header');
+      if (!hasPaidIn) missingCheckpoints.add('Paid in column header');
+      if (!hasBalance) missingCheckpoints.add('Balance column header');
+
+      // Check for date pattern (DD MMM YY format)
       if (!RegExp(r'\d{1,2}\s+[A-Z][a-z]{2}\s+\d{2}').hasMatch(fullText)) {
         missingCheckpoints.add('Date format (DD MMM YY)');
       }
@@ -115,54 +146,55 @@ class HSBCParser extends StatementParser {
 
       DateTime? lastSeenDate;
 
-      // Iterate over lines to extract date and transaction details
-      for (var line in lines) {
-        line = line.trimRight();
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trimRight();
+        if (line.isEmpty) continue;
 
-        // 1. Try to find a Date Line (e.g., "12 Jun 25")
-        final dateMatch = RegExp(r'^\s*(\d{1,2}\s+[A-Z][a-z]{2}\s+\d{2})\s*$')
+        // Look for date at start of line: "12 Jun 25"
+        final dateMatch = RegExp(r'^\s*(\d{1,2}\s+[A-Z][a-z]{2}\s+\d{2})\s+')
             .firstMatch(line);
+
         if (dateMatch != null) {
+          // Found a new date - update lastSeenDate
           lastSeenDate = _parseStatementDate(dateMatch.group(1)!);
+
+          // Check if there's a transaction on the same line after the date
+          final remainingLine = line.substring(dateMatch.end);
+          if (remainingLine.trim().isNotEmpty) {
+            final transMatch = _transactionRowPattern.firstMatch(remainingLine);
+            if (transMatch != null && lastSeenDate != null) {
+              final transaction = _extractTransaction(
+                uuid: uuid,
+                date: lastSeenDate,
+                match: transMatch,
+              );
+              if (transaction != null) {
+                transactions.add(transaction);
+                print(
+                    'DEBUG: Extracted transaction on date line: ${transaction.vendorName} - ${transaction.amount}');
+              }
+            }
+          }
           continue;
         }
 
-        // 2. Try to find a Transaction Row
-        final match = _transactionRowPattern.firstMatch(line);
-        if (match != null && lastSeenDate != null) {
-          final rawDetails = match.group(1)!.trim();
-          final rawPaidOut = match.group(2)!;
-          final rawPaidIn = match.group(3)!;
-
-          double paidOut = parseAmount(rawPaidOut) ?? 0.0;
-          double paidIn = parseAmount(rawPaidIn) ?? 0.0;
-
-          double finalAmount = 0.0;
-
-          if (paidIn > 0 && paidOut == 0) {
-            finalAmount = paidIn;
-          } else if (paidOut > 0 && paidIn == 0) {
-            finalAmount = -paidOut; // Expense
-          } else {
-            continue; // Skip zero or ambiguous transactions
+        // No date found - this is either:
+        // 1. A same-day transaction (starts with transaction type like VIS, )))
+        // 2. A continuation line (wrapped description - no transaction type, no amounts)
+        if (lastSeenDate != null) {
+          final transMatch = _transactionRowPattern.firstMatch(line);
+          if (transMatch != null) {
+            final transaction = _extractTransaction(
+              uuid: uuid,
+              date: lastSeenDate, // Use the last date we saw
+              match: transMatch,
+            );
+            if (transaction != null) {
+              transactions.add(transaction);
+              print(
+                  'DEBUG: Extracted same-day transaction: ${transaction.vendorName} - ${transaction.amount}');
+            }
           }
-
-          if (finalAmount == 0.0) continue;
-
-          // Skip balance lines and other non-transaction rows
-          if (rawDetails.toUpperCase().contains('BALANCE BROUGHT FORWARD') ||
-              rawDetails.toUpperCase().contains('BALANCE CARRIED FORWARD')) {
-            continue;
-          }
-
-          transactions.add(ParsedTransaction(
-            id: uuid.v4(),
-            date: lastSeenDate, // Use the last date found
-            vendorName: normalizeVendorName(rawDetails),
-            amount: finalAmount,
-            originalDescription: rawDetails,
-            useMemory: false,
-          ));
         }
       }
 
@@ -183,9 +215,57 @@ class HSBCParser extends StatementParser {
     }
   }
 
-  // --- Helper Methods ---
+  // Extract transaction from regex match
+  ParsedTransaction? _extractTransaction({
+    required Uuid uuid,
+    required DateTime date,
+    required RegExpMatch match,
+  }) {
+    final transType = match.group(1);
+    final rawDetails = match.group(2)?.trim() ?? '';
+    final rawPaidOut = match.group(3) ?? '';
+    final rawPaidIn = match.group(4) ?? '';
 
-  // HSBC uses a short date format (e.g., 12 Jun 25) which needs custom parsing
+    // Skip if no description or if it's a balance line
+    if (rawDetails.isEmpty || _isBalanceLine(rawDetails)) {
+      return null;
+    }
+
+    double paidOut = parseAmount(rawPaidOut) ?? 0.0;
+    double paidIn = parseAmount(rawPaidIn) ?? 0.0;
+
+    double finalAmount = 0.0;
+
+    if (paidIn > 0 && paidOut == 0) {
+      finalAmount = paidIn; // Income
+    } else if (paidOut > 0 && paidIn == 0) {
+      finalAmount = -paidOut; // Expense
+    } else {
+      return null; // Skip zero or ambiguous
+    }
+
+    if (finalAmount == 0.0) return null;
+
+    return ParsedTransaction(
+      id: uuid.v4(),
+      date: date,
+      vendorName: normalizeVendorName(rawDetails),
+      amount: finalAmount,
+      originalDescription: rawDetails,
+      useMemory: false,
+    );
+  }
+
+  // Check if description is a balance/summary line
+  bool _isBalanceLine(String description) {
+    final upper = description.toUpperCase();
+    return upper.contains('BALANCE BROUGHT FORWARD') ||
+        upper.contains('BALANCE CARRIED FORWARD') ||
+        upper.contains('TOTAL PAID OUT') ||
+        upper.contains('TOTAL PAID IN') ||
+        upper == 'BALANCE';
+  }
+
   DateTime? _parseStatementDate(String dateString) {
     const monthMap = {
       'Jan': 1,
@@ -208,7 +288,7 @@ class HSBCParser extends StatementParser {
         final day = int.parse(parts[0]);
         final monthNum = monthMap[parts[1]];
         final shortYear = parts[2];
-        final fullYear = int.parse('20$shortYear'); // Assumes 2000s
+        final fullYear = int.parse('20$shortYear');
 
         if (monthNum != null && day >= 1 && day <= 31) {
           return DateTime(fullYear, monthNum, day);
@@ -223,27 +303,29 @@ class HSBCParser extends StatementParser {
 
   @override
   String normalizeVendorName(String rawVendor) {
-    // HSBC often has "BRISTOL" or location/account info in the description.
-    // Clean up common codes and noise.
     var cleaned = rawVendor
-        .replaceAll(RegExp(r'VIS |DD |TR |BP |TFR |CHQ |OBP |>>> '),
-            '') // Remove transaction codes first
-        .replaceAll('LONDON', '') // Remove common locations
-        .replaceAll('BRISTOL', '')
-        .replaceAll(RegExp(r'\d{6,}'), '') // Remove long numbers/sort codes
-        .replaceAll(RegExp(r'[\u00A0\s]+'),
-            ' ') // Replace multiple spaces with one (do this AFTER removals)
+        // Remove transaction type codes
+        .replaceAll(RegExp(r'^(?:VIS|DD|TR|BP|TFR|CHQ|OBP|CR|\)\)\))\s+'), '')
+        // Remove common location names
+        .replaceAll(RegExp(r'\b(LONDON|BRISTOL|SOUTHAMPTON|AVON)\b'), '')
+        // Remove long numbers (sort codes, reference numbers)
+        .replaceAll(RegExp(r'\d{6,}'), '')
+        // Normalize whitespace
+        .replaceAll(RegExp(r'[\u00A0\s]+'), ' ')
         .trim();
 
-    return cleaned;
+    return cleaned.isEmpty ? rawVendor.trim() : cleaned;
   }
 
   @override
   bool containsInstitutionMarkers(String pdfText) {
     final upperText = pdfText.toUpperCase();
-    return upperText.contains('HSBC ADVANCE') ||
-        upperText.contains('HSBC UK') ||
-        (upperText.contains('HSBC') && upperText.contains('YOUR STATEMENT'));
+    
+    return upperText.contains('HSBC') &&
+        (upperText.contains('ADVANCE') ||
+            upperText.contains('YOUR STATEMENT') ||
+            upperText.contains('YOUR STUDENT BANK ACCOUNT') ||
+            upperText.contains('HSBC UK'));
   }
 
   @override
@@ -254,7 +336,11 @@ class HSBCParser extends StatementParser {
   @override
   double? parseAmount(String amountString) {
     if (amountString.isEmpty) return null;
-    final cleaned = amountString.replaceAll(RegExp(r'[£,\s]'), '').trim();
+    final cleaned = amountString
+        .replaceAll(RegExp(r'[£,\s]'), '')
+        .replaceAll(RegExp(r'[DC]$'), '') // Remove D/C suffix
+        .trim();
+    if (cleaned.isEmpty) return null;
     try {
       return double.parse(cleaned);
     } catch (e) {
@@ -264,7 +350,6 @@ class HSBCParser extends StatementParser {
 
   @override
   List<List<String>> extractTableData(String pdfText) {
-    // Simple implementation - can be enhanced if needed
     final lines = pdfText.split('\n');
     final tableData = <List<String>>[];
 
@@ -272,10 +357,10 @@ class HSBCParser extends StatementParser {
       final match = _transactionRowPattern.firstMatch(line);
       if (match != null) {
         tableData.add([
-          match.group(1)?.trim() ?? '', // Description
-          match.group(2)?.trim() ?? '', // Paid Out
-          match.group(3)?.trim() ?? '', // Paid In
-          match.group(4)?.trim() ?? '', // Balance
+          match.group(2)?.trim() ?? '', // Description
+          match.group(3)?.trim() ?? '', // Paid Out
+          match.group(4)?.trim() ?? '', // Paid In
+          match.group(5)?.trim() ?? '', // Balance
         ]);
       }
     }

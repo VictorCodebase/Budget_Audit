@@ -68,16 +68,16 @@ Records all financial events (inflow and outflow).
 | EditorParticipantId | INT                               | **Foreign Key** (Participants.ParticipantId) | The participant whose account was used to upload document.                                  |
 | Reason              | TEXT                              | NULLABLE                                     | Detailed description of the transaction.                                                    |
 
-### 1.4(b) TransactionEditHistory table
-| Column Name           | Data Type    | Key/Constraint                               | Notes                                                      |
-|:----------------------|:-------------|:---------------------------------------------|:-----------------------------------------------------------|
-| **TransactionEditId** | INT          | **Primary key** (Auto Increment)             | Unique transaction edit identifier                         |
-| EditorParticipantId   | INT          | **Foreign Key** (Participants.ParticipantId) | The participant whose account was used to upload document. |
-| TransactionId         | INT          | **Foreign Key** (Transactions.TransactionId) | The transaction modified                                   |
-| EditedField           | VarChar(100) | NOT NULL                                     | The field modified                                         |
-| OriginalValue         | VarChar(250) | NOT NULL                                     | The value that existed in the field originally             |
-| NewValue              | VarChar(250) | NOT NULL                                     | The value added by the user                                |
-| TimeStamp             | TimeStamp    | NOT NULL                                     | The exact moment the change was saved                      |
+### 1.4(b) VendorMatchHistory table
+| Column Name       | Data Type | Key/Constraint                                     | Notes                                          |
+|:------------------|:----------|:---------------------------------------------------|:-----------------------------------------------|
+| **VendorMatchId** | INT       | **Primary key** (Auto Increment)                   | Unique identifier                              |
+| VendorId          | INT       | **Foreign Key** (Vendors.VendorId)                 | The vendor                                     |
+| AccountId         | INT       | **Foreign Key** (Accounts.AccountId)               | The account associated with the vendor         |
+| ParticipantId     | INT       | **Foreign Key** (Participants.ParticipantId)       | The participant who made this association      |
+| UseCount          | INT       | DEFAULT 1                                          | Number of times this association has been used |
+| LastUsed          | DATETIME  | NOT NULL                                           | Most recent usage timestamp                    |
+| (Composite)       |           | **UNIQUE** (VendorId, AccountId, ParticipantId)    | Ensures unique stats per vendor-account pair   |
 
 ### 1.5 Vendors Table
 | Column Name  | Data Type    | Key/Constraint                  | Notes                                      |

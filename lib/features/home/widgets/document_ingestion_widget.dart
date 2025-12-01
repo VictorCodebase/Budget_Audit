@@ -24,6 +24,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
   String? _selectedFileName;
   int? _selectedOwnerId;
   FinancialInstitution? _selectedInstitution;
+  bool _isPickingFile = false;
 
   @override
   void dispose() {
@@ -110,7 +111,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         ),
         const SizedBox(height: AppTheme.spacingXs),
         InkWell(
-          onTap: _pickFile,
+          onTap: _isPickingFile ? null : _pickFile,
           child: Container(
             height: 120,
             decoration: BoxDecoration(
@@ -124,43 +125,47 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             ),
             child: Center(
-              child: _selectedFilePath != null
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: AppTheme.primaryPink,
-                          size: 32,
-                        ),
-                        const SizedBox(height: AppTheme.spacingXs),
-                        Text(
-                          _selectedFileName!,
-                          style: AppTheme.bodySmall.copyWith(
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w500,
+              child: Center(
+                child: _isPickingFile
+                    ? const CircularProgressIndicator()
+                    : _selectedFilePath != null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: AppTheme.primaryPink,
+                                size: 32,
+                              ),
+                              const SizedBox(height: AppTheme.spacingXs),
+                              Text(
+                                _selectedFileName!,
+                                style: AppTheme.bodySmall.copyWith(
+                                  color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_circle_outline,
+                                color: AppTheme.textSecondary,
+                                size: 32,
+                              ),
+                              const SizedBox(height: AppTheme.spacingXs),
+                              Text(
+                                'Click to browse',
+                                style: AppTheme.bodySmall.copyWith(
+                                  color: AppTheme.textSecondary,
+                                ),
+                              ),
+                            ],
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_circle_outline,
-                          color: AppTheme.textSecondary,
-                          size: 32,
-                        ),
-                        const SizedBox(height: AppTheme.spacingXs),
-                        Text(
-                          'Click to browse',
-                          style: AppTheme.bodySmall.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+              ),
             ),
           ),
         ),
@@ -230,7 +235,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         DropdownButtonFormField<int>(
           value: _selectedOwnerId,
           decoration: InputDecoration(
-            hintText: 'JohnJD',
+            hintText: 'Owner',
             hintStyle: AppTheme.bodyMedium.copyWith(
               color: AppTheme.textTertiary,
             ),
@@ -388,16 +393,28 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
+    setState(() {
+      _isPickingFile = true;
+    });
 
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        _selectedFilePath = result.files.single.path;
-        _selectedFileName = result.files.single.name;
-      });
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _selectedFilePath = result.files.single.path;
+          _selectedFileName = result.files.single.name;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingFile = false;
+        });
+      }
     }
   }
 

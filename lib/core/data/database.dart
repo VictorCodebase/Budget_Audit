@@ -168,26 +168,26 @@ class Transactions extends drift.Table {
 //Set<drift.Column> get primaryKey => {transactionId};
 }
 
-@drift.DataClassName('TransactionEditHistory')
-class TransactionEditHistories extends drift.Table {
-  drift.IntColumn get transactionEditId => integer().autoIncrement()();
+@drift.DataClassName('VendorMatchHistory')
+class VendorMatchHistories extends drift.Table {
+  drift.IntColumn get vendorMatchId => integer().autoIncrement()();
 
-  drift.IntColumn get editorParticipantId =>
+  drift.IntColumn get vendorId => integer().references(Vendors, #vendorId)();
+
+  drift.IntColumn get accountId => integer().references(Accounts, #accountId)();
+
+  drift.IntColumn get participantId =>
       integer().references(Participants, #participantId)();
 
-  drift.IntColumn get transactionId =>
-      integer().references(Transactions, #transactionId)();
+  drift.IntColumn get useCount =>
+      integer().withDefault(const drift.Constant(1))();
 
-  drift.TextColumn get editedField => text().withLength(min: 1, max: 100)();
+  drift.DateTimeColumn get lastUsed => dateTime()();
 
-  drift.TextColumn get originalValue => text().withLength(min: 1, max: 250)();
-
-  drift.TextColumn get newValue => text().withLength(min: 1, max: 250)();
-
-  drift.DateTimeColumn get timeStamp => dateTime()();
-
-//@override
-//Set<drift.Column> get primaryKey => {transactionEditId};
+  @override
+  List<String> get customConstraints => [
+        'UNIQUE (vendor_id, account_id, participant_id)',
+      ];
 }
 
 @drift.DataClassName('VendorPreference')
@@ -271,7 +271,7 @@ class ChartSnapshots extends drift.Table {
     Accounts,
     Transactions,
     Templates,
-    TransactionEditHistories,
+    VendorMatchHistories,
     Vendors,
     VendorPreferences,
     ParticipantIncomes,
@@ -284,13 +284,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
     // Read the ENV variable from the loaded dotenv configuration.
     // Default to 'PRODUCTION' for safety if it's not set.
-    final isProduction = !context.AppContext().isProduction; //TODO: (REMOVE NEGATION) For some reason is production is always true, I need it as false
+    final isProduction = !context.AppContext()
+        .isProduction; //TODO: (REMOVE NEGATION) For some reason is production is always true, I need it as false
 
     return MigrationStrategy(
       onCreate: (Migrator m) async {
@@ -345,7 +346,7 @@ class AppDatabase extends _$AppDatabase {
               await m.alterTable(TableMigration(categories));
               break;
 
-              case 5:
+            case 5:
               await m.renameTable(categories, 'categories_old');
               await m.createTable(categories);
 
@@ -356,8 +357,17 @@ class AppDatabase extends _$AppDatabase {
               ''');
 
               await m.deleteTable('categories_old');
-              
+
               print("Migrated Categories to use composite unique keys.");
+              break;
+
+            case 6: // Migrating from v6 to v7
+              // Drop the old table
+              await m.deleteTable('transaction_edit_histories');
+              // Create the new table
+              await m.createTable(vendorMatchHistories);
+              print(
+                  "Replaced TransactionEditHistories with VendorMatchHistories.");
               break;
           }
         }

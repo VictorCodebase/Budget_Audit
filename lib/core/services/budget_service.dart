@@ -5,22 +5,25 @@ import '../models/models.dart' as models;
 import '../models/client_models.dart' as clientModels;
 import '../data/database.dart';
 import 'package:drift/drift.dart' as drift;
+import 'transaction_service.dart';
 
 class BudgetService {
   final TemplateService _templateService;
   final AccountService _accountService;
   final CategoryService _categoryService;
+  final TransactionService _transactionService;
 
   BudgetService(AppDatabase db)
       : _templateService = TemplateService(db),
         _accountService = AccountService(db),
-        _categoryService = CategoryService(db);
+        _categoryService = CategoryService(db),
+        _transactionService = TransactionService(db);
 
   TemplateService get templateService => _templateService;
   AccountService get accountService => _accountService;
   CategoryService get categoryService => _categoryService;
+  TransactionService get transactionService => _transactionService;
 }
-
 
 class TemplateService {
   final AppDatabase _appDatabase;
@@ -33,14 +36,14 @@ class TemplateService {
       final templates = await _appDatabase.select(_appDatabase.templates).get();
       return templates
           .map((t) => models.Template(
-        templateId: t.templateId,
-        syncId: t.syncId,
-        spreadSheetId: t.spreadSheetId,
-        templateName: t.templateName,
-        creatorParticipantId: t.creatorParticipantId,
-        dateCreated: t.dateCreated,
-        timesUsed: t.timesUsed,
-      ))
+                templateId: t.templateId,
+                syncId: t.syncId,
+                spreadSheetId: t.spreadSheetId,
+                templateName: t.templateName,
+                creatorParticipantId: t.creatorParticipantId,
+                dateCreated: t.dateCreated,
+                timesUsed: t.timesUsed,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching all templates", e, st);
@@ -97,11 +100,11 @@ class TemplateService {
     try {
       // Cascade delete accounts linked to this template
       await (_appDatabase.delete(_appDatabase.accounts)
-        ..where((tbl) => tbl.templateId.equals(templateId)))
+            ..where((tbl) => tbl.templateId.equals(templateId)))
           .go();
 
       final deleted = await (_appDatabase.delete(_appDatabase.templates)
-        ..where((tbl) => tbl.templateId.equals(templateId)))
+            ..where((tbl) => tbl.templateId.equals(templateId)))
           .go();
 
       _logger.info("Deleted template $templateId ($deleted rows)");
@@ -124,22 +127,22 @@ class AccountService {
     try {
       final query = _appDatabase.select(_appDatabase.accounts)
         ..where((tbl) =>
-        tbl.templateId.equals(templateId) &
-        tbl.responsibleParticipantId.equals(participantId));
+            tbl.templateId.equals(templateId) &
+            tbl.responsibleParticipantId.equals(participantId));
       final results = await query.get();
 
       return results
           .map((a) => models.Account(
-        accountId: a.accountId,
-        categoryId: a.categoryId,
-        templateId: a.templateId,
-        accountName: a.accountName,
-        colorHex: a.colorHex,
-        budgetAmount: a.budgetAmount,
-        expenditureTotal: a.expenditureTotal ?? 0.0,
-        responsibleParticipantId: a.responsibleParticipantId,
-        dateCreated: a.dateCreated,
-      ))
+                accountId: a.accountId,
+                categoryId: a.categoryId,
+                templateId: a.templateId,
+                accountName: a.accountName,
+                colorHex: a.colorHex,
+                budgetAmount: a.budgetAmount,
+                expenditureTotal: a.expenditureTotal ?? 0.0,
+                responsibleParticipantId: a.responsibleParticipantId,
+                dateCreated: a.dateCreated,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching accounts for template $templateId", e, st);
@@ -153,22 +156,22 @@ class AccountService {
     try {
       final query = _appDatabase.select(_appDatabase.accounts)
         ..where((tbl) =>
-        tbl.templateId.equals(templateId) &
-        tbl.categoryId.equals(categoryId));
+            tbl.templateId.equals(templateId) &
+            tbl.categoryId.equals(categoryId));
       final results = await query.get();
 
       return results
           .map((a) => models.Account(
-        accountId: a.accountId,
-        categoryId: a.categoryId,
-        templateId: a.templateId,
-        accountName: a.accountName,
-        colorHex: a.colorHex,
-        budgetAmount: a.budgetAmount,
-        expenditureTotal: a.expenditureTotal ?? 0.0,
-        responsibleParticipantId: a.responsibleParticipantId,
-        dateCreated: a.dateCreated,
-      ))
+                accountId: a.accountId,
+                categoryId: a.categoryId,
+                templateId: a.templateId,
+                accountName: a.accountName,
+                colorHex: a.colorHex,
+                budgetAmount: a.budgetAmount,
+                expenditureTotal: a.expenditureTotal ?? 0.0,
+                responsibleParticipantId: a.responsibleParticipantId,
+                dateCreated: a.dateCreated,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching accounts for category $categoryId", e, st);
@@ -185,19 +188,20 @@ class AccountService {
 
       return results
           .map((a) => models.Account(
-        accountId: a.accountId,
-        categoryId: a.categoryId,
-        accountName: a.accountName,
-        templateId: a.templateId,
-        colorHex: a.colorHex,
-        budgetAmount: a.budgetAmount,
-        expenditureTotal: a.expenditureTotal ?? 0.0,
-        responsibleParticipantId: a.responsibleParticipantId,
-        dateCreated: a.dateCreated,
-      ))
+                accountId: a.accountId,
+                categoryId: a.categoryId,
+                accountName: a.accountName,
+                templateId: a.templateId,
+                colorHex: a.colorHex,
+                budgetAmount: a.budgetAmount,
+                expenditureTotal: a.expenditureTotal ?? 0.0,
+                responsibleParticipantId: a.responsibleParticipantId,
+                dateCreated: a.dateCreated,
+              ))
           .toList();
     } catch (e, st) {
-      _logger.severe("Error fetching all accounts for template $templateId", e, st);
+      _logger.severe(
+          "Error fetching all accounts for template $templateId", e, st);
       return [];
     }
   }
@@ -210,16 +214,17 @@ class AccountService {
         budgetAmount: drift.Value(modifiedAccount.budgetAmount),
         expenditureTotal: drift.Value(modifiedAccount.expenditureTotal),
         responsibleParticipantId:
-        drift.Value(modifiedAccount.responsibleParticipantId),
+            drift.Value(modifiedAccount.responsibleParticipantId),
       );
 
       final rows = await (_appDatabase.update(_appDatabase.accounts)
-        ..where((tbl) => tbl.accountId.equals(modifiedAccount.accountId)))
+            ..where((tbl) => tbl.accountId.equals(modifiedAccount.accountId)))
           .write(update);
 
       return rows > 0;
     } catch (e, st) {
-      _logger.severe("Error modifying account ${modifiedAccount.accountId}", e, st);
+      _logger.severe(
+          "Error modifying account ${modifiedAccount.accountId}", e, st);
       return false;
     }
   }
@@ -227,7 +232,7 @@ class AccountService {
   Future<bool> deleteAccount(int id) async {
     try {
       final deleted = await (_appDatabase.delete(_appDatabase.accounts)
-        ..where((tbl) => tbl.accountId.equals(id)))
+            ..where((tbl) => tbl.accountId.equals(id)))
           .go();
       return deleted > 0;
     } catch (e, st) {
@@ -303,11 +308,11 @@ class CategoryService {
 
       return results
           .map((c) => models.Category(
-        categoryId: c.categoryId,
-        templateId: c.templateId,
-        categoryName: c.categoryName,
-        colorHex: c.colorHex,
-      ))
+                categoryId: c.categoryId,
+                templateId: c.templateId,
+                categoryName: c.categoryName,
+                colorHex: c.colorHex,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching categories", e, st);
@@ -326,20 +331,22 @@ class CategoryService {
       debugPrint("Sampled category: ${results[0]}");
       return results
           .map((c) => models.Category(
-        categoryId: c.categoryId,
-        templateId: c.templateId,
-        categoryName: c.categoryName,
-        colorHex: c.colorHex,
-      ))
+                categoryId: c.categoryId,
+                templateId: c.templateId,
+                categoryName: c.categoryName,
+                colorHex: c.colorHex,
+              ))
           .toList();
     } catch (e, st) {
-      _logger.severe("Error fetching categories for template $templateId", e, st);
+      _logger.severe(
+          "Error fetching categories for template $templateId", e, st);
       return [];
     }
   }
 
   Future<int?> createCategory(clientModels.Category newCategory) async {
-    print("Attempting to create category. Details:\n Name: ${newCategory.categoryName} \n Template ID: ${newCategory.templateId} \n Color: ${newCategory.colorHex}");
+    print(
+        "Attempting to create category. Details:\n Name: ${newCategory.categoryName} \n Template ID: ${newCategory.templateId} \n Color: ${newCategory.colorHex}");
     try {
       final entry = CategoriesCompanion.insert(
         categoryName: newCategory.categoryName,
@@ -359,12 +366,12 @@ class CategoryService {
     try {
       // First, delete all accounts in this category
       await (_appDatabase.delete(_appDatabase.accounts)
-        ..where((tbl) => tbl.categoryId.equals(categoryId)))
+            ..where((tbl) => tbl.categoryId.equals(categoryId)))
           .go();
 
       // Then delete the category
       final deleted = await (_appDatabase.delete(_appDatabase.categories)
-        ..where((tbl) => tbl.categoryId.equals(categoryId)))
+            ..where((tbl) => tbl.categoryId.equals(categoryId)))
           .go();
 
       _logger.info("Deleted category $categoryId and its accounts");

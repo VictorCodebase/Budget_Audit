@@ -2717,428 +2717,359 @@ class TransactionsCompanion extends drift.UpdateCompanion<Transaction> {
   }
 }
 
-class $TransactionEditHistoriesTable extends TransactionEditHistories
-    with
-        drift
-        .TableInfo<$TransactionEditHistoriesTable, TransactionEditHistory> {
+class $VendorMatchHistoriesTable extends VendorMatchHistories
+    with drift.TableInfo<$VendorMatchHistoriesTable, VendorMatchHistory> {
   @override
   final drift.GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $TransactionEditHistoriesTable(this.attachedDatabase, [this._alias]);
-  static const drift.VerificationMeta _transactionEditIdMeta =
-      const drift.VerificationMeta('transactionEditId');
+  $VendorMatchHistoriesTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _vendorMatchIdMeta =
+      const drift.VerificationMeta('vendorMatchId');
   @override
-  late final drift.GeneratedColumn<int> transactionEditId =
-      drift.GeneratedColumn<int>('transaction_edit_id', aliasedName, false,
+  late final drift.GeneratedColumn<int> vendorMatchId =
+      drift.GeneratedColumn<int>('vendor_match_id', aliasedName, false,
           hasAutoIncrement: true,
           type: DriftSqlType.int,
           requiredDuringInsert: false,
           defaultConstraints:
               GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const drift.VerificationMeta _editorParticipantIdMeta =
-      const drift.VerificationMeta('editorParticipantId');
+  static const drift.VerificationMeta _vendorIdMeta =
+      const drift.VerificationMeta('vendorId');
   @override
-  late final drift.GeneratedColumn<int> editorParticipantId =
-      drift.GeneratedColumn<int>('editor_participant_id', aliasedName, false,
+  late final drift.GeneratedColumn<int> vendorId = drift.GeneratedColumn<int>(
+      'vendor_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES vendors (vendor_id)'));
+  static const drift.VerificationMeta _accountIdMeta =
+      const drift.VerificationMeta('accountId');
+  @override
+  late final drift.GeneratedColumn<int> accountId = drift.GeneratedColumn<int>(
+      'account_id', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES accounts (account_id)'));
+  static const drift.VerificationMeta _participantIdMeta =
+      const drift.VerificationMeta('participantId');
+  @override
+  late final drift.GeneratedColumn<int> participantId =
+      drift.GeneratedColumn<int>('participant_id', aliasedName, false,
           type: DriftSqlType.int,
           requiredDuringInsert: true,
           defaultConstraints: GeneratedColumn.constraintIsAlways(
               'REFERENCES participants (participant_id)'));
-  static const drift.VerificationMeta _transactionIdMeta =
-      const drift.VerificationMeta('transactionId');
+  static const drift.VerificationMeta _useCountMeta =
+      const drift.VerificationMeta('useCount');
   @override
-  late final drift.GeneratedColumn<int> transactionId =
-      drift.GeneratedColumn<int>('transaction_id', aliasedName, false,
-          type: DriftSqlType.int,
-          requiredDuringInsert: true,
-          defaultConstraints: GeneratedColumn.constraintIsAlways(
-              'REFERENCES transactions (transaction_id)'));
-  static const drift.VerificationMeta _editedFieldMeta =
-      const drift.VerificationMeta('editedField');
+  late final drift.GeneratedColumn<int> useCount = drift.GeneratedColumn<int>(
+      'use_count', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const drift.Constant(1));
+  static const drift.VerificationMeta _lastUsedMeta =
+      const drift.VerificationMeta('lastUsed');
   @override
-  late final drift.GeneratedColumn<String> editedField =
-      drift.GeneratedColumn<String>('edited_field', aliasedName, false,
-          additionalChecks: GeneratedColumn.checkTextLength(
-              minTextLength: 1, maxTextLength: 100),
-          type: DriftSqlType.string,
-          requiredDuringInsert: true);
-  static const drift.VerificationMeta _originalValueMeta =
-      const drift.VerificationMeta('originalValue');
-  @override
-  late final drift.GeneratedColumn<String> originalValue =
-      drift.GeneratedColumn<String>('original_value', aliasedName, false,
-          additionalChecks: GeneratedColumn.checkTextLength(
-              minTextLength: 1, maxTextLength: 250),
-          type: DriftSqlType.string,
-          requiredDuringInsert: true);
-  static const drift.VerificationMeta _newValueMeta =
-      const drift.VerificationMeta('newValue');
-  @override
-  late final drift.GeneratedColumn<String> newValue =
-      drift.GeneratedColumn<String>(
-          'new_value', aliasedName, false,
-          additionalChecks: GeneratedColumn.checkTextLength(
-              minTextLength: 1, maxTextLength: 250),
-          type: DriftSqlType.string,
-          requiredDuringInsert: true);
-  static const drift.VerificationMeta _timeStampMeta =
-      const drift.VerificationMeta('timeStamp');
-  @override
-  late final drift.GeneratedColumn<DateTime> timeStamp =
-      drift.GeneratedColumn<DateTime>('time_stamp', aliasedName, false,
+  late final drift.GeneratedColumn<DateTime> lastUsed =
+      drift.GeneratedColumn<DateTime>('last_used', aliasedName, false,
           type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
-  List<drift.GeneratedColumn> get $columns => [
-        transactionEditId,
-        editorParticipantId,
-        transactionId,
-        editedField,
-        originalValue,
-        newValue,
-        timeStamp
-      ];
+  List<drift.GeneratedColumn> get $columns =>
+      [vendorMatchId, vendorId, accountId, participantId, useCount, lastUsed];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'transaction_edit_histories';
+  static const String $name = 'vendor_match_histories';
   @override
   drift.VerificationContext validateIntegrity(
-      drift.Insertable<TransactionEditHistory> instance,
+      drift.Insertable<VendorMatchHistory> instance,
       {bool isInserting = false}) {
     final context = drift.VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('transaction_edit_id')) {
+    if (data.containsKey('vendor_match_id')) {
       context.handle(
-          _transactionEditIdMeta,
-          transactionEditId.isAcceptableOrUnknown(
-              data['transaction_edit_id']!, _transactionEditIdMeta));
+          _vendorMatchIdMeta,
+          vendorMatchId.isAcceptableOrUnknown(
+              data['vendor_match_id']!, _vendorMatchIdMeta));
     }
-    if (data.containsKey('editor_participant_id')) {
+    if (data.containsKey('vendor_id')) {
+      context.handle(_vendorIdMeta,
+          vendorId.isAcceptableOrUnknown(data['vendor_id']!, _vendorIdMeta));
+    } else if (isInserting) {
+      context.missing(_vendorIdMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(_accountIdMeta,
+          accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta));
+    } else if (isInserting) {
+      context.missing(_accountIdMeta);
+    }
+    if (data.containsKey('participant_id')) {
       context.handle(
-          _editorParticipantIdMeta,
-          editorParticipantId.isAcceptableOrUnknown(
-              data['editor_participant_id']!, _editorParticipantIdMeta));
+          _participantIdMeta,
+          participantId.isAcceptableOrUnknown(
+              data['participant_id']!, _participantIdMeta));
     } else if (isInserting) {
-      context.missing(_editorParticipantIdMeta);
+      context.missing(_participantIdMeta);
     }
-    if (data.containsKey('transaction_id')) {
-      context.handle(
-          _transactionIdMeta,
-          transactionId.isAcceptableOrUnknown(
-              data['transaction_id']!, _transactionIdMeta));
-    } else if (isInserting) {
-      context.missing(_transactionIdMeta);
+    if (data.containsKey('use_count')) {
+      context.handle(_useCountMeta,
+          useCount.isAcceptableOrUnknown(data['use_count']!, _useCountMeta));
     }
-    if (data.containsKey('edited_field')) {
-      context.handle(
-          _editedFieldMeta,
-          editedField.isAcceptableOrUnknown(
-              data['edited_field']!, _editedFieldMeta));
+    if (data.containsKey('last_used')) {
+      context.handle(_lastUsedMeta,
+          lastUsed.isAcceptableOrUnknown(data['last_used']!, _lastUsedMeta));
     } else if (isInserting) {
-      context.missing(_editedFieldMeta);
-    }
-    if (data.containsKey('original_value')) {
-      context.handle(
-          _originalValueMeta,
-          originalValue.isAcceptableOrUnknown(
-              data['original_value']!, _originalValueMeta));
-    } else if (isInserting) {
-      context.missing(_originalValueMeta);
-    }
-    if (data.containsKey('new_value')) {
-      context.handle(_newValueMeta,
-          newValue.isAcceptableOrUnknown(data['new_value']!, _newValueMeta));
-    } else if (isInserting) {
-      context.missing(_newValueMeta);
-    }
-    if (data.containsKey('time_stamp')) {
-      context.handle(_timeStampMeta,
-          timeStamp.isAcceptableOrUnknown(data['time_stamp']!, _timeStampMeta));
-    } else if (isInserting) {
-      context.missing(_timeStampMeta);
+      context.missing(_lastUsedMeta);
     }
     return context;
   }
 
   @override
-  Set<drift.GeneratedColumn> get $primaryKey => {transactionEditId};
+  Set<drift.GeneratedColumn> get $primaryKey => {vendorMatchId};
   @override
-  TransactionEditHistory map(Map<String, dynamic> data, {String? tablePrefix}) {
+  VendorMatchHistory map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return TransactionEditHistory(
-      transactionEditId: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}transaction_edit_id'])!,
-      editorParticipantId: attachedDatabase.typeMapping.read(
-          DriftSqlType.int, data['${effectivePrefix}editor_participant_id'])!,
-      transactionId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}transaction_id'])!,
-      editedField: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}edited_field'])!,
-      originalValue: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}original_value'])!,
-      newValue: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}new_value'])!,
-      timeStamp: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}time_stamp'])!,
+    return VendorMatchHistory(
+      vendorMatchId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}vendor_match_id'])!,
+      vendorId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}vendor_id'])!,
+      accountId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}account_id'])!,
+      participantId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}participant_id'])!,
+      useCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}use_count'])!,
+      lastUsed: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_used'])!,
     );
   }
 
   @override
-  $TransactionEditHistoriesTable createAlias(String alias) {
-    return $TransactionEditHistoriesTable(attachedDatabase, alias);
+  $VendorMatchHistoriesTable createAlias(String alias) {
+    return $VendorMatchHistoriesTable(attachedDatabase, alias);
   }
 }
 
-class TransactionEditHistory extends drift.DataClass
-    implements drift.Insertable<TransactionEditHistory> {
-  final int transactionEditId;
-  final int editorParticipantId;
-  final int transactionId;
-  final String editedField;
-  final String originalValue;
-  final String newValue;
-  final DateTime timeStamp;
-  const TransactionEditHistory(
-      {required this.transactionEditId,
-      required this.editorParticipantId,
-      required this.transactionId,
-      required this.editedField,
-      required this.originalValue,
-      required this.newValue,
-      required this.timeStamp});
+class VendorMatchHistory extends drift.DataClass
+    implements drift.Insertable<VendorMatchHistory> {
+  final int vendorMatchId;
+  final int vendorId;
+  final int accountId;
+  final int participantId;
+  final int useCount;
+  final DateTime lastUsed;
+  const VendorMatchHistory(
+      {required this.vendorMatchId,
+      required this.vendorId,
+      required this.accountId,
+      required this.participantId,
+      required this.useCount,
+      required this.lastUsed});
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    map['transaction_edit_id'] = drift.Variable<int>(transactionEditId);
-    map['editor_participant_id'] = drift.Variable<int>(editorParticipantId);
-    map['transaction_id'] = drift.Variable<int>(transactionId);
-    map['edited_field'] = drift.Variable<String>(editedField);
-    map['original_value'] = drift.Variable<String>(originalValue);
-    map['new_value'] = drift.Variable<String>(newValue);
-    map['time_stamp'] = drift.Variable<DateTime>(timeStamp);
+    map['vendor_match_id'] = drift.Variable<int>(vendorMatchId);
+    map['vendor_id'] = drift.Variable<int>(vendorId);
+    map['account_id'] = drift.Variable<int>(accountId);
+    map['participant_id'] = drift.Variable<int>(participantId);
+    map['use_count'] = drift.Variable<int>(useCount);
+    map['last_used'] = drift.Variable<DateTime>(lastUsed);
     return map;
   }
 
-  TransactionEditHistoriesCompanion toCompanion(bool nullToAbsent) {
-    return TransactionEditHistoriesCompanion(
-      transactionEditId: drift.Value(transactionEditId),
-      editorParticipantId: drift.Value(editorParticipantId),
-      transactionId: drift.Value(transactionId),
-      editedField: drift.Value(editedField),
-      originalValue: drift.Value(originalValue),
-      newValue: drift.Value(newValue),
-      timeStamp: drift.Value(timeStamp),
+  VendorMatchHistoriesCompanion toCompanion(bool nullToAbsent) {
+    return VendorMatchHistoriesCompanion(
+      vendorMatchId: drift.Value(vendorMatchId),
+      vendorId: drift.Value(vendorId),
+      accountId: drift.Value(accountId),
+      participantId: drift.Value(participantId),
+      useCount: drift.Value(useCount),
+      lastUsed: drift.Value(lastUsed),
     );
   }
 
-  factory TransactionEditHistory.fromJson(Map<String, dynamic> json,
+  factory VendorMatchHistory.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
-    return TransactionEditHistory(
-      transactionEditId: serializer.fromJson<int>(json['transactionEditId']),
-      editorParticipantId:
-          serializer.fromJson<int>(json['editorParticipantId']),
-      transactionId: serializer.fromJson<int>(json['transactionId']),
-      editedField: serializer.fromJson<String>(json['editedField']),
-      originalValue: serializer.fromJson<String>(json['originalValue']),
-      newValue: serializer.fromJson<String>(json['newValue']),
-      timeStamp: serializer.fromJson<DateTime>(json['timeStamp']),
+    return VendorMatchHistory(
+      vendorMatchId: serializer.fromJson<int>(json['vendorMatchId']),
+      vendorId: serializer.fromJson<int>(json['vendorId']),
+      accountId: serializer.fromJson<int>(json['accountId']),
+      participantId: serializer.fromJson<int>(json['participantId']),
+      useCount: serializer.fromJson<int>(json['useCount']),
+      lastUsed: serializer.fromJson<DateTime>(json['lastUsed']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'transactionEditId': serializer.toJson<int>(transactionEditId),
-      'editorParticipantId': serializer.toJson<int>(editorParticipantId),
-      'transactionId': serializer.toJson<int>(transactionId),
-      'editedField': serializer.toJson<String>(editedField),
-      'originalValue': serializer.toJson<String>(originalValue),
-      'newValue': serializer.toJson<String>(newValue),
-      'timeStamp': serializer.toJson<DateTime>(timeStamp),
+      'vendorMatchId': serializer.toJson<int>(vendorMatchId),
+      'vendorId': serializer.toJson<int>(vendorId),
+      'accountId': serializer.toJson<int>(accountId),
+      'participantId': serializer.toJson<int>(participantId),
+      'useCount': serializer.toJson<int>(useCount),
+      'lastUsed': serializer.toJson<DateTime>(lastUsed),
     };
   }
 
-  TransactionEditHistory copyWith(
-          {int? transactionEditId,
-          int? editorParticipantId,
-          int? transactionId,
-          String? editedField,
-          String? originalValue,
-          String? newValue,
-          DateTime? timeStamp}) =>
-      TransactionEditHistory(
-        transactionEditId: transactionEditId ?? this.transactionEditId,
-        editorParticipantId: editorParticipantId ?? this.editorParticipantId,
-        transactionId: transactionId ?? this.transactionId,
-        editedField: editedField ?? this.editedField,
-        originalValue: originalValue ?? this.originalValue,
-        newValue: newValue ?? this.newValue,
-        timeStamp: timeStamp ?? this.timeStamp,
+  VendorMatchHistory copyWith(
+          {int? vendorMatchId,
+          int? vendorId,
+          int? accountId,
+          int? participantId,
+          int? useCount,
+          DateTime? lastUsed}) =>
+      VendorMatchHistory(
+        vendorMatchId: vendorMatchId ?? this.vendorMatchId,
+        vendorId: vendorId ?? this.vendorId,
+        accountId: accountId ?? this.accountId,
+        participantId: participantId ?? this.participantId,
+        useCount: useCount ?? this.useCount,
+        lastUsed: lastUsed ?? this.lastUsed,
       );
-  TransactionEditHistory copyWithCompanion(
-      TransactionEditHistoriesCompanion data) {
-    return TransactionEditHistory(
-      transactionEditId: data.transactionEditId.present
-          ? data.transactionEditId.value
-          : this.transactionEditId,
-      editorParticipantId: data.editorParticipantId.present
-          ? data.editorParticipantId.value
-          : this.editorParticipantId,
-      transactionId: data.transactionId.present
-          ? data.transactionId.value
-          : this.transactionId,
-      editedField:
-          data.editedField.present ? data.editedField.value : this.editedField,
-      originalValue: data.originalValue.present
-          ? data.originalValue.value
-          : this.originalValue,
-      newValue: data.newValue.present ? data.newValue.value : this.newValue,
-      timeStamp: data.timeStamp.present ? data.timeStamp.value : this.timeStamp,
+  VendorMatchHistory copyWithCompanion(VendorMatchHistoriesCompanion data) {
+    return VendorMatchHistory(
+      vendorMatchId: data.vendorMatchId.present
+          ? data.vendorMatchId.value
+          : this.vendorMatchId,
+      vendorId: data.vendorId.present ? data.vendorId.value : this.vendorId,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      participantId: data.participantId.present
+          ? data.participantId.value
+          : this.participantId,
+      useCount: data.useCount.present ? data.useCount.value : this.useCount,
+      lastUsed: data.lastUsed.present ? data.lastUsed.value : this.lastUsed,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('TransactionEditHistory(')
-          ..write('transactionEditId: $transactionEditId, ')
-          ..write('editorParticipantId: $editorParticipantId, ')
-          ..write('transactionId: $transactionId, ')
-          ..write('editedField: $editedField, ')
-          ..write('originalValue: $originalValue, ')
-          ..write('newValue: $newValue, ')
-          ..write('timeStamp: $timeStamp')
+    return (StringBuffer('VendorMatchHistory(')
+          ..write('vendorMatchId: $vendorMatchId, ')
+          ..write('vendorId: $vendorId, ')
+          ..write('accountId: $accountId, ')
+          ..write('participantId: $participantId, ')
+          ..write('useCount: $useCount, ')
+          ..write('lastUsed: $lastUsed')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(transactionEditId, editorParticipantId,
-      transactionId, editedField, originalValue, newValue, timeStamp);
+  int get hashCode => Object.hash(
+      vendorMatchId, vendorId, accountId, participantId, useCount, lastUsed);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is TransactionEditHistory &&
-          other.transactionEditId == this.transactionEditId &&
-          other.editorParticipantId == this.editorParticipantId &&
-          other.transactionId == this.transactionId &&
-          other.editedField == this.editedField &&
-          other.originalValue == this.originalValue &&
-          other.newValue == this.newValue &&
-          other.timeStamp == this.timeStamp);
+      (other is VendorMatchHistory &&
+          other.vendorMatchId == this.vendorMatchId &&
+          other.vendorId == this.vendorId &&
+          other.accountId == this.accountId &&
+          other.participantId == this.participantId &&
+          other.useCount == this.useCount &&
+          other.lastUsed == this.lastUsed);
 }
 
-class TransactionEditHistoriesCompanion
-    extends drift.UpdateCompanion<TransactionEditHistory> {
-  final drift.Value<int> transactionEditId;
-  final drift.Value<int> editorParticipantId;
-  final drift.Value<int> transactionId;
-  final drift.Value<String> editedField;
-  final drift.Value<String> originalValue;
-  final drift.Value<String> newValue;
-  final drift.Value<DateTime> timeStamp;
-  const TransactionEditHistoriesCompanion({
-    this.transactionEditId = const drift.Value.absent(),
-    this.editorParticipantId = const drift.Value.absent(),
-    this.transactionId = const drift.Value.absent(),
-    this.editedField = const drift.Value.absent(),
-    this.originalValue = const drift.Value.absent(),
-    this.newValue = const drift.Value.absent(),
-    this.timeStamp = const drift.Value.absent(),
+class VendorMatchHistoriesCompanion
+    extends drift.UpdateCompanion<VendorMatchHistory> {
+  final drift.Value<int> vendorMatchId;
+  final drift.Value<int> vendorId;
+  final drift.Value<int> accountId;
+  final drift.Value<int> participantId;
+  final drift.Value<int> useCount;
+  final drift.Value<DateTime> lastUsed;
+  const VendorMatchHistoriesCompanion({
+    this.vendorMatchId = const drift.Value.absent(),
+    this.vendorId = const drift.Value.absent(),
+    this.accountId = const drift.Value.absent(),
+    this.participantId = const drift.Value.absent(),
+    this.useCount = const drift.Value.absent(),
+    this.lastUsed = const drift.Value.absent(),
   });
-  TransactionEditHistoriesCompanion.insert({
-    this.transactionEditId = const drift.Value.absent(),
-    required int editorParticipantId,
-    required int transactionId,
-    required String editedField,
-    required String originalValue,
-    required String newValue,
-    required DateTime timeStamp,
-  })  : editorParticipantId = drift.Value(editorParticipantId),
-        transactionId = drift.Value(transactionId),
-        editedField = drift.Value(editedField),
-        originalValue = drift.Value(originalValue),
-        newValue = drift.Value(newValue),
-        timeStamp = drift.Value(timeStamp);
-  static drift.Insertable<TransactionEditHistory> custom({
-    drift.Expression<int>? transactionEditId,
-    drift.Expression<int>? editorParticipantId,
-    drift.Expression<int>? transactionId,
-    drift.Expression<String>? editedField,
-    drift.Expression<String>? originalValue,
-    drift.Expression<String>? newValue,
-    drift.Expression<DateTime>? timeStamp,
+  VendorMatchHistoriesCompanion.insert({
+    this.vendorMatchId = const drift.Value.absent(),
+    required int vendorId,
+    required int accountId,
+    required int participantId,
+    this.useCount = const drift.Value.absent(),
+    required DateTime lastUsed,
+  })  : vendorId = drift.Value(vendorId),
+        accountId = drift.Value(accountId),
+        participantId = drift.Value(participantId),
+        lastUsed = drift.Value(lastUsed);
+  static drift.Insertable<VendorMatchHistory> custom({
+    drift.Expression<int>? vendorMatchId,
+    drift.Expression<int>? vendorId,
+    drift.Expression<int>? accountId,
+    drift.Expression<int>? participantId,
+    drift.Expression<int>? useCount,
+    drift.Expression<DateTime>? lastUsed,
   }) {
     return drift.RawValuesInsertable({
-      if (transactionEditId != null) 'transaction_edit_id': transactionEditId,
-      if (editorParticipantId != null)
-        'editor_participant_id': editorParticipantId,
-      if (transactionId != null) 'transaction_id': transactionId,
-      if (editedField != null) 'edited_field': editedField,
-      if (originalValue != null) 'original_value': originalValue,
-      if (newValue != null) 'new_value': newValue,
-      if (timeStamp != null) 'time_stamp': timeStamp,
+      if (vendorMatchId != null) 'vendor_match_id': vendorMatchId,
+      if (vendorId != null) 'vendor_id': vendorId,
+      if (accountId != null) 'account_id': accountId,
+      if (participantId != null) 'participant_id': participantId,
+      if (useCount != null) 'use_count': useCount,
+      if (lastUsed != null) 'last_used': lastUsed,
     });
   }
 
-  TransactionEditHistoriesCompanion copyWith(
-      {drift.Value<int>? transactionEditId,
-      drift.Value<int>? editorParticipantId,
-      drift.Value<int>? transactionId,
-      drift.Value<String>? editedField,
-      drift.Value<String>? originalValue,
-      drift.Value<String>? newValue,
-      drift.Value<DateTime>? timeStamp}) {
-    return TransactionEditHistoriesCompanion(
-      transactionEditId: transactionEditId ?? this.transactionEditId,
-      editorParticipantId: editorParticipantId ?? this.editorParticipantId,
-      transactionId: transactionId ?? this.transactionId,
-      editedField: editedField ?? this.editedField,
-      originalValue: originalValue ?? this.originalValue,
-      newValue: newValue ?? this.newValue,
-      timeStamp: timeStamp ?? this.timeStamp,
+  VendorMatchHistoriesCompanion copyWith(
+      {drift.Value<int>? vendorMatchId,
+      drift.Value<int>? vendorId,
+      drift.Value<int>? accountId,
+      drift.Value<int>? participantId,
+      drift.Value<int>? useCount,
+      drift.Value<DateTime>? lastUsed}) {
+    return VendorMatchHistoriesCompanion(
+      vendorMatchId: vendorMatchId ?? this.vendorMatchId,
+      vendorId: vendorId ?? this.vendorId,
+      accountId: accountId ?? this.accountId,
+      participantId: participantId ?? this.participantId,
+      useCount: useCount ?? this.useCount,
+      lastUsed: lastUsed ?? this.lastUsed,
     );
   }
 
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    if (transactionEditId.present) {
-      map['transaction_edit_id'] = drift.Variable<int>(transactionEditId.value);
+    if (vendorMatchId.present) {
+      map['vendor_match_id'] = drift.Variable<int>(vendorMatchId.value);
     }
-    if (editorParticipantId.present) {
-      map['editor_participant_id'] =
-          drift.Variable<int>(editorParticipantId.value);
+    if (vendorId.present) {
+      map['vendor_id'] = drift.Variable<int>(vendorId.value);
     }
-    if (transactionId.present) {
-      map['transaction_id'] = drift.Variable<int>(transactionId.value);
+    if (accountId.present) {
+      map['account_id'] = drift.Variable<int>(accountId.value);
     }
-    if (editedField.present) {
-      map['edited_field'] = drift.Variable<String>(editedField.value);
+    if (participantId.present) {
+      map['participant_id'] = drift.Variable<int>(participantId.value);
     }
-    if (originalValue.present) {
-      map['original_value'] = drift.Variable<String>(originalValue.value);
+    if (useCount.present) {
+      map['use_count'] = drift.Variable<int>(useCount.value);
     }
-    if (newValue.present) {
-      map['new_value'] = drift.Variable<String>(newValue.value);
-    }
-    if (timeStamp.present) {
-      map['time_stamp'] = drift.Variable<DateTime>(timeStamp.value);
+    if (lastUsed.present) {
+      map['last_used'] = drift.Variable<DateTime>(lastUsed.value);
     }
     return map;
   }
 
   @override
   String toString() {
-    return (StringBuffer('TransactionEditHistoriesCompanion(')
-          ..write('transactionEditId: $transactionEditId, ')
-          ..write('editorParticipantId: $editorParticipantId, ')
-          ..write('transactionId: $transactionId, ')
-          ..write('editedField: $editedField, ')
-          ..write('originalValue: $originalValue, ')
-          ..write('newValue: $newValue, ')
-          ..write('timeStamp: $timeStamp')
+    return (StringBuffer('VendorMatchHistoriesCompanion(')
+          ..write('vendorMatchId: $vendorMatchId, ')
+          ..write('vendorId: $vendorId, ')
+          ..write('accountId: $accountId, ')
+          ..write('participantId: $participantId, ')
+          ..write('useCount: $useCount, ')
+          ..write('lastUsed: $lastUsed')
           ..write(')'))
         .toString();
   }
@@ -4402,8 +4333,8 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   late final $AccountsTable accounts = $AccountsTable(this);
   late final $VendorsTable vendors = $VendorsTable(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
-  late final $TransactionEditHistoriesTable transactionEditHistories =
-      $TransactionEditHistoriesTable(this);
+  late final $VendorMatchHistoriesTable vendorMatchHistories =
+      $VendorMatchHistoriesTable(this);
   late final $VendorPreferencesTable vendorPreferences =
       $VendorPreferencesTable(this);
   late final $ParticipantIncomesTable participantIncomes =
@@ -4423,7 +4354,7 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
         accounts,
         vendors,
         transactions,
-        transactionEditHistories,
+        vendorMatchHistories,
         vendorPreferences,
         participantIncomes,
         templateParticipants,
@@ -4524,22 +4455,23 @@ final class $$ParticipantsTableReferences extends drift
         manager.$state.copyWith(prefetchedData: cache));
   }
 
-  static drift.MultiTypedResultKey<$TransactionEditHistoriesTable,
-      List<TransactionEditHistory>> _transactionEditHistoriesRefsTable(
-          _$AppDatabase db) =>
-      drift.MultiTypedResultKey.fromTable(db.transactionEditHistories,
-          aliasName: drift.$_aliasNameGenerator(db.participants.participantId,
-              db.transactionEditHistories.editorParticipantId));
+  static drift
+      .MultiTypedResultKey<$VendorMatchHistoriesTable, List<VendorMatchHistory>>
+      _vendorMatchHistoriesRefsTable(_$AppDatabase db) =>
+          drift.MultiTypedResultKey.fromTable(db.vendorMatchHistories,
+              aliasName: drift.$_aliasNameGenerator(
+                  db.participants.participantId,
+                  db.vendorMatchHistories.participantId));
 
-  $$TransactionEditHistoriesTableProcessedTableManager
-      get transactionEditHistoriesRefs {
-    final manager = $$TransactionEditHistoriesTableTableManager(
-            $_db, $_db.transactionEditHistories)
-        .filter((f) => f.editorParticipantId.participantId
-            .sqlEquals($_itemColumn<int>('participant_id')!));
+  $$VendorMatchHistoriesTableProcessedTableManager
+      get vendorMatchHistoriesRefs {
+    final manager =
+        $$VendorMatchHistoriesTableTableManager($_db, $_db.vendorMatchHistories)
+            .filter((f) => f.participantId.participantId
+                .sqlEquals($_itemColumn<int>('participant_id')!));
 
     final cache =
-        $_typedResult.readTableOrNull(_transactionEditHistoriesRefsTable($_db));
+        $_typedResult.readTableOrNull(_vendorMatchHistoriesRefsTable($_db));
     return drift.ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -4723,27 +4655,26 @@ class $$ParticipantsTableFilterComposer
     return f(composer);
   }
 
-  drift.Expression<bool> transactionEditHistoriesRefs(
+  drift.Expression<bool> vendorMatchHistoriesRefs(
       drift.Expression<bool> Function(
-              $$TransactionEditHistoriesTableFilterComposer f)
+              $$VendorMatchHistoriesTableFilterComposer f)
           f) {
-    final $$TransactionEditHistoriesTableFilterComposer composer =
-        $composerBuilder(
-            composer: this,
-            getCurrentColumn: (t) => t.participantId,
-            referencedTable: $db.transactionEditHistories,
-            getReferencedColumn: (t) => t.editorParticipantId,
-            builder: (joinBuilder,
-                    {$addJoinBuilderToRootComposer,
-                    $removeJoinBuilderFromRootComposer}) =>
-                $$TransactionEditHistoriesTableFilterComposer(
-                  $db: $db,
-                  $table: $db.transactionEditHistories,
-                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                  joinBuilder: joinBuilder,
-                  $removeJoinBuilderFromRootComposer:
-                      $removeJoinBuilderFromRootComposer,
-                ));
+    final $$VendorMatchHistoriesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.participantId,
+        referencedTable: $db.vendorMatchHistories,
+        getReferencedColumn: (t) => t.participantId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VendorMatchHistoriesTableFilterComposer(
+              $db: $db,
+              $table: $db.vendorMatchHistories,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
     return f(composer);
   }
 
@@ -4965,22 +4896,22 @@ class $$ParticipantsTableAnnotationComposer
     return f(composer);
   }
 
-  drift.Expression<T> transactionEditHistoriesRefs<T extends Object>(
+  drift.Expression<T> vendorMatchHistoriesRefs<T extends Object>(
       drift.Expression<T> Function(
-              $$TransactionEditHistoriesTableAnnotationComposer a)
+              $$VendorMatchHistoriesTableAnnotationComposer a)
           f) {
-    final $$TransactionEditHistoriesTableAnnotationComposer composer =
+    final $$VendorMatchHistoriesTableAnnotationComposer composer =
         $composerBuilder(
             composer: this,
             getCurrentColumn: (t) => t.participantId,
-            referencedTable: $db.transactionEditHistories,
-            getReferencedColumn: (t) => t.editorParticipantId,
+            referencedTable: $db.vendorMatchHistories,
+            getReferencedColumn: (t) => t.participantId,
             builder: (joinBuilder,
                     {$addJoinBuilderToRootComposer,
                     $removeJoinBuilderFromRootComposer}) =>
-                $$TransactionEditHistoriesTableAnnotationComposer(
+                $$VendorMatchHistoriesTableAnnotationComposer(
                   $db: $db,
-                  $table: $db.transactionEditHistories,
+                  $table: $db.vendorMatchHistories,
                   $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
                   joinBuilder: joinBuilder,
                   $removeJoinBuilderFromRootComposer:
@@ -5077,7 +5008,7 @@ class $$ParticipantsTableTableManager extends drift.RootTableManager<
         bool accountsRefs,
         bool transactionOwner,
         bool transactionEditor,
-        bool transactionEditHistoriesRefs,
+        bool vendorMatchHistoriesRefs,
         bool vendorPreferencesRefs,
         bool participantIncomesRefs,
         bool templateParticipantsRefs})> {
@@ -5138,7 +5069,7 @@ class $$ParticipantsTableTableManager extends drift.RootTableManager<
               accountsRefs = false,
               transactionOwner = false,
               transactionEditor = false,
-              transactionEditHistoriesRefs = false,
+              vendorMatchHistoriesRefs = false,
               vendorPreferencesRefs = false,
               participantIncomesRefs = false,
               templateParticipantsRefs = false}) {
@@ -5149,7 +5080,7 @@ class $$ParticipantsTableTableManager extends drift.RootTableManager<
                 if (accountsRefs) db.accounts,
                 if (transactionOwner) db.transactions,
                 if (transactionEditor) db.transactions,
-                if (transactionEditHistoriesRefs) db.transactionEditHistories,
+                if (vendorMatchHistoriesRefs) db.vendorMatchHistories,
                 if (vendorPreferencesRefs) db.vendorPreferences,
                 if (participantIncomesRefs) db.participantIncomes,
                 if (templateParticipantsRefs) db.templateParticipants
@@ -5222,19 +5153,18 @@ class $$ParticipantsTableTableManager extends drift.RootTableManager<
                             referencedItems.where((e) =>
                                 e.editorParticipantId == item.participantId),
                         typedResults: items),
-                  if (transactionEditHistoriesRefs)
+                  if (vendorMatchHistoriesRefs)
                     await drift.$_getPrefetchedData<Participant,
-                            $ParticipantsTable, TransactionEditHistory>(
+                            $ParticipantsTable, VendorMatchHistory>(
                         currentTable: table,
                         referencedTable: $$ParticipantsTableReferences
-                            ._transactionEditHistoriesRefsTable(db),
+                            ._vendorMatchHistoriesRefsTable(db),
                         managerFromTypedResult: (p0) =>
                             $$ParticipantsTableReferences(db, table, p0)
-                                .transactionEditHistoriesRefs,
-                        referencedItemsForCurrentItem: (item,
-                                referencedItems) =>
-                            referencedItems.where((e) =>
-                                e.editorParticipantId == item.participantId),
+                                .vendorMatchHistoriesRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems.where(
+                                (e) => e.participantId == item.participantId),
                         typedResults: items),
                   if (vendorPreferencesRefs)
                     await drift.$_getPrefetchedData<Participant,
@@ -5298,7 +5228,7 @@ typedef $$ParticipantsTableProcessedTableManager = drift.ProcessedTableManager<
         bool accountsRefs,
         bool transactionOwner,
         bool transactionEditor,
-        bool transactionEditHistoriesRefs,
+        bool vendorMatchHistoriesRefs,
         bool vendorPreferencesRefs,
         bool participantIncomesRefs,
         bool templateParticipantsRefs})>;
@@ -6768,6 +6698,26 @@ final class $$AccountsTableReferences
     return drift.ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static drift
+      .MultiTypedResultKey<$VendorMatchHistoriesTable, List<VendorMatchHistory>>
+      _vendorMatchHistoriesRefsTable(_$AppDatabase db) =>
+          drift.MultiTypedResultKey.fromTable(db.vendorMatchHistories,
+              aliasName: drift.$_aliasNameGenerator(
+                  db.accounts.accountId, db.vendorMatchHistories.accountId));
+
+  $$VendorMatchHistoriesTableProcessedTableManager
+      get vendorMatchHistoriesRefs {
+    final manager = $$VendorMatchHistoriesTableTableManager(
+            $_db, $_db.vendorMatchHistories)
+        .filter((f) =>
+            f.accountId.accountId.sqlEquals($_itemColumn<int>('account_id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_vendorMatchHistoriesRefsTable($_db));
+    return drift.ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$AccountsTableFilterComposer
@@ -6876,6 +6826,29 @@ class $$AccountsTableFilterComposer
             $$TransactionsTableFilterComposer(
               $db: $db,
               $table: $db.transactions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  drift.Expression<bool> vendorMatchHistoriesRefs(
+      drift.Expression<bool> Function(
+              $$VendorMatchHistoriesTableFilterComposer f)
+          f) {
+    final $$VendorMatchHistoriesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.accountId,
+        referencedTable: $db.vendorMatchHistories,
+        getReferencedColumn: (t) => t.accountId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VendorMatchHistoriesTableFilterComposer(
+              $db: $db,
+              $table: $db.vendorMatchHistories,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -7086,6 +7059,30 @@ class $$AccountsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  drift.Expression<T> vendorMatchHistoriesRefs<T extends Object>(
+      drift.Expression<T> Function(
+              $$VendorMatchHistoriesTableAnnotationComposer a)
+          f) {
+    final $$VendorMatchHistoriesTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.accountId,
+            referencedTable: $db.vendorMatchHistories,
+            getReferencedColumn: (t) => t.accountId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$VendorMatchHistoriesTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.vendorMatchHistories,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
 }
 
 class $$AccountsTableTableManager extends drift.RootTableManager<
@@ -7103,7 +7100,8 @@ class $$AccountsTableTableManager extends drift.RootTableManager<
         {bool categoryId,
         bool templateId,
         bool responsibleParticipantId,
-        bool transactionsRefs})> {
+        bool transactionsRefs,
+        bool vendorMatchHistoriesRefs})> {
   $$AccountsTableTableManager(_$AppDatabase db, $AccountsTable table)
       : super(drift.TableManagerState(
           db: db,
@@ -7167,10 +7165,14 @@ class $$AccountsTableTableManager extends drift.RootTableManager<
               {categoryId = false,
               templateId = false,
               responsibleParticipantId = false,
-              transactionsRefs = false}) {
+              transactionsRefs = false,
+              vendorMatchHistoriesRefs = false}) {
             return drift.PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (transactionsRefs) db.transactions],
+              explicitlyWatchedTables: [
+                if (transactionsRefs) db.transactions,
+                if (vendorMatchHistoriesRefs) db.vendorMatchHistories
+              ],
               addJoins: <
                   T extends drift.TableManagerState<
                       dynamic,
@@ -7234,7 +7236,22 @@ class $$AccountsTableTableManager extends drift.RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.accountId == item.accountId),
-                        typedResults: items)
+                        typedResults: items),
+                  if (vendorMatchHistoriesRefs)
+                    await drift
+                        .$_getPrefetchedData<Account, $AccountsTable,
+                                VendorMatchHistory>(
+                            currentTable: table,
+                            referencedTable: $$AccountsTableReferences
+                                ._vendorMatchHistoriesRefsTable(db),
+                            managerFromTypedResult: (p0) =>
+                                $$AccountsTableReferences(db, table, p0)
+                                    .vendorMatchHistoriesRefs,
+                            referencedItemsForCurrentItem:
+                                (item, referencedItems) =>
+                                    referencedItems.where(
+                                        (e) => e.accountId == item.accountId),
+                            typedResults: items)
                 ];
               },
             );
@@ -7257,7 +7274,8 @@ typedef $$AccountsTableProcessedTableManager = drift.ProcessedTableManager<
         {bool categoryId,
         bool templateId,
         bool responsibleParticipantId,
-        bool transactionsRefs})>;
+        bool transactionsRefs,
+        bool vendorMatchHistoriesRefs})>;
 typedef $$VendorsTableCreateCompanionBuilder = VendorsCompanion Function({
   drift.Value<int> vendorId,
   required String vendorName,
@@ -7283,6 +7301,26 @@ final class $$VendorsTableReferences
             f.vendorId.vendorId.sqlEquals($_itemColumn<int>('vendor_id')!));
 
     final cache = $_typedResult.readTableOrNull(_transactionsRefsTable($_db));
+    return drift.ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static drift
+      .MultiTypedResultKey<$VendorMatchHistoriesTable, List<VendorMatchHistory>>
+      _vendorMatchHistoriesRefsTable(_$AppDatabase db) =>
+          drift.MultiTypedResultKey.fromTable(db.vendorMatchHistories,
+              aliasName: drift.$_aliasNameGenerator(
+                  db.vendors.vendorId, db.vendorMatchHistories.vendorId));
+
+  $$VendorMatchHistoriesTableProcessedTableManager
+      get vendorMatchHistoriesRefs {
+    final manager =
+        $$VendorMatchHistoriesTableTableManager($_db, $_db.vendorMatchHistories)
+            .filter((f) =>
+                f.vendorId.vendorId.sqlEquals($_itemColumn<int>('vendor_id')!));
+
+    final cache =
+        $_typedResult.readTableOrNull(_vendorMatchHistoriesRefsTable($_db));
     return drift.ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -7337,6 +7375,29 @@ class $$VendorsTableFilterComposer
             $$TransactionsTableFilterComposer(
               $db: $db,
               $table: $db.transactions,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  drift.Expression<bool> vendorMatchHistoriesRefs(
+      drift.Expression<bool> Function(
+              $$VendorMatchHistoriesTableFilterComposer f)
+          f) {
+    final $$VendorMatchHistoriesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.vendorId,
+        referencedTable: $db.vendorMatchHistories,
+        getReferencedColumn: (t) => t.vendorId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VendorMatchHistoriesTableFilterComposer(
+              $db: $db,
+              $table: $db.vendorMatchHistories,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -7422,6 +7483,30 @@ class $$VendorsTableAnnotationComposer
     return f(composer);
   }
 
+  drift.Expression<T> vendorMatchHistoriesRefs<T extends Object>(
+      drift.Expression<T> Function(
+              $$VendorMatchHistoriesTableAnnotationComposer a)
+          f) {
+    final $$VendorMatchHistoriesTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.vendorId,
+            referencedTable: $db.vendorMatchHistories,
+            getReferencedColumn: (t) => t.vendorId,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$VendorMatchHistoriesTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.vendorMatchHistories,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+
   drift.Expression<T> vendorPreferencesRefs<T extends Object>(
       drift.Expression<T> Function($$VendorPreferencesTableAnnotationComposer a)
           f) {
@@ -7458,7 +7543,9 @@ class $$VendorsTableTableManager extends drift.RootTableManager<
     (Vendor, $$VendorsTableReferences),
     Vendor,
     drift.PrefetchHooks Function(
-        {bool transactionsRefs, bool vendorPreferencesRefs})> {
+        {bool transactionsRefs,
+        bool vendorMatchHistoriesRefs,
+        bool vendorPreferencesRefs})> {
   $$VendorsTableTableManager(_$AppDatabase db, $VendorsTable table)
       : super(drift.TableManagerState(
           db: db,
@@ -7490,11 +7577,14 @@ class $$VendorsTableTableManager extends drift.RootTableManager<
                   (e.readTable(table), $$VendorsTableReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: (
-              {transactionsRefs = false, vendorPreferencesRefs = false}) {
+              {transactionsRefs = false,
+              vendorMatchHistoriesRefs = false,
+              vendorPreferencesRefs = false}) {
             return drift.PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (transactionsRefs) db.transactions,
+                if (vendorMatchHistoriesRefs) db.vendorMatchHistories,
                 if (vendorPreferencesRefs) db.vendorPreferences
               ],
               addJoins: null,
@@ -7509,6 +7599,19 @@ class $$VendorsTableTableManager extends drift.RootTableManager<
                         managerFromTypedResult: (p0) =>
                             $$VendorsTableReferences(db, table, p0)
                                 .transactionsRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.vendorId == item.vendorId),
+                        typedResults: items),
+                  if (vendorMatchHistoriesRefs)
+                    await drift.$_getPrefetchedData<Vendor, $VendorsTable,
+                            VendorMatchHistory>(
+                        currentTable: table,
+                        referencedTable: $$VendorsTableReferences
+                            ._vendorMatchHistoriesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$VendorsTableReferences(db, table, p0)
+                                .vendorMatchHistoriesRefs,
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.vendorId == item.vendorId),
@@ -7545,7 +7648,9 @@ typedef $$VendorsTableProcessedTableManager = drift.ProcessedTableManager<
     (Vendor, $$VendorsTableReferences),
     Vendor,
     drift.PrefetchHooks Function(
-        {bool transactionsRefs, bool vendorPreferencesRefs})>;
+        {bool transactionsRefs,
+        bool vendorMatchHistoriesRefs,
+        bool vendorPreferencesRefs})>;
 typedef $$TransactionsTableCreateCompanionBuilder = TransactionsCompanion
     Function({
   drift.Value<int> transactionId,
@@ -7649,26 +7754,6 @@ final class $$TransactionsTableReferences extends drift
     if (item == null) return manager;
     return drift.ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
-  }
-
-  static drift.MultiTypedResultKey<$TransactionEditHistoriesTable,
-      List<TransactionEditHistory>> _transactionEditHistoriesRefsTable(
-          _$AppDatabase db) =>
-      drift.MultiTypedResultKey.fromTable(db.transactionEditHistories,
-          aliasName: drift.$_aliasNameGenerator(db.transactions.transactionId,
-              db.transactionEditHistories.transactionId));
-
-  $$TransactionEditHistoriesTableProcessedTableManager
-      get transactionEditHistoriesRefs {
-    final manager = $$TransactionEditHistoriesTableTableManager(
-            $_db, $_db.transactionEditHistories)
-        .filter((f) => f.transactionId.transactionId
-            .sqlEquals($_itemColumn<int>('transaction_id')!));
-
-    final cache =
-        $_typedResult.readTableOrNull(_transactionEditHistoriesRefsTable($_db));
-    return drift.ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: cache));
   }
 }
 
@@ -7796,30 +7881,6 @@ class $$TransactionsTableFilterComposer
                   $removeJoinBuilderFromRootComposer,
             ));
     return composer;
-  }
-
-  drift.Expression<bool> transactionEditHistoriesRefs(
-      drift.Expression<bool> Function(
-              $$TransactionEditHistoriesTableFilterComposer f)
-          f) {
-    final $$TransactionEditHistoriesTableFilterComposer composer =
-        $composerBuilder(
-            composer: this,
-            getCurrentColumn: (t) => t.transactionId,
-            referencedTable: $db.transactionEditHistories,
-            getReferencedColumn: (t) => t.transactionId,
-            builder: (joinBuilder,
-                    {$addJoinBuilderToRootComposer,
-                    $removeJoinBuilderFromRootComposer}) =>
-                $$TransactionEditHistoriesTableFilterComposer(
-                  $db: $db,
-                  $table: $db.transactionEditHistories,
-                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                  joinBuilder: joinBuilder,
-                  $removeJoinBuilderFromRootComposer:
-                      $removeJoinBuilderFromRootComposer,
-                ));
-    return f(composer);
   }
 }
 
@@ -8075,30 +8136,6 @@ class $$TransactionsTableAnnotationComposer
             ));
     return composer;
   }
-
-  drift.Expression<T> transactionEditHistoriesRefs<T extends Object>(
-      drift.Expression<T> Function(
-              $$TransactionEditHistoriesTableAnnotationComposer a)
-          f) {
-    final $$TransactionEditHistoriesTableAnnotationComposer composer =
-        $composerBuilder(
-            composer: this,
-            getCurrentColumn: (t) => t.transactionId,
-            referencedTable: $db.transactionEditHistories,
-            getReferencedColumn: (t) => t.transactionId,
-            builder: (joinBuilder,
-                    {$addJoinBuilderToRootComposer,
-                    $removeJoinBuilderFromRootComposer}) =>
-                $$TransactionEditHistoriesTableAnnotationComposer(
-                  $db: $db,
-                  $table: $db.transactionEditHistories,
-                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                  joinBuilder: joinBuilder,
-                  $removeJoinBuilderFromRootComposer:
-                      $removeJoinBuilderFromRootComposer,
-                ));
-    return f(composer);
-  }
 }
 
 class $$TransactionsTableTableManager extends drift.RootTableManager<
@@ -8117,8 +8154,7 @@ class $$TransactionsTableTableManager extends drift.RootTableManager<
         bool accountId,
         bool vendorId,
         bool participantId,
-        bool editorParticipantId,
-        bool transactionEditHistoriesRefs})> {
+        bool editorParticipantId})> {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
       : super(drift.TableManagerState(
           db: db,
@@ -8188,13 +8224,10 @@ class $$TransactionsTableTableManager extends drift.RootTableManager<
               accountId = false,
               vendorId = false,
               participantId = false,
-              editorParticipantId = false,
-              transactionEditHistoriesRefs = false}) {
+              editorParticipantId = false}) {
             return drift.PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [
-                if (transactionEditHistoriesRefs) db.transactionEditHistories
-              ],
+              explicitlyWatchedTables: [],
               addJoins: <
                   T extends drift.TableManagerState<
                       dynamic,
@@ -8266,21 +8299,7 @@ class $$TransactionsTableTableManager extends drift.RootTableManager<
                 return state;
               },
               getPrefetchedDataCallback: (items) async {
-                return [
-                  if (transactionEditHistoriesRefs)
-                    await drift.$_getPrefetchedData<Transaction,
-                            $TransactionsTable, TransactionEditHistory>(
-                        currentTable: table,
-                        referencedTable: $$TransactionsTableReferences
-                            ._transactionEditHistoriesRefsTable(db),
-                        managerFromTypedResult: (p0) =>
-                            $$TransactionsTableReferences(db, table, p0)
-                                .transactionEditHistoriesRefs,
-                        referencedItemsForCurrentItem:
-                            (item, referencedItems) => referencedItems.where(
-                                (e) => e.transactionId == item.transactionId),
-                        typedResults: items)
-                ];
+                return [];
               },
             );
           },
@@ -8303,101 +8322,143 @@ typedef $$TransactionsTableProcessedTableManager = drift.ProcessedTableManager<
         bool accountId,
         bool vendorId,
         bool participantId,
-        bool editorParticipantId,
-        bool transactionEditHistoriesRefs})>;
-typedef $$TransactionEditHistoriesTableCreateCompanionBuilder
-    = TransactionEditHistoriesCompanion Function({
-  drift.Value<int> transactionEditId,
-  required int editorParticipantId,
-  required int transactionId,
-  required String editedField,
-  required String originalValue,
-  required String newValue,
-  required DateTime timeStamp,
+        bool editorParticipantId})>;
+typedef $$VendorMatchHistoriesTableCreateCompanionBuilder
+    = VendorMatchHistoriesCompanion Function({
+  drift.Value<int> vendorMatchId,
+  required int vendorId,
+  required int accountId,
+  required int participantId,
+  drift.Value<int> useCount,
+  required DateTime lastUsed,
 });
-typedef $$TransactionEditHistoriesTableUpdateCompanionBuilder
-    = TransactionEditHistoriesCompanion Function({
-  drift.Value<int> transactionEditId,
-  drift.Value<int> editorParticipantId,
-  drift.Value<int> transactionId,
-  drift.Value<String> editedField,
-  drift.Value<String> originalValue,
-  drift.Value<String> newValue,
-  drift.Value<DateTime> timeStamp,
+typedef $$VendorMatchHistoriesTableUpdateCompanionBuilder
+    = VendorMatchHistoriesCompanion Function({
+  drift.Value<int> vendorMatchId,
+  drift.Value<int> vendorId,
+  drift.Value<int> accountId,
+  drift.Value<int> participantId,
+  drift.Value<int> useCount,
+  drift.Value<DateTime> lastUsed,
 });
 
-final class $$TransactionEditHistoriesTableReferences
-    extends drift.BaseReferences<_$AppDatabase, $TransactionEditHistoriesTable,
-        TransactionEditHistory> {
-  $$TransactionEditHistoriesTableReferences(
+final class $$VendorMatchHistoriesTableReferences extends drift.BaseReferences<
+    _$AppDatabase, $VendorMatchHistoriesTable, VendorMatchHistory> {
+  $$VendorMatchHistoriesTableReferences(
       super.$_db, super.$_table, super.$_typedResult);
 
-  static $ParticipantsTable _editorParticipantIdTable(_$AppDatabase db) =>
-      db.participants.createAlias(drift.$_aliasNameGenerator(
-          db.transactionEditHistories.editorParticipantId,
-          db.participants.participantId));
+  static $VendorsTable _vendorIdTable(_$AppDatabase db) =>
+      db.vendors.createAlias(drift.$_aliasNameGenerator(
+          db.vendorMatchHistories.vendorId, db.vendors.vendorId));
 
-  $$ParticipantsTableProcessedTableManager get editorParticipantId {
-    final $_column = $_itemColumn<int>('editor_participant_id')!;
+  $$VendorsTableProcessedTableManager get vendorId {
+    final $_column = $_itemColumn<int>('vendor_id')!;
 
-    final manager = $$ParticipantsTableTableManager($_db, $_db.participants)
-        .filter((f) => f.participantId.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_editorParticipantIdTable($_db));
+    final manager = $$VendorsTableTableManager($_db, $_db.vendors)
+        .filter((f) => f.vendorId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_vendorIdTable($_db));
     if (item == null) return manager;
     return drift.ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
   }
 
-  static $TransactionsTable _transactionIdTable(_$AppDatabase db) =>
-      db.transactions.createAlias(drift.$_aliasNameGenerator(
-          db.transactionEditHistories.transactionId,
-          db.transactions.transactionId));
+  static $AccountsTable _accountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias(drift.$_aliasNameGenerator(
+          db.vendorMatchHistories.accountId, db.accounts.accountId));
 
-  $$TransactionsTableProcessedTableManager get transactionId {
-    final $_column = $_itemColumn<int>('transaction_id')!;
+  $$AccountsTableProcessedTableManager get accountId {
+    final $_column = $_itemColumn<int>('account_id')!;
 
-    final manager = $$TransactionsTableTableManager($_db, $_db.transactions)
-        .filter((f) => f.transactionId.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_transactionIdTable($_db));
+    final manager = $$AccountsTableTableManager($_db, $_db.accounts)
+        .filter((f) => f.accountId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return drift.ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $ParticipantsTable _participantIdTable(_$AppDatabase db) =>
+      db.participants.createAlias(drift.$_aliasNameGenerator(
+          db.vendorMatchHistories.participantId,
+          db.participants.participantId));
+
+  $$ParticipantsTableProcessedTableManager get participantId {
+    final $_column = $_itemColumn<int>('participant_id')!;
+
+    final manager = $$ParticipantsTableTableManager($_db, $_db.participants)
+        .filter((f) => f.participantId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_participantIdTable($_db));
     if (item == null) return manager;
     return drift.ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
   }
 }
 
-class $$TransactionEditHistoriesTableFilterComposer
-    extends drift.Composer<_$AppDatabase, $TransactionEditHistoriesTable> {
-  $$TransactionEditHistoriesTableFilterComposer({
+class $$VendorMatchHistoriesTableFilterComposer
+    extends drift.Composer<_$AppDatabase, $VendorMatchHistoriesTable> {
+  $$VendorMatchHistoriesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnFilters<int> get transactionEditId => $composableBuilder(
-      column: $table.transactionEditId,
+  drift.ColumnFilters<int> get vendorMatchId => $composableBuilder(
+      column: $table.vendorMatchId,
       builder: (column) => drift.ColumnFilters(column));
 
-  drift.ColumnFilters<String> get editedField => $composableBuilder(
-      column: $table.editedField,
+  drift.ColumnFilters<int> get useCount => $composableBuilder(
+      column: $table.useCount,
       builder: (column) => drift.ColumnFilters(column));
 
-  drift.ColumnFilters<String> get originalValue => $composableBuilder(
-      column: $table.originalValue,
+  drift.ColumnFilters<DateTime> get lastUsed => $composableBuilder(
+      column: $table.lastUsed,
       builder: (column) => drift.ColumnFilters(column));
 
-  drift.ColumnFilters<String> get newValue => $composableBuilder(
-      column: $table.newValue,
-      builder: (column) => drift.ColumnFilters(column));
+  $$VendorsTableFilterComposer get vendorId {
+    final $$VendorsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.vendorId,
+        referencedTable: $db.vendors,
+        getReferencedColumn: (t) => t.vendorId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VendorsTableFilterComposer(
+              $db: $db,
+              $table: $db.vendors,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
-  drift.ColumnFilters<DateTime> get timeStamp => $composableBuilder(
-      column: $table.timeStamp,
-      builder: (column) => drift.ColumnFilters(column));
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.accountId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.accountId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableFilterComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
-  $$ParticipantsTableFilterComposer get editorParticipantId {
+  $$ParticipantsTableFilterComposer get participantId {
     final $$ParticipantsTableFilterComposer composer = $composerBuilder(
         composer: this,
-        getCurrentColumn: (t) => t.editorParticipantId,
+        getCurrentColumn: (t) => t.participantId,
         referencedTable: $db.participants,
         getReferencedColumn: (t) => t.participantId,
         builder: (joinBuilder,
@@ -8413,19 +8474,41 @@ class $$TransactionEditHistoriesTableFilterComposer
             ));
     return composer;
   }
+}
 
-  $$TransactionsTableFilterComposer get transactionId {
-    final $$TransactionsTableFilterComposer composer = $composerBuilder(
+class $$VendorMatchHistoriesTableOrderingComposer
+    extends drift.Composer<_$AppDatabase, $VendorMatchHistoriesTable> {
+  $$VendorMatchHistoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.ColumnOrderings<int> get vendorMatchId => $composableBuilder(
+      column: $table.vendorMatchId,
+      builder: (column) => drift.ColumnOrderings(column));
+
+  drift.ColumnOrderings<int> get useCount => $composableBuilder(
+      column: $table.useCount,
+      builder: (column) => drift.ColumnOrderings(column));
+
+  drift.ColumnOrderings<DateTime> get lastUsed => $composableBuilder(
+      column: $table.lastUsed,
+      builder: (column) => drift.ColumnOrderings(column));
+
+  $$VendorsTableOrderingComposer get vendorId {
+    final $$VendorsTableOrderingComposer composer = $composerBuilder(
         composer: this,
-        getCurrentColumn: (t) => t.transactionId,
-        referencedTable: $db.transactions,
-        getReferencedColumn: (t) => t.transactionId,
+        getCurrentColumn: (t) => t.vendorId,
+        referencedTable: $db.vendors,
+        getReferencedColumn: (t) => t.vendorId,
         builder: (joinBuilder,
                 {$addJoinBuilderToRootComposer,
                 $removeJoinBuilderFromRootComposer}) =>
-            $$TransactionsTableFilterComposer(
+            $$VendorsTableOrderingComposer(
               $db: $db,
-              $table: $db.transactions,
+              $table: $db.vendors,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -8433,41 +8516,31 @@ class $$TransactionEditHistoriesTableFilterComposer
             ));
     return composer;
   }
-}
 
-class $$TransactionEditHistoriesTableOrderingComposer
-    extends drift.Composer<_$AppDatabase, $TransactionEditHistoriesTable> {
-  $$TransactionEditHistoriesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.ColumnOrderings<int> get transactionEditId => $composableBuilder(
-      column: $table.transactionEditId,
-      builder: (column) => drift.ColumnOrderings(column));
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.accountId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.accountId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableOrderingComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
-  drift.ColumnOrderings<String> get editedField => $composableBuilder(
-      column: $table.editedField,
-      builder: (column) => drift.ColumnOrderings(column));
-
-  drift.ColumnOrderings<String> get originalValue => $composableBuilder(
-      column: $table.originalValue,
-      builder: (column) => drift.ColumnOrderings(column));
-
-  drift.ColumnOrderings<String> get newValue => $composableBuilder(
-      column: $table.newValue,
-      builder: (column) => drift.ColumnOrderings(column));
-
-  drift.ColumnOrderings<DateTime> get timeStamp => $composableBuilder(
-      column: $table.timeStamp,
-      builder: (column) => drift.ColumnOrderings(column));
-
-  $$ParticipantsTableOrderingComposer get editorParticipantId {
+  $$ParticipantsTableOrderingComposer get participantId {
     final $$ParticipantsTableOrderingComposer composer = $composerBuilder(
         composer: this,
-        getCurrentColumn: (t) => t.editorParticipantId,
+        getCurrentColumn: (t) => t.participantId,
         referencedTable: $db.participants,
         getReferencedColumn: (t) => t.participantId,
         builder: (joinBuilder,
@@ -8483,19 +8556,38 @@ class $$TransactionEditHistoriesTableOrderingComposer
             ));
     return composer;
   }
+}
 
-  $$TransactionsTableOrderingComposer get transactionId {
-    final $$TransactionsTableOrderingComposer composer = $composerBuilder(
+class $$VendorMatchHistoriesTableAnnotationComposer
+    extends drift.Composer<_$AppDatabase, $VendorMatchHistoriesTable> {
+  $$VendorMatchHistoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.GeneratedColumn<int> get vendorMatchId => $composableBuilder(
+      column: $table.vendorMatchId, builder: (column) => column);
+
+  drift.GeneratedColumn<int> get useCount =>
+      $composableBuilder(column: $table.useCount, builder: (column) => column);
+
+  drift.GeneratedColumn<DateTime> get lastUsed =>
+      $composableBuilder(column: $table.lastUsed, builder: (column) => column);
+
+  $$VendorsTableAnnotationComposer get vendorId {
+    final $$VendorsTableAnnotationComposer composer = $composerBuilder(
         composer: this,
-        getCurrentColumn: (t) => t.transactionId,
-        referencedTable: $db.transactions,
-        getReferencedColumn: (t) => t.transactionId,
+        getCurrentColumn: (t) => t.vendorId,
+        referencedTable: $db.vendors,
+        getReferencedColumn: (t) => t.vendorId,
         builder: (joinBuilder,
                 {$addJoinBuilderToRootComposer,
                 $removeJoinBuilderFromRootComposer}) =>
-            $$TransactionsTableOrderingComposer(
+            $$VendorsTableAnnotationComposer(
               $db: $db,
-              $table: $db.transactions,
+              $table: $db.vendors,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -8503,36 +8595,31 @@ class $$TransactionEditHistoriesTableOrderingComposer
             ));
     return composer;
   }
-}
 
-class $$TransactionEditHistoriesTableAnnotationComposer
-    extends drift.Composer<_$AppDatabase, $TransactionEditHistoriesTable> {
-  $$TransactionEditHistoriesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.GeneratedColumn<int> get transactionEditId => $composableBuilder(
-      column: $table.transactionEditId, builder: (column) => column);
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.accountId,
+        referencedTable: $db.accounts,
+        getReferencedColumn: (t) => t.accountId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$AccountsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.accounts,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
-  drift.GeneratedColumn<String> get editedField => $composableBuilder(
-      column: $table.editedField, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get originalValue => $composableBuilder(
-      column: $table.originalValue, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get newValue =>
-      $composableBuilder(column: $table.newValue, builder: (column) => column);
-
-  drift.GeneratedColumn<DateTime> get timeStamp =>
-      $composableBuilder(column: $table.timeStamp, builder: (column) => column);
-
-  $$ParticipantsTableAnnotationComposer get editorParticipantId {
+  $$ParticipantsTableAnnotationComposer get participantId {
     final $$ParticipantsTableAnnotationComposer composer = $composerBuilder(
         composer: this,
-        getCurrentColumn: (t) => t.editorParticipantId,
+        getCurrentColumn: (t) => t.participantId,
         referencedTable: $db.participants,
         getReferencedColumn: (t) => t.participantId,
         builder: (joinBuilder,
@@ -8548,100 +8635,74 @@ class $$TransactionEditHistoriesTableAnnotationComposer
             ));
     return composer;
   }
-
-  $$TransactionsTableAnnotationComposer get transactionId {
-    final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.transactionId,
-        referencedTable: $db.transactions,
-        getReferencedColumn: (t) => t.transactionId,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$TransactionsTableAnnotationComposer(
-              $db: $db,
-              $table: $db.transactions,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 }
 
-class $$TransactionEditHistoriesTableTableManager
-    extends drift.RootTableManager<
-        _$AppDatabase,
-        $TransactionEditHistoriesTable,
-        TransactionEditHistory,
-        $$TransactionEditHistoriesTableFilterComposer,
-        $$TransactionEditHistoriesTableOrderingComposer,
-        $$TransactionEditHistoriesTableAnnotationComposer,
-        $$TransactionEditHistoriesTableCreateCompanionBuilder,
-        $$TransactionEditHistoriesTableUpdateCompanionBuilder,
-        (TransactionEditHistory, $$TransactionEditHistoriesTableReferences),
-        TransactionEditHistory,
-        drift.PrefetchHooks Function(
-            {bool editorParticipantId, bool transactionId})> {
-  $$TransactionEditHistoriesTableTableManager(
-      _$AppDatabase db, $TransactionEditHistoriesTable table)
+class $$VendorMatchHistoriesTableTableManager extends drift.RootTableManager<
+    _$AppDatabase,
+    $VendorMatchHistoriesTable,
+    VendorMatchHistory,
+    $$VendorMatchHistoriesTableFilterComposer,
+    $$VendorMatchHistoriesTableOrderingComposer,
+    $$VendorMatchHistoriesTableAnnotationComposer,
+    $$VendorMatchHistoriesTableCreateCompanionBuilder,
+    $$VendorMatchHistoriesTableUpdateCompanionBuilder,
+    (VendorMatchHistory, $$VendorMatchHistoriesTableReferences),
+    VendorMatchHistory,
+    drift.PrefetchHooks Function(
+        {bool vendorId, bool accountId, bool participantId})> {
+  $$VendorMatchHistoriesTableTableManager(
+      _$AppDatabase db, $VendorMatchHistoriesTable table)
       : super(drift.TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$TransactionEditHistoriesTableFilterComposer(
-                  $db: db, $table: table),
+              $$VendorMatchHistoriesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$TransactionEditHistoriesTableOrderingComposer(
+              $$VendorMatchHistoriesTableOrderingComposer(
                   $db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$TransactionEditHistoriesTableAnnotationComposer(
+              $$VendorMatchHistoriesTableAnnotationComposer(
                   $db: db, $table: table),
           updateCompanionCallback: ({
-            drift.Value<int> transactionEditId = const drift.Value.absent(),
-            drift.Value<int> editorParticipantId = const drift.Value.absent(),
-            drift.Value<int> transactionId = const drift.Value.absent(),
-            drift.Value<String> editedField = const drift.Value.absent(),
-            drift.Value<String> originalValue = const drift.Value.absent(),
-            drift.Value<String> newValue = const drift.Value.absent(),
-            drift.Value<DateTime> timeStamp = const drift.Value.absent(),
+            drift.Value<int> vendorMatchId = const drift.Value.absent(),
+            drift.Value<int> vendorId = const drift.Value.absent(),
+            drift.Value<int> accountId = const drift.Value.absent(),
+            drift.Value<int> participantId = const drift.Value.absent(),
+            drift.Value<int> useCount = const drift.Value.absent(),
+            drift.Value<DateTime> lastUsed = const drift.Value.absent(),
           }) =>
-              TransactionEditHistoriesCompanion(
-            transactionEditId: transactionEditId,
-            editorParticipantId: editorParticipantId,
-            transactionId: transactionId,
-            editedField: editedField,
-            originalValue: originalValue,
-            newValue: newValue,
-            timeStamp: timeStamp,
+              VendorMatchHistoriesCompanion(
+            vendorMatchId: vendorMatchId,
+            vendorId: vendorId,
+            accountId: accountId,
+            participantId: participantId,
+            useCount: useCount,
+            lastUsed: lastUsed,
           ),
           createCompanionCallback: ({
-            drift.Value<int> transactionEditId = const drift.Value.absent(),
-            required int editorParticipantId,
-            required int transactionId,
-            required String editedField,
-            required String originalValue,
-            required String newValue,
-            required DateTime timeStamp,
+            drift.Value<int> vendorMatchId = const drift.Value.absent(),
+            required int vendorId,
+            required int accountId,
+            required int participantId,
+            drift.Value<int> useCount = const drift.Value.absent(),
+            required DateTime lastUsed,
           }) =>
-              TransactionEditHistoriesCompanion.insert(
-            transactionEditId: transactionEditId,
-            editorParticipantId: editorParticipantId,
-            transactionId: transactionId,
-            editedField: editedField,
-            originalValue: originalValue,
-            newValue: newValue,
-            timeStamp: timeStamp,
+              VendorMatchHistoriesCompanion.insert(
+            vendorMatchId: vendorMatchId,
+            vendorId: vendorId,
+            accountId: accountId,
+            participantId: participantId,
+            useCount: useCount,
+            lastUsed: lastUsed,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (
                     e.readTable(table),
-                    $$TransactionEditHistoriesTableReferences(db, table, e)
+                    $$VendorMatchHistoriesTableReferences(db, table, e)
                   ))
               .toList(),
           prefetchHooksCallback: (
-              {editorParticipantId = false, transactionId = false}) {
+              {vendorId = false, accountId = false, participantId = false}) {
             return drift.PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -8658,26 +8719,37 @@ class $$TransactionEditHistoriesTableTableManager
                       dynamic,
                       dynamic,
                       dynamic>>(state) {
-                if (editorParticipantId) {
+                if (vendorId) {
                   state = state.withJoin(
                     currentTable: table,
-                    currentColumn: table.editorParticipantId,
-                    referencedTable: $$TransactionEditHistoriesTableReferences
-                        ._editorParticipantIdTable(db),
-                    referencedColumn: $$TransactionEditHistoriesTableReferences
-                        ._editorParticipantIdTable(db)
-                        .participantId,
+                    currentColumn: table.vendorId,
+                    referencedTable: $$VendorMatchHistoriesTableReferences
+                        ._vendorIdTable(db),
+                    referencedColumn: $$VendorMatchHistoriesTableReferences
+                        ._vendorIdTable(db)
+                        .vendorId,
                   ) as T;
                 }
-                if (transactionId) {
+                if (accountId) {
                   state = state.withJoin(
                     currentTable: table,
-                    currentColumn: table.transactionId,
-                    referencedTable: $$TransactionEditHistoriesTableReferences
-                        ._transactionIdTable(db),
-                    referencedColumn: $$TransactionEditHistoriesTableReferences
-                        ._transactionIdTable(db)
-                        .transactionId,
+                    currentColumn: table.accountId,
+                    referencedTable: $$VendorMatchHistoriesTableReferences
+                        ._accountIdTable(db),
+                    referencedColumn: $$VendorMatchHistoriesTableReferences
+                        ._accountIdTable(db)
+                        .accountId,
+                  ) as T;
+                }
+                if (participantId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.participantId,
+                    referencedTable: $$VendorMatchHistoriesTableReferences
+                        ._participantIdTable(db),
+                    referencedColumn: $$VendorMatchHistoriesTableReferences
+                        ._participantIdTable(db)
+                        .participantId,
                   ) as T;
                 }
 
@@ -8691,20 +8763,20 @@ class $$TransactionEditHistoriesTableTableManager
         ));
 }
 
-typedef $$TransactionEditHistoriesTableProcessedTableManager
+typedef $$VendorMatchHistoriesTableProcessedTableManager
     = drift.ProcessedTableManager<
         _$AppDatabase,
-        $TransactionEditHistoriesTable,
-        TransactionEditHistory,
-        $$TransactionEditHistoriesTableFilterComposer,
-        $$TransactionEditHistoriesTableOrderingComposer,
-        $$TransactionEditHistoriesTableAnnotationComposer,
-        $$TransactionEditHistoriesTableCreateCompanionBuilder,
-        $$TransactionEditHistoriesTableUpdateCompanionBuilder,
-        (TransactionEditHistory, $$TransactionEditHistoriesTableReferences),
-        TransactionEditHistory,
+        $VendorMatchHistoriesTable,
+        VendorMatchHistory,
+        $$VendorMatchHistoriesTableFilterComposer,
+        $$VendorMatchHistoriesTableOrderingComposer,
+        $$VendorMatchHistoriesTableAnnotationComposer,
+        $$VendorMatchHistoriesTableCreateCompanionBuilder,
+        $$VendorMatchHistoriesTableUpdateCompanionBuilder,
+        (VendorMatchHistory, $$VendorMatchHistoriesTableReferences),
+        VendorMatchHistory,
         drift.PrefetchHooks Function(
-            {bool editorParticipantId, bool transactionId})>;
+            {bool vendorId, bool accountId, bool participantId})>;
 typedef $$VendorPreferencesTableCreateCompanionBuilder
     = VendorPreferencesCompanion Function({
   drift.Value<int> vendorPreferenceId,
@@ -9972,9 +10044,8 @@ class $AppDatabaseManager {
       $$VendorsTableTableManager(_db, _db.vendors);
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db, _db.transactions);
-  $$TransactionEditHistoriesTableTableManager get transactionEditHistories =>
-      $$TransactionEditHistoriesTableTableManager(
-          _db, _db.transactionEditHistories);
+  $$VendorMatchHistoriesTableTableManager get vendorMatchHistories =>
+      $$VendorMatchHistoriesTableTableManager(_db, _db.vendorMatchHistories);
   $$VendorPreferencesTableTableManager get vendorPreferences =>
       $$VendorPreferencesTableTableManager(_db, _db.vendorPreferences);
   $$ParticipantIncomesTableTableManager get participantIncomes =>

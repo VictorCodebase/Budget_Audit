@@ -3,6 +3,7 @@
 import 'package:budget_audit/core/models/client_models.dart';
 import 'package:budget_audit/core/models/client_models.dart' as client_models;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:logging/logging.dart';
 import '../../core/context.dart';
 import '../../core/models/client_models.dart';
@@ -10,6 +11,8 @@ import '../../core/models/models.dart' as models;
 import '../../core/services/document_service.dart';
 import '../../core/services/participant_service.dart';
 import '../../core/services/budget_service.dart';
+import '../../core/utils/fuzzy_search.dart';
+import '../../core/services/transaction_service.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final DocumentService _documentService;
@@ -190,6 +193,10 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = false;
       _logger.info(
           'Audit completed. Found ${_extractedTransactions.length} transactions.');
+
+      // Run matching logic
+      await matchTransactions();
+
       notifyListeners();
     } catch (e, st) {
       _logger.severe('Error running audit', e, st);
@@ -197,6 +204,131 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Matches transactions to vendors and accounts
+  Future<void> matchTransactions() async {
+    if (_appContext.currentTemplate == null) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final vendors = await _budgetService.transactionService.getAllVendors();
+      final vendorNames = vendors.map((v) => v.vendorName).toList();
+
+      // Fetch all accounts for the current template to map IDs to names/colors
+      final accounts = await _budgetService.accountService
+          .getAllAccountsForTemplate(_appContext.currentTemplate!.templateId);
+      final accountMap = {for (var a in accounts) a.accountId: a};
+
+      final updatedTransactions = <ParsedTransaction>[];
+
+      for (final transaction in _extractedTransactions) {
+        var matchStatus = MatchStatus.critical;
+        List<String> potentialMatches = [];
+        client_models.AccountData? suggestedAccount;
+        String finalVendorName = transaction.vendorName;
+
+        // 1. Exact Match
+        final exactMatch = vendors
+            .where((v) =>
+                v.vendorName.toLowerCase() ==
+                transaction.vendorName.toLowerCase())
+            .firstOrNull;
+
+        if (exactMatch != null) {
+          finalVendorName = exactMatch.vendorName; // Use canonical name
+          // Check history
+          final history = await _budgetService.transactionService
+              .getVendorMatchHistory(exactMatch.vendorId);
+
+          if (history.isNotEmpty) {
+            // We have history
+            final bestMatch = history.first; // Ordered by lastUsed desc
+
+            // Check if ambiguous (multiple accounts used recently? or just multiple entries)
+            final distinctAccounts = history.map((h) => h.accountId).toSet();
+
+            if (distinctAccounts.length > 1) {
+              matchStatus = MatchStatus.ambiguous;
+            } else {
+              matchStatus = MatchStatus.confident;
+            }
+
+            final account = accountMap[bestMatch.accountId];
+            if (account != null) {
+              suggestedAccount = client_models.AccountData(
+                id: account.accountId.toString(),
+                name: account.accountName,
+                budgetAmount: account.budgetAmount,
+                color: Color(
+                    int.parse(account.colorHex.substring(1), radix: 16) +
+                        0xFF000000),
+              );
+            }
+          } else {
+            // Vendor known, but no account history
+            matchStatus = MatchStatus.critical;
+          }
+        } else {
+          // 2. Fuzzy Match
+          potentialMatches =
+              FuzzySearch.findSimilar(transaction.vendorName, vendorNames);
+          if (potentialMatches.isNotEmpty) {
+            matchStatus = MatchStatus.potential;
+          }
+        }
+
+        updatedTransactions.add(transaction.copyWith(
+          vendorName: finalVendorName,
+          matchStatus: matchStatus,
+          potentialMatches: potentialMatches,
+          suggestedAccount: suggestedAccount,
+          account: suggestedAccount?.name, // Pre-fill account name for UI
+        ));
+      }
+
+      _extractedTransactions = updatedTransactions;
+    } catch (e, st) {
+      _logger.severe('Error matching transactions', e, st);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Splits a transaction into two
+  void splitTransaction(
+      String originalTransactionId, double splitAmount, String newAccountName) {
+    final index =
+        _extractedTransactions.indexWhere((t) => t.id == originalTransactionId);
+    if (index == -1) return;
+
+    final original = _extractedTransactions[index];
+    if (splitAmount >= original.amount.abs())
+      return; // Cannot split more than total
+
+    final remainingAmount = original.amount.abs() - splitAmount;
+    final isNegative = original.amount < 0;
+
+    // 1. Update original transaction (Remaining)
+    final updatedOriginal = original.copyWith(
+      amount: isNegative ? -remainingAmount : remainingAmount,
+    );
+
+    // 2. Create new transaction (Split part)
+    final newTransaction = original.copyWith(
+      id: '${original.id}_split_${DateTime.now().millisecondsSinceEpoch}',
+      amount: isNegative ? -splitAmount : splitAmount,
+      account: newAccountName, // User selects this
+      matchStatus: MatchStatus.critical, // Needs review potentially
+    );
+
+    _extractedTransactions[index] = updatedOriginal;
+    _extractedTransactions.insert(index + 1, newTransaction);
+
+    notifyListeners();
   }
 
   /// Updates a parsed transaction
