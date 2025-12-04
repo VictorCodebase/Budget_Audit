@@ -108,8 +108,14 @@ class _HomeViewState extends State<HomeView> {
           const DocumentIngestionWidget(),
           const SizedBox(height: AppTheme.spacingLg),
 
-          // Extracted transactions (only shown after audit)
-          if (viewModel.hasRunAudit) ...[
+          // Loading indicator
+          if (viewModel.isLoading) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ] else if (viewModel.hasRunAudit) ...[
+            // Extracted transactions (only shown after audit)
             const ExtractedTransactionsWidget(),
           ],
 

@@ -81,6 +81,8 @@ class ParsedTransaction extends Equatable {
   final DateTime date;
   final String vendorName;
   final double amount;
+  final bool userModified;  // Tracks if user edited this transaction
+  final int? vendorId; 
   final String? originalDescription;
   final String? category;
   final String? account;
@@ -96,6 +98,8 @@ class ParsedTransaction extends Equatable {
     required this.vendorName,
     required this.amount,
     this.originalDescription,
+    this.userModified = false,
+    this.vendorId,
     this.category,
     this.account,
     this.reason,
@@ -112,6 +116,8 @@ class ParsedTransaction extends Equatable {
     double? amount,
     String? originalDescription,
     String? category,
+    bool? userModified,
+    int? vendorId,
     String? account,
     String? reason,
     bool? useMemory,
@@ -127,6 +133,8 @@ class ParsedTransaction extends Equatable {
       originalDescription: originalDescription ?? this.originalDescription,
       category: category ?? this.category,
       account: account ?? this.account,
+      userModified: userModified ?? this.userModified,
+      vendorId: vendorId ?? this.vendorId,
       reason: reason ?? this.reason,
       useMemory: useMemory ?? this.useMemory,
       matchStatus: matchStatus ?? this.matchStatus,
@@ -144,6 +152,8 @@ class ParsedTransaction extends Equatable {
         category,
         originalDescription,
         account,
+        userModified,
+        vendorId,
         reason,
         useMemory,
         matchStatus,

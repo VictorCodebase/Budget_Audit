@@ -64,6 +64,76 @@ class HomeViewModel extends ChangeNotifier {
     await loadTemplateHistory();
   }
 
+  /// Gets recommended accounts for a vendor based on history
+  Future<List<client_models.AccountData>> getVendorRecommendations(
+      int vendorId) async {
+    try {
+      final history = await _budgetService.transactionService
+          .getVendorMatchHistory(vendorId);
+
+      if (history.isEmpty) return [];
+
+      // Get unique account IDs from history, sorted by lastUsed desc
+      final accountIds = <int>[];
+      for (final entry in history) {
+        if (!accountIds.contains(entry.accountId)) {
+          accountIds.add(entry.accountId);
+        }
+      }
+
+      // Fetch account details
+      final recommendations = <client_models.AccountData>[];
+      if (_appContext.currentTemplate != null) {
+        final allAccounts = await _budgetService.accountService
+            .getAllAccountsForTemplate(_appContext.currentTemplate!.templateId);
+
+        for (final accountId in accountIds) {
+          final account =
+              allAccounts.where((a) => a.accountId == accountId).firstOrNull;
+
+          if (account != null) {
+            recommendations.add(client_models.AccountData(
+              id: account.accountId.toString(),
+              name: account.accountName,
+              budgetAmount: account.budgetAmount,
+              color: Color(int.parse(account.colorHex.substring(1), radix: 16) +
+                  0xFF000000),
+              participants: _participants
+                  .where((p) =>
+                      p.participantId == account.responsibleParticipantId)
+                  .toList(),
+            ));
+          }
+        }
+      }
+
+      return recommendations;
+    } catch (e, st) {
+      _logger.severe('Error getting vendor recommendations', e, st);
+      return [];
+    }
+  }
+
+    /// Deletes a vendor recommendation (removes from VendorMatchHistory)
+  Future<void> deleteVendorRecommendation(int vendorId, int accountId) async {
+    if (currentParticipantId == null) return;
+
+    try {
+      await _budgetService.transactionService.deleteVendorMatchHistory(
+        vendorId: vendorId,
+        accountId: accountId,
+        participantId: currentParticipantId!,
+      );
+      _logger.info(
+          'Deleted vendor recommendation: vendor=$vendorId, account=$accountId');
+
+      // Refresh recommendations for affected transactions
+      await matchTransactions();
+    } catch (e, st) {
+      _logger.severe('Error deleting vendor recommendation', e, st);
+    }
+  }
+
   /// Loads all participants from the database
   Future<void> loadParticipants() async {
     try {
@@ -206,6 +276,7 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
+  
   /// Matches transactions to vendors and accounts
   Future<void> matchTransactions() async {
     if (_appContext.currentTemplate == null) return;
@@ -229,6 +300,7 @@ class HomeViewModel extends ChangeNotifier {
         List<String> potentialMatches = [];
         client_models.AccountData? suggestedAccount;
         String finalVendorName = transaction.vendorName;
+        int? vendorId;
 
         // 1. Exact Match
         final exactMatch = vendors
@@ -238,7 +310,9 @@ class HomeViewModel extends ChangeNotifier {
             .firstOrNull;
 
         if (exactMatch != null) {
+          vendorId = exactMatch.vendorId;
           finalVendorName = exactMatch.vendorName; // Use canonical name
+
           // Check history
           final history = await _budgetService.transactionService
               .getVendorMatchHistory(exactMatch.vendorId);
@@ -247,7 +321,7 @@ class HomeViewModel extends ChangeNotifier {
             // We have history
             final bestMatch = history.first; // Ordered by lastUsed desc
 
-            // Check if ambiguous (multiple accounts used recently? or just multiple entries)
+            // Check if ambiguous (multiple accounts used)
             final distinctAccounts = history.map((h) => h.accountId).toSet();
 
             if (distinctAccounts.length > 1) {
@@ -286,6 +360,9 @@ class HomeViewModel extends ChangeNotifier {
           potentialMatches: potentialMatches,
           suggestedAccount: suggestedAccount,
           account: suggestedAccount?.name, // Pre-fill account name for UI
+          vendorId: vendorId,
+          // Preserve userModified flag if it was already set
+          userModified: transaction.userModified,
         ));
       }
 

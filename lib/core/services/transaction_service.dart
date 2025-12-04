@@ -43,6 +43,27 @@ class TransactionService {
     }
   }
 
+    /// Deletes a vendor match history entry
+  Future<bool> deleteVendorMatchHistory({
+    required int vendorId,
+    required int accountId,
+    required int participantId,
+  }) async {
+    try {
+      final deleted = await (_appDatabase.delete(_appDatabase.vendorMatchHistories)
+            ..where((t) =>
+                t.vendorId.equals(vendorId) &
+                t.accountId.equals(accountId) &
+                t.participantId.equals(participantId)))
+          .go();
+
+      return deleted > 0;
+    } catch (e) {
+      _logger.severe('Error deleting vendor match history', e);
+      return false;
+    }
+  }
+
   /// Record a vendor match (create or update stats)
   Future<void> recordVendorMatch({
     required int vendorId,
