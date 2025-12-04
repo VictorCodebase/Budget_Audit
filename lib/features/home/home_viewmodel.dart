@@ -114,7 +114,7 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-    /// Deletes a vendor recommendation (removes from VendorMatchHistory)
+  /// Deletes a vendor recommendation (removes from VendorMatchHistory)
   Future<void> deleteVendorRecommendation(int vendorId, int accountId) async {
     if (currentParticipantId == null) return;
 
@@ -276,7 +276,6 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  
   /// Matches transactions to vendors and accounts
   Future<void> matchTransactions() async {
     if (_appContext.currentTemplate == null) return;
@@ -302,6 +301,10 @@ class HomeViewModel extends ChangeNotifier {
         String finalVendorName = transaction.vendorName;
         int? vendorId;
 
+        // Store original status on first match
+        final originalStatus =
+            transaction.originalStatus ?? transaction.matchStatus;
+
         // 1. Exact Match
         final exactMatch = vendors
             .where((v) =>
@@ -311,15 +314,14 @@ class HomeViewModel extends ChangeNotifier {
 
         if (exactMatch != null) {
           vendorId = exactMatch.vendorId;
-          finalVendorName = exactMatch.vendorName; // Use canonical name
+          finalVendorName = exactMatch.vendorName;
 
           // Check history
           final history = await _budgetService.transactionService
               .getVendorMatchHistory(exactMatch.vendorId);
 
           if (history.isNotEmpty) {
-            // We have history
-            final bestMatch = history.first; // Ordered by lastUsed desc
+            final bestMatch = history.first;
 
             // Check if ambiguous (multiple accounts used)
             final distinctAccounts = history.map((h) => h.accountId).toSet();
@@ -342,7 +344,6 @@ class HomeViewModel extends ChangeNotifier {
               );
             }
           } else {
-            // Vendor known, but no account history
             matchStatus = MatchStatus.critical;
           }
         } else {
@@ -359,10 +360,12 @@ class HomeViewModel extends ChangeNotifier {
           matchStatus: matchStatus,
           potentialMatches: potentialMatches,
           suggestedAccount: suggestedAccount,
-          account: suggestedAccount?.name, // Pre-fill account name for UI
+          account: suggestedAccount?.name,
           vendorId: vendorId,
-          // Preserve userModified flag if it was already set
+          originalStatus: originalStatus, // Preserve original status
+          // Keep existing modification flags
           userModified: transaction.userModified,
+          autoUpdated: transaction.autoUpdated,
         ));
       }
 
@@ -380,44 +383,108 @@ class HomeViewModel extends ChangeNotifier {
       String originalTransactionId, double splitAmount, String newAccountName) {
     final index =
         _extractedTransactions.indexWhere((t) => t.id == originalTransactionId);
-    if (index == -1) return;
+    if (index == -1) {
+      _logger
+          .warning('Transaction not found for split: $originalTransactionId');
+      return;
+    }
 
     final original = _extractedTransactions[index];
-    if (splitAmount >= original.amount.abs())
-      return; // Cannot split more than total
+    final originalAmount = original.amount.abs();
 
-    final remainingAmount = original.amount.abs() - splitAmount;
+    if (splitAmount <= 0 || splitAmount >= originalAmount) {
+      _logger.warning(
+          'Invalid split amount: $splitAmount for total $originalAmount');
+      return;
+    }
+
+    final remainingAmount = originalAmount - splitAmount;
     final isNegative = original.amount < 0;
 
-    // 1. Update original transaction (Remaining)
+    // 1. Update original transaction (Remaining amount)
     final updatedOriginal = original.copyWith(
       amount: isNegative ? -remainingAmount : remainingAmount,
+      userModified: true, // Mark as modified since user initiated the split
     );
 
-    // 2. Create new transaction (Split part)
+    // 2. Create new transaction (Split part) - inherits original properties
+    final splitId =
+        '${original.id}_split_${DateTime.now().millisecondsSinceEpoch}';
+
+    // Find the account data for the new account
+    client_models.AccountData? splitAccount;
+    // This would need to be passed or looked up - for now we'll create a minimal version
+
     final newTransaction = original.copyWith(
-      id: '${original.id}_split_${DateTime.now().millisecondsSinceEpoch}',
+      id: splitId,
       amount: isNegative ? -splitAmount : splitAmount,
-      account: newAccountName, // User selects this
-      matchStatus: MatchStatus.critical, // Needs review potentially
+      account: newAccountName,
+      suggestedAccount: splitAccount, // Would need proper account lookup
+      matchStatus: MatchStatus.critical, // Needs review
+      userModified: true,
+      autoUpdated: false,
+      originalStatus: original.originalStatus ??
+          original.matchStatus, // Inherit original status
     );
 
+    // Replace original and insert new transaction immediately after it
     _extractedTransactions[index] = updatedOriginal;
     _extractedTransactions.insert(index + 1, newTransaction);
 
+    _logger.info(
+        'Transaction split: $originalTransactionId -> $splitAmount to $newAccountName');
     notifyListeners();
   }
 
-  /// Updates a parsed transaction
+  /// Updates a parsed transaction with auto-update propagation
   void updateTransaction(ParsedTransaction updatedTransaction) {
     final index = _extractedTransactions.indexWhere(
       (t) => t.id == updatedTransaction.id,
     );
 
-    if (index != -1) {
-      _extractedTransactions[index] = updatedTransaction;
-      notifyListeners();
+    if (index == -1) return;
+
+    // Store the update
+    _extractedTransactions[index] = updatedTransaction;
+
+    // AUTO-UPDATE LOGIC: If user manually selected an account for a vendor,
+    // update all other transactions with the same vendor that haven't been modified
+    if (updatedTransaction.userModified &&
+        updatedTransaction.vendorId != null &&
+        updatedTransaction.suggestedAccount != null) {
+      _logger.info('Propagating vendor-account association: '
+          'vendor=${updatedTransaction.vendorId}, '
+          'account=${updatedTransaction.suggestedAccount!.name}');
+
+      // Find all transactions with the same vendor that haven't been manually updated
+      for (int i = 0; i < _extractedTransactions.length; i++) {
+        if (i == index) continue; // Skip the current transaction
+
+        final txn = _extractedTransactions[i];
+
+        // Only auto-update if:
+        // 1. Same vendor
+        // 2. User hasn't manually modified this transaction yet
+        // 3. Not already auto-updated to this account
+        if (txn.vendorId == updatedTransaction.vendorId &&
+            !txn.userModified &&
+            txn.suggestedAccount?.id !=
+                updatedTransaction.suggestedAccount!.id) {
+          _extractedTransactions[i] = txn.copyWith(
+            account: updatedTransaction.suggestedAccount!.name,
+            suggestedAccount: updatedTransaction.suggestedAccount,
+            matchStatus: MatchStatus.confident,
+            autoUpdated: true, // Mark as auto-updated
+            userModified: false, // Explicitly not user-modified
+          );
+
+          _logger.fine(
+              'Auto-updated transaction ${txn.id} to account ${updatedTransaction.suggestedAccount!.name}');
+        }
+      }
     }
+
+    notifyListeners();
   }
 
   /// Toggles the "Use Memory" checkbox for a transaction
@@ -428,6 +495,7 @@ class HomeViewModel extends ChangeNotifier {
       final transaction = _extractedTransactions[index];
       _extractedTransactions[index] = transaction.copyWith(
         useMemory: !transaction.useMemory,
+        userModified: true,
       );
       notifyListeners();
     }
@@ -478,15 +546,12 @@ class HomeViewModel extends ChangeNotifier {
   Future<List<client_models.CategoryData>> getTemplateDetails(
       int templateId) async {
     try {
-      // 1. Get all categories for this template
       final categories = await _budgetService.categoryService
           .getCategoriesForTemplate(templateId);
 
-      // 2. Get all accounts for this template
       final accounts = await _budgetService.accountService
           .getAllAccountsForTemplate(templateId);
 
-      // 3. Map accounts to their categories
       return categories.map((category) {
         final categoryAccounts = accounts
             .where((a) => a.categoryId == category.categoryId)
@@ -495,9 +560,6 @@ class HomeViewModel extends ChangeNotifier {
                   name: a.accountName,
                   budgetAmount: a.budgetAmount,
                   color: a.color,
-                  // We don't need participants for read-only preview usually,
-                  // but if needed we'd fetch them. For now leaving empty or fetching if critical.
-                  // The Account model has responsibleParticipantId, we could map it if we had the list.
                   participants: _participants
                       .where(
                           (p) => p.participantId == a.responsibleParticipantId)
@@ -520,7 +582,6 @@ class HomeViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    // Cleanup any temporary files
     for (final doc in _uploadedDocuments) {
       _documentService.cleanupDocument(doc);
     }

@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:budget_audit/core/models/client_models.dart';
 
-class AccountSelector extends StatelessWidget {
+class EnhancedAccountSelector extends StatelessWidget {
   final List<CategoryData> categories;
   final String? selectedAccountId;
   final ValueChanged<AccountData> onAccountSelected;
+  final int? vendorId;
+  final Function(int, int)? onDeleteRecommendation;
 
-  const AccountSelector({
+  const EnhancedAccountSelector({
     super.key,
     required this.categories,
     required this.selectedAccountId,
     required this.onAccountSelected,
+    this.vendorId,
+    this.onDeleteRecommendation,
   });
 
   @override

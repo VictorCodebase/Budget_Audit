@@ -91,6 +91,8 @@ class ParsedTransaction extends Equatable {
   final MatchStatus matchStatus;
   final List<String> potentialMatches;
   final AccountData? suggestedAccount;
+   final MatchStatus? originalStatus;
+   final bool autoUpdated;
 
   const ParsedTransaction({
     required this.id,
@@ -107,6 +109,8 @@ class ParsedTransaction extends Equatable {
     this.matchStatus = MatchStatus.critical,
     this.potentialMatches = const [],
     this.suggestedAccount,
+    this.originalStatus,
+    this.autoUpdated = false,
   });
 
   ParsedTransaction copyWith({
@@ -124,6 +128,8 @@ class ParsedTransaction extends Equatable {
     MatchStatus? matchStatus,
     List<String>? potentialMatches,
     AccountData? suggestedAccount,
+    MatchStatus? originalStatus,
+    bool? autoUpdated,
   }) {
     return ParsedTransaction(
       id: id ?? this.id,
@@ -140,6 +146,8 @@ class ParsedTransaction extends Equatable {
       matchStatus: matchStatus ?? this.matchStatus,
       potentialMatches: potentialMatches ?? this.potentialMatches,
       suggestedAccount: suggestedAccount ?? this.suggestedAccount,
+      originalStatus: originalStatus ?? this.originalStatus,
+      autoUpdated: autoUpdated ?? this.autoUpdated,
     );
   }
 

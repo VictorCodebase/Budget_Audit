@@ -101,14 +101,16 @@ class _ExtractedTransactionsWidgetState
 
   Widget _buildTransactionGroups(
       BuildContext context, HomeViewModel viewModel) {
-    // Group transactions by status (but keep original order within each group)
+    // Group transactions by their ORIGINAL status (preserve position)
     final criticalTxns = <ParsedTransaction>[];
     final potentialTxns = <ParsedTransaction>[];
     final ambiguousTxns = <ParsedTransaction>[];
     final confidentTxns = <ParsedTransaction>[];
 
     for (final txn in viewModel.extractedTransactions) {
-      switch (txn.matchStatus) {
+      // Use originalStatus to determine group placement
+      // This keeps transactions in their original group even after modification
+      switch (txn.originalStatus ?? txn.matchStatus) {
         case MatchStatus.critical:
           criticalTxns.add(txn);
           break;
@@ -133,7 +135,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: criticalTxns,
             status: MatchStatus.critical,
-            title: 'These require your input',
+            title: 'Your Input is Required',
             color: AppTheme.error,
           ),
         if (criticalTxns.isNotEmpty) const SizedBox(height: 16),
@@ -158,7 +160,7 @@ class _ExtractedTransactionsWidgetState
             transactions: ambiguousTxns,
             status: MatchStatus.ambiguous,
             title: 'Review historical associations',
-            color: const Color(0xFF86EFAC), // Pale green
+            color: const Color(0xFF86EFAC),
           ),
         if (ambiguousTxns.isNotEmpty) const SizedBox(height: 16),
 
@@ -186,7 +188,9 @@ class _ExtractedTransactionsWidgetState
   }) {
     // Count transactions that haven't been modified (still need action)
     final unmodifiedCount = transactions
-        .where((txn) => txn.suggestedAccount == null || !txn.userModified)
+        .where((txn) =>
+            txn.suggestedAccount == null ||
+            (!txn.userModified && !txn.autoUpdated))
         .length;
 
     return ContentBox(
@@ -225,6 +229,8 @@ class _ExtractedTransactionsWidgetState
         children: [
           for (int i = 0; i < transactions.length; i++) ...[
             _TransactionContentBox(
+              key:
+                  ValueKey(transactions[i].id), // Important for widget identity
               transaction: transactions[i],
               categories: _categories,
               originalStatus: status,
@@ -280,13 +286,14 @@ class _TransactionContentBox extends StatelessWidget {
   final Function(int, int) onDeleteRecommendation;
 
   const _TransactionContentBox({
+    Key? key,
     required this.transaction,
     required this.categories,
     required this.originalStatus,
     required this.onUpdate,
     required this.onSplit,
     required this.onDeleteRecommendation,
-  });
+  }) : super(key: key);
 
   Color _getStatusColor(MatchStatus status) {
     switch (status) {
@@ -295,18 +302,20 @@ class _TransactionContentBox extends StatelessWidget {
       case MatchStatus.potential:
         return Colors.orange;
       case MatchStatus.ambiguous:
-        return const Color(0xFF86EFAC); // Pale green
+        return const Color(0xFF86EFAC);
       case MatchStatus.confident:
         return AppTheme.success;
     }
   }
 
   Color _getCurrentColor() {
-    // If user has modified the transaction, show green
+    // Priority: user modified > auto updated > original status
     if (transaction.userModified) {
-      return AppTheme.success;
+      return AppTheme.success; // Full green for manual updates
+    } else if (transaction.autoUpdated) {
+      return const Color(0xFFBBF7D0); // Pale green for auto-updates
     }
-    // Otherwise show original status color
+    // Show original status color if not modified
     return _getStatusColor(originalStatus);
   }
 
@@ -338,6 +347,16 @@ class _TransactionContentBox extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            // Show indicator for auto-updated transactions
+            if (transaction.autoUpdated && !transaction.userModified)
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Icon(
+                  Icons.auto_fix_high,
+                  size: 14,
+                  color: Colors.green.shade600,
+                ),
+              ),
           ],
         ),
         // Amount
@@ -359,6 +378,8 @@ class _TransactionContentBox extends StatelessWidget {
               suggestedAccount: account,
               matchStatus: MatchStatus.confident,
               userModified: true,
+              autoUpdated:
+                  false, // Clear auto-update flag when manually changed
             ));
           },
           onDeleteRecommendation: onDeleteRecommendation,
@@ -380,6 +401,24 @@ class _TransactionContentBox extends StatelessWidget {
               DateFormat('dd/MM/yyyy').format(transaction.date),
               style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
             ),
+            if (transaction.autoUpdated && !transaction.userModified) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.green.shade300),
+                ),
+                child: Text(
+                  'Auto-updated',
+                  style: AppTheme.caption.copyWith(
+                    color: Colors.green.shade700,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ],
@@ -456,6 +495,7 @@ class _TransactionContentBox extends StatelessWidget {
               suggestedAccount: account,
               matchStatus: MatchStatus.confident,
               userModified: true,
+              autoUpdated: false,
             ));
           },
           onDeleteRecommendation: onDeleteRecommendation,
@@ -613,7 +653,7 @@ class _SplitTransactionDialogState extends State<_SplitTransactionDialog> {
             EnhancedAccountSelector(
               categories: widget.categories,
               selectedAccountId: _selectedAccount?.id,
-              vendorId: null, // No recommendations for split transactions
+              vendorId: null,
               onAccountSelected: (account) {
                 setState(() {
                   _selectedAccount = account;
@@ -639,197 +679,4 @@ class _SplitTransactionDialogState extends State<_SplitTransactionDialog> {
       ],
     );
   }
-}
-
-// Enhanced Account Selector with recommendations
-class EnhancedAccountSelector extends StatefulWidget {
-  final List<CategoryData> categories;
-  final String? selectedAccountId;
-  final int? vendorId;
-  final ValueChanged<AccountData> onAccountSelected;
-  final Function(int, int) onDeleteRecommendation;
-
-  const EnhancedAccountSelector({
-    Key? key,
-    required this.categories,
-    required this.selectedAccountId,
-    required this.vendorId,
-    required this.onAccountSelected,
-    required this.onDeleteRecommendation,
-  }) : super(key: key);
-
-  @override
-  State<EnhancedAccountSelector> createState() =>
-      _EnhancedAccountSelectorState();
-}
-
-class _EnhancedAccountSelectorState extends State<EnhancedAccountSelector> {
-  List<AccountData> _recommendedAccounts = [];
-  bool _isLoadingRecommendations = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadRecommendations();
-  }
-
-  Future<void> _loadRecommendations() async {
-    if (widget.vendorId == null) return;
-
-    setState(() {
-      _isLoadingRecommendations = true;
-    });
-
-    try {
-      // TODO: Implement in HomeViewModel
-      // final recommendations = await viewModel.getVendorRecommendations(widget.vendorId!);
-      // For now, mock empty list
-      _recommendedAccounts = [];
-    } catch (e) {
-      _recommendedAccounts = [];
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingRecommendations = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Flatten all accounts with category information
-    final allAccounts = <_AccountWithCategory>[];
-    for (final category in widget.categories) {
-      for (final account in category.accounts) {
-        allAccounts.add(_AccountWithCategory(
-          account: account,
-          categoryName: category.name,
-        ));
-      }
-    }
-
-    // Sort alphabetically by category, then by account name
-    allAccounts.sort((a, b) {
-      final catCompare = a.categoryName.compareTo(b.categoryName);
-      if (catCompare != 0) return catCompare;
-      return a.account.name.compareTo(b.account.name);
-    });
-
-    // Find selected account name
-    String? selectedName;
-    if (widget.selectedAccountId != null) {
-      final selected = allAccounts
-          .where((a) => a.account.id == widget.selectedAccountId)
-          .firstOrNull;
-      if (selected != null) {
-        selectedName = '${selected.categoryName} - ${selected.account.name}';
-      }
-    }
-
-    return DropdownButtonFormField<String>(
-      value: widget.selectedAccountId,
-      decoration: const InputDecoration(
-        border: OutlineInputBorder(),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      hint: const Text('Select account'),
-      isExpanded: true,
-      items: [
-        // Recommended section
-        if (_recommendedAccounts.isNotEmpty) ...[
-          const DropdownMenuItem<String>(
-            enabled: false,
-            child: Text(
-              'RECOMMENDED',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ),
-          for (final rec in _recommendedAccounts)
-            DropdownMenuItem<String>(
-              value: rec.id,
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: rec.color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(rec.name)),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 16),
-                    onPressed: () {
-                      if (widget.vendorId != null) {
-                        widget.onDeleteRecommendation(
-                          widget.vendorId!,
-                          int.parse(rec.id),
-                        );
-                        setState(() {
-                          _recommendedAccounts.remove(rec);
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          const DropdownMenuItem<String>(
-            enabled: false,
-            child: Divider(),
-          ),
-        ],
-        // All accounts
-        for (final item in allAccounts)
-          DropdownMenuItem<String>(
-            value: item.account.id,
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: item.account.color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${item.categoryName} - ${item.account.name}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-      onChanged: (value) {
-        if (value != null) {
-          final selected =
-              allAccounts.where((a) => a.account.id == value).firstOrNull;
-          if (selected != null) {
-            widget.onAccountSelected(selected.account);
-          }
-        }
-      },
-    );
-  }
-}
-
-class _AccountWithCategory {
-  final AccountData account;
-  final String categoryName;
-
-  _AccountWithCategory({
-    required this.account,
-    required this.categoryName,
-  });
 }
