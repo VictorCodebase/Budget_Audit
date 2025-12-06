@@ -131,6 +131,8 @@ class SyncLog extends drift.Table {
   drift.TextColumn get errorMessage => text().nullable()();
 
   drift.TextColumn get sheetUrl => text()();
+
+  drift.DateTimeColumn get dateSynced => dateTime()();
 //drift.IntColumn get associatedTemplate => integer().references(Templates, #templateId)();
 
 //@override

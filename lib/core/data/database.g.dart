@@ -459,9 +459,22 @@ class $SyncLogTable extends SyncLog
   late final drift.GeneratedColumn<String> sheetUrl =
       drift.GeneratedColumn<String>('sheet_url', aliasedName, false,
           type: DriftSqlType.string, requiredDuringInsert: true);
+  static const drift.VerificationMeta _dateSyncedMeta =
+      const drift.VerificationMeta('dateSynced');
   @override
-  List<drift.GeneratedColumn> get $columns =>
-      [syncId, syncDirection, synced, success, errorMessage, sheetUrl];
+  late final drift.GeneratedColumn<DateTime> dateSynced =
+      drift.GeneratedColumn<DateTime>('date_synced', aliasedName, false,
+          type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<drift.GeneratedColumn> get $columns => [
+        syncId,
+        syncDirection,
+        synced,
+        success,
+        errorMessage,
+        sheetUrl,
+        dateSynced
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -509,6 +522,14 @@ class $SyncLogTable extends SyncLog
     } else if (isInserting) {
       context.missing(_sheetUrlMeta);
     }
+    if (data.containsKey('date_synced')) {
+      context.handle(
+          _dateSyncedMeta,
+          dateSynced.isAcceptableOrUnknown(
+              data['date_synced']!, _dateSyncedMeta));
+    } else if (isInserting) {
+      context.missing(_dateSyncedMeta);
+    }
     return context;
   }
 
@@ -530,6 +551,8 @@ class $SyncLogTable extends SyncLog
           .read(DriftSqlType.string, data['${effectivePrefix}error_message']),
       sheetUrl: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}sheet_url'])!,
+      dateSynced: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}date_synced'])!,
     );
   }
 
@@ -547,13 +570,15 @@ class SyncLogEntry extends drift.DataClass
   final bool success;
   final String? errorMessage;
   final String sheetUrl;
+  final DateTime dateSynced;
   const SyncLogEntry(
       {required this.syncId,
       required this.syncDirection,
       required this.synced,
       required this.success,
       this.errorMessage,
-      required this.sheetUrl});
+      required this.sheetUrl,
+      required this.dateSynced});
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
@@ -565,6 +590,7 @@ class SyncLogEntry extends drift.DataClass
       map['error_message'] = drift.Variable<String>(errorMessage);
     }
     map['sheet_url'] = drift.Variable<String>(sheetUrl);
+    map['date_synced'] = drift.Variable<DateTime>(dateSynced);
     return map;
   }
 
@@ -578,6 +604,7 @@ class SyncLogEntry extends drift.DataClass
           ? const drift.Value.absent()
           : drift.Value(errorMessage),
       sheetUrl: drift.Value(sheetUrl),
+      dateSynced: drift.Value(dateSynced),
     );
   }
 
@@ -591,6 +618,7 @@ class SyncLogEntry extends drift.DataClass
       success: serializer.fromJson<bool>(json['success']),
       errorMessage: serializer.fromJson<String?>(json['errorMessage']),
       sheetUrl: serializer.fromJson<String>(json['sheetUrl']),
+      dateSynced: serializer.fromJson<DateTime>(json['dateSynced']),
     );
   }
   @override
@@ -603,6 +631,7 @@ class SyncLogEntry extends drift.DataClass
       'success': serializer.toJson<bool>(success),
       'errorMessage': serializer.toJson<String?>(errorMessage),
       'sheetUrl': serializer.toJson<String>(sheetUrl),
+      'dateSynced': serializer.toJson<DateTime>(dateSynced),
     };
   }
 
@@ -612,7 +641,8 @@ class SyncLogEntry extends drift.DataClass
           bool? synced,
           bool? success,
           drift.Value<String?> errorMessage = const drift.Value.absent(),
-          String? sheetUrl}) =>
+          String? sheetUrl,
+          DateTime? dateSynced}) =>
       SyncLogEntry(
         syncId: syncId ?? this.syncId,
         syncDirection: syncDirection ?? this.syncDirection,
@@ -621,6 +651,7 @@ class SyncLogEntry extends drift.DataClass
         errorMessage:
             errorMessage.present ? errorMessage.value : this.errorMessage,
         sheetUrl: sheetUrl ?? this.sheetUrl,
+        dateSynced: dateSynced ?? this.dateSynced,
       );
   SyncLogEntry copyWithCompanion(SyncLogCompanion data) {
     return SyncLogEntry(
@@ -634,6 +665,8 @@ class SyncLogEntry extends drift.DataClass
           ? data.errorMessage.value
           : this.errorMessage,
       sheetUrl: data.sheetUrl.present ? data.sheetUrl.value : this.sheetUrl,
+      dateSynced:
+          data.dateSynced.present ? data.dateSynced.value : this.dateSynced,
     );
   }
 
@@ -645,14 +678,15 @@ class SyncLogEntry extends drift.DataClass
           ..write('synced: $synced, ')
           ..write('success: $success, ')
           ..write('errorMessage: $errorMessage, ')
-          ..write('sheetUrl: $sheetUrl')
+          ..write('sheetUrl: $sheetUrl, ')
+          ..write('dateSynced: $dateSynced')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      syncId, syncDirection, synced, success, errorMessage, sheetUrl);
+  int get hashCode => Object.hash(syncId, syncDirection, synced, success,
+      errorMessage, sheetUrl, dateSynced);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -662,7 +696,8 @@ class SyncLogEntry extends drift.DataClass
           other.synced == this.synced &&
           other.success == this.success &&
           other.errorMessage == this.errorMessage &&
-          other.sheetUrl == this.sheetUrl);
+          other.sheetUrl == this.sheetUrl &&
+          other.dateSynced == this.dateSynced);
 }
 
 class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
@@ -672,6 +707,7 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
   final drift.Value<bool> success;
   final drift.Value<String?> errorMessage;
   final drift.Value<String> sheetUrl;
+  final drift.Value<DateTime> dateSynced;
   const SyncLogCompanion({
     this.syncId = const drift.Value.absent(),
     this.syncDirection = const drift.Value.absent(),
@@ -679,6 +715,7 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
     this.success = const drift.Value.absent(),
     this.errorMessage = const drift.Value.absent(),
     this.sheetUrl = const drift.Value.absent(),
+    this.dateSynced = const drift.Value.absent(),
   });
   SyncLogCompanion.insert({
     this.syncId = const drift.Value.absent(),
@@ -687,10 +724,12 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
     required bool success,
     this.errorMessage = const drift.Value.absent(),
     required String sheetUrl,
+    required DateTime dateSynced,
   })  : syncDirection = drift.Value(syncDirection),
         synced = drift.Value(synced),
         success = drift.Value(success),
-        sheetUrl = drift.Value(sheetUrl);
+        sheetUrl = drift.Value(sheetUrl),
+        dateSynced = drift.Value(dateSynced);
   static drift.Insertable<SyncLogEntry> custom({
     drift.Expression<int>? syncId,
     drift.Expression<String>? syncDirection,
@@ -698,6 +737,7 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
     drift.Expression<bool>? success,
     drift.Expression<String>? errorMessage,
     drift.Expression<String>? sheetUrl,
+    drift.Expression<DateTime>? dateSynced,
   }) {
     return drift.RawValuesInsertable({
       if (syncId != null) 'sync_id': syncId,
@@ -706,6 +746,7 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
       if (success != null) 'success': success,
       if (errorMessage != null) 'error_message': errorMessage,
       if (sheetUrl != null) 'sheet_url': sheetUrl,
+      if (dateSynced != null) 'date_synced': dateSynced,
     });
   }
 
@@ -715,7 +756,8 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
       drift.Value<bool>? synced,
       drift.Value<bool>? success,
       drift.Value<String?>? errorMessage,
-      drift.Value<String>? sheetUrl}) {
+      drift.Value<String>? sheetUrl,
+      drift.Value<DateTime>? dateSynced}) {
     return SyncLogCompanion(
       syncId: syncId ?? this.syncId,
       syncDirection: syncDirection ?? this.syncDirection,
@@ -723,6 +765,7 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
       success: success ?? this.success,
       errorMessage: errorMessage ?? this.errorMessage,
       sheetUrl: sheetUrl ?? this.sheetUrl,
+      dateSynced: dateSynced ?? this.dateSynced,
     );
   }
 
@@ -747,6 +790,9 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
     if (sheetUrl.present) {
       map['sheet_url'] = drift.Variable<String>(sheetUrl.value);
     }
+    if (dateSynced.present) {
+      map['date_synced'] = drift.Variable<DateTime>(dateSynced.value);
+    }
     return map;
   }
 
@@ -758,7 +804,8 @@ class SyncLogCompanion extends drift.UpdateCompanion<SyncLogEntry> {
           ..write('synced: $synced, ')
           ..write('success: $success, ')
           ..write('errorMessage: $errorMessage, ')
-          ..write('sheetUrl: $sheetUrl')
+          ..write('sheetUrl: $sheetUrl, ')
+          ..write('dateSynced: $dateSynced')
           ..write(')'))
         .toString();
   }
@@ -5239,6 +5286,7 @@ typedef $$SyncLogTableCreateCompanionBuilder = SyncLogCompanion Function({
   required bool success,
   drift.Value<String?> errorMessage,
   required String sheetUrl,
+  required DateTime dateSynced,
 });
 typedef $$SyncLogTableUpdateCompanionBuilder = SyncLogCompanion Function({
   drift.Value<int> syncId,
@@ -5247,6 +5295,7 @@ typedef $$SyncLogTableUpdateCompanionBuilder = SyncLogCompanion Function({
   drift.Value<bool> success,
   drift.Value<String?> errorMessage,
   drift.Value<String> sheetUrl,
+  drift.Value<DateTime> dateSynced,
 });
 
 final class $$SyncLogTableReferences
@@ -5313,6 +5362,10 @@ class $$SyncLogTableFilterComposer
 
   drift.ColumnFilters<String> get sheetUrl => $composableBuilder(
       column: $table.sheetUrl,
+      builder: (column) => drift.ColumnFilters(column));
+
+  drift.ColumnFilters<DateTime> get dateSynced => $composableBuilder(
+      column: $table.dateSynced,
       builder: (column) => drift.ColumnFilters(column));
 
   drift.Expression<bool> templatesRefs(
@@ -5390,6 +5443,10 @@ class $$SyncLogTableOrderingComposer
   drift.ColumnOrderings<String> get sheetUrl => $composableBuilder(
       column: $table.sheetUrl,
       builder: (column) => drift.ColumnOrderings(column));
+
+  drift.ColumnOrderings<DateTime> get dateSynced => $composableBuilder(
+      column: $table.dateSynced,
+      builder: (column) => drift.ColumnOrderings(column));
 }
 
 class $$SyncLogTableAnnotationComposer
@@ -5418,6 +5475,9 @@ class $$SyncLogTableAnnotationComposer
 
   drift.GeneratedColumn<String> get sheetUrl =>
       $composableBuilder(column: $table.sheetUrl, builder: (column) => column);
+
+  drift.GeneratedColumn<DateTime> get dateSynced => $composableBuilder(
+      column: $table.dateSynced, builder: (column) => column);
 
   drift.Expression<T> templatesRefs<T extends Object>(
       drift.Expression<T> Function($$TemplatesTableAnnotationComposer a) f) {
@@ -5491,6 +5551,7 @@ class $$SyncLogTableTableManager extends drift.RootTableManager<
             drift.Value<bool> success = const drift.Value.absent(),
             drift.Value<String?> errorMessage = const drift.Value.absent(),
             drift.Value<String> sheetUrl = const drift.Value.absent(),
+            drift.Value<DateTime> dateSynced = const drift.Value.absent(),
           }) =>
               SyncLogCompanion(
             syncId: syncId,
@@ -5499,6 +5560,7 @@ class $$SyncLogTableTableManager extends drift.RootTableManager<
             success: success,
             errorMessage: errorMessage,
             sheetUrl: sheetUrl,
+            dateSynced: dateSynced,
           ),
           createCompanionCallback: ({
             drift.Value<int> syncId = const drift.Value.absent(),
@@ -5507,6 +5569,7 @@ class $$SyncLogTableTableManager extends drift.RootTableManager<
             required bool success,
             drift.Value<String?> errorMessage = const drift.Value.absent(),
             required String sheetUrl,
+            required DateTime dateSynced,
           }) =>
               SyncLogCompanion.insert(
             syncId: syncId,
@@ -5515,6 +5578,7 @@ class $$SyncLogTableTableManager extends drift.RootTableManager<
             success: success,
             errorMessage: errorMessage,
             sheetUrl: sheetUrl,
+            dateSynced: dateSynced,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>

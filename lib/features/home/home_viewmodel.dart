@@ -229,8 +229,7 @@ class HomeViewModel extends ChangeNotifier {
 
       // Get or create sync log for this batch
       final syncId =
-          0; // TODO: implement sync log
-          //await _budgetService.transactionService.getOrCreateSyncLog();
+          await _budgetService.transactionService.getOrCreateSyncLog();
       int savedCount = 0;
 
       // Process each document group

@@ -528,20 +528,25 @@ class TransactionService {
 
   /// Get or create a sync log entry for batch operations
   Future<int> getOrCreateSyncLog() async {
-    throw UnimplementedError("Synclog date not implemented  ");
-    // try {
-    //   final syncId = await _appDatabase.into(_appDatabase.syncLog).insert(
+    //throw UnimplementedError("Synclog date not implemented  ");
+    try {
+      final syncId = await _appDatabase.into(_appDatabase.syncLog).insert(
          // TODO: add date to synclog in db
-    //         SyncLogCompanion.insert(
-    //           syncDate: DateTime.now(),
-    //           // Add other required fields based on your SyncLog table structure
-    //         ),
-    //       );
-    //   return syncId;
-    // } catch (e, st) {
-    //   _logger.severe('Error creating sync log', e, st);
-    //   rethrow;
-    // }
+        SyncLogCompanion.insert(
+          dateSynced: DateTime.now(),
+          syncDirection: models.SyncDirection.upload.value,
+          synced: false,
+          success: false,
+          sheetUrl: "",
+          
+          // Add other required fields based on your SyncLog table structure
+        ),
+      );
+      return syncId;
+    } catch (e, st) {
+      _logger.severe('Error creating sync log', e, st);
+      rethrow;
+    }
   }
 
   /// Create a new vendor

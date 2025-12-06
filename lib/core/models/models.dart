@@ -32,12 +32,11 @@ enum Role {
 
   static Role fromString(String role) {
     return Role.values.firstWhere(
-          (r) => r.value.toLowerCase() == role.toLowerCase(),
+      (r) => r.value.toLowerCase() == role.toLowerCase(),
       orElse: () => throw ArgumentError('Invalid role: $role'),
     );
   }
-  }
-
+}
 
 // 1.2. Categories Model
 class Category {
@@ -46,7 +45,8 @@ class Category {
   final String categoryName;
   final String colorHex;
 
-  Color get color => Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
+  Color get color =>
+      Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
   Category({
     required this.categoryId,
@@ -92,8 +92,8 @@ class Account {
   // Calculated Field from NOTE:
   double get balance => budgetAmount - expenditureTotal;
 
-  Color get color => Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
-
+  Color get color =>
+      Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
   Account({
     required this.accountId,
@@ -123,7 +123,8 @@ class Vendor {
 class SyncLogEntry {
   final int syncId;
   final int? transactionId;
-  final String syncDirection;
+  final SyncDirection syncDirection;
+  final DateTime dateSynced;
   final bool synced;
   final bool success;
   final String? errorMessage;
@@ -134,6 +135,7 @@ class SyncLogEntry {
     required this.syncId,
     this.transactionId,
     required this.syncDirection,
+    required this.dateSynced,
     required this.synced,
     required this.success,
     this.errorMessage,
@@ -142,6 +144,20 @@ class SyncLogEntry {
   });
 }
 
+enum SyncDirection {
+  upload('upload'),
+  download('download');
+
+  final String value;
+  const SyncDirection(this.value);
+
+  static SyncDirection fromString(String syncDirection) {
+    return SyncDirection.values.firstWhere(
+      (sd) => sd.value.toLowerCase() == syncDirection.toLowerCase(),
+      orElse: () => throw ArgumentError('Invalid sync direction: $syncDirection'),
+    );
+  }
+}
 
 // 1.4. Transactions Model
 // class Transaction {
@@ -205,7 +221,6 @@ class SyncLogEntry {
 //   }
 //   }
 
-
 // // 1.2. Categories Model
 // class Category {
 //   final int categoryId;
@@ -261,7 +276,6 @@ class SyncLogEntry {
 
 //   Color get color => Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
-
 //   Account({
 //     required this.accountId,
 //     required this.categoryId,
@@ -308,7 +322,6 @@ class SyncLogEntry {
 //     required this.associatedTemplate,
 //   });
 // }
-
 
 // 1.4. Transactions Model
 class Transaction {
