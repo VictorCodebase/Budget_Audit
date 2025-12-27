@@ -46,6 +46,7 @@ extension TemplateJson on Template {
       'templateName': templateName,
       'creatorParticipantId': creatorParticipantId,
       'dateCreated': dateCreated.toIso8601String(),
+      'period': period,
     };
   }
 
@@ -55,6 +56,7 @@ extension TemplateJson on Template {
       templateName: json['templateName'] as String,
       creatorParticipantId: json['creatorParticipantId'] as int,
       dateCreated: DateTime.parse(json['dateCreated'] as String),
+      period: json['period'] as String? ?? 'Monthly',
     );
   }
 }

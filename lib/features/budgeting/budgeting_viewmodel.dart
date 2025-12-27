@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart'; // Import uuid
 import '../../core/context.dart';
 import '../../core/models/models.dart' as models;
 import '../../core/models/client_models.dart' as clientModels;
@@ -27,7 +28,8 @@ class BudgetingViewModel extends ChangeNotifier {
   List<models.Template> _templates = [];
 
   String _searchQuery = '';
-  FilterType _currentFilter = FilterType.name;
+  FilterType?
+      _currentFilter; // Nullable to allow "no filter" (user selected order)
   SortOrder _sortOrder = SortOrder.asc;
   models.Participant? _filterParticipant;
   Color? _filterColor;
@@ -49,7 +51,7 @@ class BudgetingViewModel extends ChangeNotifier {
 
   String get searchQuery => _searchQuery;
 
-  FilterType get currentFilter => _currentFilter;
+  FilterType? get currentFilter => _currentFilter;
 
   SortOrder get sortOrder => _sortOrder;
 
@@ -66,6 +68,35 @@ class BudgetingViewModel extends ChangeNotifier {
 
   String? get newlyAddedCategoryId => _newlyAddedCategoryId;
   String? get newlyAddedAccountId => _newlyAddedAccountId;
+
+  // Budget Period
+  final List<String> periodOptions = [
+    'Monthly',
+    'Quarterly',
+    'Semi-Annually',
+    'Annually',
+    'Custom'
+  ];
+  String _selectedPeriod = 'Monthly';
+  int _customPeriodMonths = 1;
+
+  String get selectedPeriod => _selectedPeriod;
+  int get customPeriodMonths => _customPeriodMonths;
+  List<String> get availablePeriods => periodOptions;
+
+  void setPeriod(String period) {
+    if (periodOptions.contains(period)) {
+      _selectedPeriod = period;
+      notifyListeners();
+    }
+  }
+
+  void setCustomPeriodMonths(int months) {
+    if (months > 0 && months <= 60) {
+      _customPeriodMonths = months;
+      notifyListeners();
+    }
+  }
 
   void clearNewlyAddedIds() {
     _newlyAddedCategoryId = null;
@@ -157,6 +188,61 @@ class BudgetingViewModel extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+
+      // Listen for global context changes (e.g. template switching)
+      _appContext.addListener(_onAppContextChange);
+    }
+  }
+
+  @override
+  void dispose() {
+    _appContext.removeListener(_onAppContextChange);
+    super.dispose();
+  }
+
+  void _onAppContextChange() {
+    final activeTemplate = _appContext.currentTemplate;
+
+    // If we have no categories yet (first load) or if the template ID changed
+    // we should reload. A simple check is if we have an active template but e.g.
+    // our internal state doesn't match, or just purely reload if the template object changed.
+
+    // Simplest approach: compare IDs if possible.
+    // Since _loadTemplateForEditing handles setting internal state, we can just call it
+    // if we detect a switch.
+
+    // However, we want to avoid reloading if we are currently editing the SAME template
+    // and just updated a small property via this view model (which might trigger app context update).
+    // But AppContext is usually updated via adopt or manual switch.
+
+    if (activeTemplate != null) {
+      // Check if we are already editing this template
+      // We don't have a simple _currentTemplateId field, but we can verify against known data
+
+      // NOTE: For now, we will reload if the current loaded data seems 'stale'
+      // or simply rely on the user to initiate the switch via the UI which calls initialize.
+      // The user requested: "ensure that if there is an active budget in context, the budget period reflects the budget's period"
+
+      // Let's check specifically for period mismatch or if we should just re-run the parse logic
+
+      final periodStr = activeTemplate.period;
+      // Re-parse period logic to ensure UI stays in sync
+      if (periodStr.startsWith('Custom:')) {
+        final parts = periodStr.split(' ');
+        if (parts.length >= 2) {
+          final months = int.tryParse(parts[1]) ?? 1;
+          if (_selectedPeriod != 'Custom' || _customPeriodMonths != months) {
+            _selectedPeriod = 'Custom';
+            _customPeriodMonths = months;
+            notifyListeners();
+          }
+        }
+      } else {
+        if (_selectedPeriod != periodStr) {
+          _selectedPeriod = periodStr;
+          notifyListeners();
+        }
+      }
     }
   }
 
@@ -204,6 +290,26 @@ class BudgetingViewModel extends ChangeNotifier {
       // 3. Set the loaded categories as the current working state
       _categories = loadedCategories;
 
+      // 4. Parse period
+      final periodStr = template.period; // "Monthly" or "Custom: 5 Months"
+      if (periodStr.startsWith('Custom:')) {
+        _selectedPeriod = 'Custom';
+        try {
+          final parts = periodStr.split(' '); // "Custom:", "5", "Months"
+          if (parts.length >= 2) {
+            _customPeriodMonths = int.tryParse(parts[1]) ?? 1;
+          }
+        } catch (e) {
+          _customPeriodMonths = 1;
+        }
+      } else {
+        if (periodOptions.contains(periodStr)) {
+          _selectedPeriod = periodStr;
+        } else {
+          _selectedPeriod = 'Monthly'; // Fallback
+        }
+      }
+
       // Note: We don't call notifyListeners() here because the calling method will do it.
     } catch (e) {
       _errorMessage = 'Failed to load template data: $e';
@@ -211,8 +317,9 @@ class BudgetingViewModel extends ChangeNotifier {
   }
 
   void addCategory() {
+    clearFilters(); // Clear filters so user sees the new category
     final newCategory = clientModels.CategoryData(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       name: 'CATEGORY NAME',
       color: _generateRandomColor(),
     );
@@ -258,7 +365,7 @@ class BudgetingViewModel extends ChangeNotifier {
     if (index != -1) {
       final category = _categories[index];
       final newAccount = clientModels.AccountData(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: const Uuid().v4(),
         name: 'Account name',
         budgetAmount: 0.0,
         color: _generateLighterShade(category.color),
@@ -345,9 +452,17 @@ class BudgetingViewModel extends ChangeNotifier {
   }
 
   void setFilter(FilterType filter, {SortOrder? order}) {
-    _currentFilter = filter;
-    if (order != null) {
-      _sortOrder = order;
+    if (_currentFilter == filter) {
+      // Tri-state toggle: Asc -> Desc -> Off
+      if (_sortOrder == SortOrder.asc) {
+        _sortOrder = SortOrder.desc;
+      } else {
+        _currentFilter = null;
+        _sortOrder = SortOrder.asc; // Reset to default
+      }
+    } else {
+      _currentFilter = filter;
+      _sortOrder = order ?? SortOrder.asc;
     }
     notifyListeners();
   }
@@ -362,14 +477,9 @@ class BudgetingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleSortOrder() {
-    _sortOrder = _sortOrder == SortOrder.asc ? SortOrder.desc : SortOrder.asc;
-    notifyListeners();
-  }
-
   void clearFilters() {
     _searchQuery = '';
-    _currentFilter = FilterType.name;
+    _currentFilter = null;
     _sortOrder = SortOrder.asc;
     _filterParticipant = null;
     _filterColor = null;
@@ -392,10 +502,15 @@ class BudgetingViewModel extends ChangeNotifier {
 
     try {
       // 1. Create the template
+      final periodString = _selectedPeriod == 'Custom'
+          ? 'Custom: $_customPeriodMonths Months'
+          : _selectedPeriod;
+
       final newTemplate = clientModels.Template(
         templateName: templateName,
         creatorParticipantId: creatorParticipantId,
         dateCreated: DateTime.now(),
+        period: periodString,
       );
 
       final templateId =
@@ -475,6 +590,8 @@ class BudgetingViewModel extends ChangeNotifier {
 
   void startNewTemplate() {
     _categories = [];
+    _selectedPeriod = 'Monthly';
+    _customPeriodMonths = 1;
     _appContext.clearCurrentTemplate();
     notifyListeners();
   }
@@ -494,6 +611,28 @@ class BudgetingViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 0. Update the template record (name and period)
+      // Construct period string
+      final periodString = _selectedPeriod == 'Custom'
+          ? 'Custom: $_customPeriodMonths Months'
+          : _selectedPeriod;
+
+      // We create a temporary object to pass data. ensure required fields are present even if unused by the specific update query.
+      final templateUpdateData = models.Template(
+        templateId: templateId,
+        templateName: templateName,
+        period: periodString,
+        creatorParticipantId: 0, // Unused by updateTemplate
+        dateCreated: DateTime.now(), // Unused by updateTemplate
+      );
+
+      final success = await _budgetService.templateService
+          .updateTemplate(templateUpdateData);
+
+      if (!success) {
+        throw Exception('Failed to update template details');
+      }
+
       // 1. Delete all existing categories and accounts for this template
       final existingCategories = await _budgetService.categoryService
           .getCategoriesForTemplate(templateId);
@@ -540,6 +679,11 @@ class BudgetingViewModel extends ChangeNotifier {
           await _budgetService.templateService.getTemplate(templateId);
       if (updatedTemplate != null) {
         await _loadTemplateForEditing(updatedTemplate);
+
+        // Update global context if this is the active template
+        if (_appContext.currentTemplate?.templateId == templateId) {
+          await _appContext.setCurrentTemplate(updatedTemplate);
+        }
       }
 
       notifyListeners();
@@ -627,6 +771,15 @@ class BudgetingViewModel extends ChangeNotifier {
 
         if (isANew && !isBNew) return 1;
         if (!isANew && isBNew) return -1;
+      } else if (_currentFilter == null) {
+        // No sort: preserve order (or explicit order if implemented)
+        // Since _categories is the source list and we return a new list,
+        // using 0 here effectively implies "original list order" if sort is stable.
+        // But Dart's sort is stable, so 0 works to keep relative order if used carefully.
+        // Actually, if filter is null, we can return the list directly, but we might have filtered items.
+        // Since we did `where` query, we have a new list.
+        // Returning 0 keeps them in relative order.
+        return 0;
       }
 
       int comparison;
@@ -644,6 +797,8 @@ class BudgetingViewModel extends ChangeNotifier {
         case FilterType.color:
           comparison = a.color.value.compareTo(b.color.value);
           break;
+        case null:
+          return 0;
       }
 
       return _sortOrder == SortOrder.asc ? comparison : -comparison;

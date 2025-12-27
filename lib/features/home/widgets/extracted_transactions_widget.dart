@@ -77,13 +77,11 @@ class _ExtractedTransactionsWidgetState
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Document metadata
-            _buildDocumentMetadata(currentGroup),
-            const SizedBox(height: 16),
+            
 
             // Navigation controls
             _buildNavigationControls(viewModel),
-            const SizedBox(height: 16),
+            //const SizedBox(height: 16),
 
             const Text('Verify extracted details', style: AppTheme.h3),
             const SizedBox(height: 8),
@@ -111,6 +109,9 @@ class _ExtractedTransactionsWidgetState
       ],
       content: Column(
         children: [
+          // Document metadata
+          _buildDocumentMetadata(currentGroup),
+          const SizedBox(height: 16),
           _buildTransactionGroups(
               context, viewModel, currentGroup.transactions),
           const SizedBox(height: 24),
@@ -292,7 +293,7 @@ class _ExtractedTransactionsWidgetState
         // Document indicator
         Expanded(
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 16),
             decoration: BoxDecoration(
               color: context.colors.surface,
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),

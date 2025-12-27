@@ -862,6 +862,15 @@ class $TemplatesTable extends Templates
           requiredDuringInsert: true,
           defaultConstraints: GeneratedColumn.constraintIsAlways(
               'REFERENCES participants (participant_id)'));
+  static const drift.VerificationMeta _periodMeta =
+      const drift.VerificationMeta('period');
+  @override
+  late final drift.GeneratedColumn<String> period =
+      drift.GeneratedColumn<String>('period', aliasedName, false,
+          additionalChecks: GeneratedColumn.checkTextLength(
+              minTextLength: 1, maxTextLength: 100),
+          type: DriftSqlType.string,
+          requiredDuringInsert: true);
   static const drift.VerificationMeta _dateCreatedMeta =
       const drift.VerificationMeta('dateCreated');
   @override
@@ -881,6 +890,7 @@ class $TemplatesTable extends Templates
         spreadSheetId,
         templateName,
         creatorParticipantId,
+        period,
         dateCreated,
         timesUsed
       ];
@@ -927,6 +937,12 @@ class $TemplatesTable extends Templates
     } else if (isInserting) {
       context.missing(_creatorParticipantIdMeta);
     }
+    if (data.containsKey('period')) {
+      context.handle(_periodMeta,
+          period.isAcceptableOrUnknown(data['period']!, _periodMeta));
+    } else if (isInserting) {
+      context.missing(_periodMeta);
+    }
     if (data.containsKey('date_created')) {
       context.handle(
           _dateCreatedMeta,
@@ -958,6 +974,8 @@ class $TemplatesTable extends Templates
           .read(DriftSqlType.string, data['${effectivePrefix}template_name'])!,
       creatorParticipantId: attachedDatabase.typeMapping.read(
           DriftSqlType.int, data['${effectivePrefix}creator_participant_id'])!,
+      period: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}period'])!,
       dateCreated: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}date_created'])!,
       timesUsed: attachedDatabase.typeMapping
@@ -977,6 +995,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
   final String? spreadSheetId;
   final String templateName;
   final int creatorParticipantId;
+  final String period;
   final DateTime dateCreated;
   final int? timesUsed;
   const Template(
@@ -985,6 +1004,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       this.spreadSheetId,
       required this.templateName,
       required this.creatorParticipantId,
+      required this.period,
       required this.dateCreated,
       this.timesUsed});
   @override
@@ -999,6 +1019,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
     }
     map['template_name'] = drift.Variable<String>(templateName);
     map['creator_participant_id'] = drift.Variable<int>(creatorParticipantId);
+    map['period'] = drift.Variable<String>(period);
     map['date_created'] = drift.Variable<DateTime>(dateCreated);
     if (!nullToAbsent || timesUsed != null) {
       map['times_used'] = drift.Variable<int>(timesUsed);
@@ -1017,6 +1038,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
           : drift.Value(spreadSheetId),
       templateName: drift.Value(templateName),
       creatorParticipantId: drift.Value(creatorParticipantId),
+      period: drift.Value(period),
       dateCreated: drift.Value(dateCreated),
       timesUsed: timesUsed == null && nullToAbsent
           ? const drift.Value.absent()
@@ -1034,6 +1056,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       templateName: serializer.fromJson<String>(json['templateName']),
       creatorParticipantId:
           serializer.fromJson<int>(json['creatorParticipantId']),
+      period: serializer.fromJson<String>(json['period']),
       dateCreated: serializer.fromJson<DateTime>(json['dateCreated']),
       timesUsed: serializer.fromJson<int?>(json['timesUsed']),
     );
@@ -1047,6 +1070,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       'spreadSheetId': serializer.toJson<String?>(spreadSheetId),
       'templateName': serializer.toJson<String>(templateName),
       'creatorParticipantId': serializer.toJson<int>(creatorParticipantId),
+      'period': serializer.toJson<String>(period),
       'dateCreated': serializer.toJson<DateTime>(dateCreated),
       'timesUsed': serializer.toJson<int?>(timesUsed),
     };
@@ -1058,6 +1082,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
           drift.Value<String?> spreadSheetId = const drift.Value.absent(),
           String? templateName,
           int? creatorParticipantId,
+          String? period,
           DateTime? dateCreated,
           drift.Value<int?> timesUsed = const drift.Value.absent()}) =>
       Template(
@@ -1067,6 +1092,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
             spreadSheetId.present ? spreadSheetId.value : this.spreadSheetId,
         templateName: templateName ?? this.templateName,
         creatorParticipantId: creatorParticipantId ?? this.creatorParticipantId,
+        period: period ?? this.period,
         dateCreated: dateCreated ?? this.dateCreated,
         timesUsed: timesUsed.present ? timesUsed.value : this.timesUsed,
       );
@@ -1084,6 +1110,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
       creatorParticipantId: data.creatorParticipantId.present
           ? data.creatorParticipantId.value
           : this.creatorParticipantId,
+      period: data.period.present ? data.period.value : this.period,
       dateCreated:
           data.dateCreated.present ? data.dateCreated.value : this.dateCreated,
       timesUsed: data.timesUsed.present ? data.timesUsed.value : this.timesUsed,
@@ -1098,6 +1125,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
           ..write('spreadSheetId: $spreadSheetId, ')
           ..write('templateName: $templateName, ')
           ..write('creatorParticipantId: $creatorParticipantId, ')
+          ..write('period: $period, ')
           ..write('dateCreated: $dateCreated, ')
           ..write('timesUsed: $timesUsed')
           ..write(')'))
@@ -1106,7 +1134,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
 
   @override
   int get hashCode => Object.hash(templateId, syncId, spreadSheetId,
-      templateName, creatorParticipantId, dateCreated, timesUsed);
+      templateName, creatorParticipantId, period, dateCreated, timesUsed);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1116,6 +1144,7 @@ class Template extends drift.DataClass implements drift.Insertable<Template> {
           other.spreadSheetId == this.spreadSheetId &&
           other.templateName == this.templateName &&
           other.creatorParticipantId == this.creatorParticipantId &&
+          other.period == this.period &&
           other.dateCreated == this.dateCreated &&
           other.timesUsed == this.timesUsed);
 }
@@ -1126,6 +1155,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
   final drift.Value<String?> spreadSheetId;
   final drift.Value<String> templateName;
   final drift.Value<int> creatorParticipantId;
+  final drift.Value<String> period;
   final drift.Value<DateTime> dateCreated;
   final drift.Value<int?> timesUsed;
   const TemplatesCompanion({
@@ -1134,6 +1164,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
     this.spreadSheetId = const drift.Value.absent(),
     this.templateName = const drift.Value.absent(),
     this.creatorParticipantId = const drift.Value.absent(),
+    this.period = const drift.Value.absent(),
     this.dateCreated = const drift.Value.absent(),
     this.timesUsed = const drift.Value.absent(),
   });
@@ -1143,10 +1174,12 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
     this.spreadSheetId = const drift.Value.absent(),
     required String templateName,
     required int creatorParticipantId,
+    required String period,
     required DateTime dateCreated,
     this.timesUsed = const drift.Value.absent(),
   })  : templateName = drift.Value(templateName),
         creatorParticipantId = drift.Value(creatorParticipantId),
+        period = drift.Value(period),
         dateCreated = drift.Value(dateCreated);
   static drift.Insertable<Template> custom({
     drift.Expression<int>? templateId,
@@ -1154,6 +1187,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
     drift.Expression<String>? spreadSheetId,
     drift.Expression<String>? templateName,
     drift.Expression<int>? creatorParticipantId,
+    drift.Expression<String>? period,
     drift.Expression<DateTime>? dateCreated,
     drift.Expression<int>? timesUsed,
   }) {
@@ -1164,6 +1198,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
       if (templateName != null) 'template_name': templateName,
       if (creatorParticipantId != null)
         'creator_participant_id': creatorParticipantId,
+      if (period != null) 'period': period,
       if (dateCreated != null) 'date_created': dateCreated,
       if (timesUsed != null) 'times_used': timesUsed,
     });
@@ -1175,6 +1210,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
       drift.Value<String?>? spreadSheetId,
       drift.Value<String>? templateName,
       drift.Value<int>? creatorParticipantId,
+      drift.Value<String>? period,
       drift.Value<DateTime>? dateCreated,
       drift.Value<int?>? timesUsed}) {
     return TemplatesCompanion(
@@ -1183,6 +1219,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
       spreadSheetId: spreadSheetId ?? this.spreadSheetId,
       templateName: templateName ?? this.templateName,
       creatorParticipantId: creatorParticipantId ?? this.creatorParticipantId,
+      period: period ?? this.period,
       dateCreated: dateCreated ?? this.dateCreated,
       timesUsed: timesUsed ?? this.timesUsed,
     );
@@ -1207,6 +1244,9 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
       map['creator_participant_id'] =
           drift.Variable<int>(creatorParticipantId.value);
     }
+    if (period.present) {
+      map['period'] = drift.Variable<String>(period.value);
+    }
     if (dateCreated.present) {
       map['date_created'] = drift.Variable<DateTime>(dateCreated.value);
     }
@@ -1224,6 +1264,7 @@ class TemplatesCompanion extends drift.UpdateCompanion<Template> {
           ..write('spreadSheetId: $spreadSheetId, ')
           ..write('templateName: $templateName, ')
           ..write('creatorParticipantId: $creatorParticipantId, ')
+          ..write('period: $period, ')
           ..write('dateCreated: $dateCreated, ')
           ..write('timesUsed: $timesUsed')
           ..write(')'))
@@ -5649,6 +5690,7 @@ typedef $$TemplatesTableCreateCompanionBuilder = TemplatesCompanion Function({
   drift.Value<String?> spreadSheetId,
   required String templateName,
   required int creatorParticipantId,
+  required String period,
   required DateTime dateCreated,
   drift.Value<int?> timesUsed,
 });
@@ -5658,6 +5700,7 @@ typedef $$TemplatesTableUpdateCompanionBuilder = TemplatesCompanion Function({
   drift.Value<String?> spreadSheetId,
   drift.Value<String> templateName,
   drift.Value<int> creatorParticipantId,
+  drift.Value<String> period,
   drift.Value<DateTime> dateCreated,
   drift.Value<int?> timesUsed,
 });
@@ -5785,6 +5828,9 @@ class $$TemplatesTableFilterComposer
   drift.ColumnFilters<String> get templateName => $composableBuilder(
       column: $table.templateName,
       builder: (column) => drift.ColumnFilters(column));
+
+  drift.ColumnFilters<String> get period => $composableBuilder(
+      column: $table.period, builder: (column) => drift.ColumnFilters(column));
 
   drift.ColumnFilters<DateTime> get dateCreated => $composableBuilder(
       column: $table.dateCreated,
@@ -5943,6 +5989,10 @@ class $$TemplatesTableOrderingComposer
       column: $table.templateName,
       builder: (column) => drift.ColumnOrderings(column));
 
+  drift.ColumnOrderings<String> get period => $composableBuilder(
+      column: $table.period,
+      builder: (column) => drift.ColumnOrderings(column));
+
   drift.ColumnOrderings<DateTime> get dateCreated => $composableBuilder(
       column: $table.dateCreated,
       builder: (column) => drift.ColumnOrderings(column));
@@ -6009,6 +6059,9 @@ class $$TemplatesTableAnnotationComposer
 
   drift.GeneratedColumn<String> get templateName => $composableBuilder(
       column: $table.templateName, builder: (column) => column);
+
+  drift.GeneratedColumn<String> get period =>
+      $composableBuilder(column: $table.period, builder: (column) => column);
 
   drift.GeneratedColumn<DateTime> get dateCreated => $composableBuilder(
       column: $table.dateCreated, builder: (column) => column);
@@ -6179,6 +6232,7 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
             drift.Value<String?> spreadSheetId = const drift.Value.absent(),
             drift.Value<String> templateName = const drift.Value.absent(),
             drift.Value<int> creatorParticipantId = const drift.Value.absent(),
+            drift.Value<String> period = const drift.Value.absent(),
             drift.Value<DateTime> dateCreated = const drift.Value.absent(),
             drift.Value<int?> timesUsed = const drift.Value.absent(),
           }) =>
@@ -6188,6 +6242,7 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
             spreadSheetId: spreadSheetId,
             templateName: templateName,
             creatorParticipantId: creatorParticipantId,
+            period: period,
             dateCreated: dateCreated,
             timesUsed: timesUsed,
           ),
@@ -6197,6 +6252,7 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
             drift.Value<String?> spreadSheetId = const drift.Value.absent(),
             required String templateName,
             required int creatorParticipantId,
+            required String period,
             required DateTime dateCreated,
             drift.Value<int?> timesUsed = const drift.Value.absent(),
           }) =>
@@ -6206,6 +6262,7 @@ class $$TemplatesTableTableManager extends drift.RootTableManager<
             spreadSheetId: spreadSheetId,
             templateName: templateName,
             creatorParticipantId: creatorParticipantId,
+            period: period,
             dateCreated: dateCreated,
             timesUsed: timesUsed,
           ),

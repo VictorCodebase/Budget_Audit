@@ -42,7 +42,7 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   equatable: ^2.0.5
-  uuid: ^4.2.1
+  uuid: ^4.5.2
 
   # Other
   flutter_dotenv: ^5.1.0

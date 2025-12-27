@@ -23,18 +23,34 @@ class BudgetingView extends StatefulWidget {
 class _BudgetingViewState extends State<BudgetingView> {
   // Cache for template data futures to prevent recreation on rebuild
   final Map<int, Future<_TemplateData>> _templateDataCache = {};
+  late TextEditingController _customPeriodController;
 
   @override
   void initState() {
     super.initState();
+    _customPeriodController = TextEditingController(text: '1');
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BudgetingViewModel>().initialize();
+      final viewModel = context.read<BudgetingViewModel>();
+      viewModel.initialize();
+      viewModel.addListener(_onViewModelChange);
     });
+  }
+
+  void _onViewModelChange() {
+    final viewModel = context.read<BudgetingViewModel>();
+    if (viewModel.selectedPeriod == 'Custom') {
+      final text = viewModel.customPeriodMonths.toString();
+      if (_customPeriodController.text != text) {
+        _customPeriodController.text = text;
+      }
+    }
   }
 
   @override
   void dispose() {
+    context.read<BudgetingViewModel>().removeListener(_onViewModelChange);
     _templateDataCache.clear();
+    _customPeriodController.dispose();
     super.dispose();
   }
 
@@ -245,6 +261,10 @@ class _BudgetingViewState extends State<BudgetingView> {
           _buildInformationBox(appContext),
           const SizedBox(height: AppTheme.spacingXl),
 
+          // Period Selector
+          _buildPeriodSelector(context, viewModel),
+          const SizedBox(height: AppTheme.spacingXl),
+
           // Search and filter
           const SearchFilterBar(),
 
@@ -320,7 +340,8 @@ class _BudgetingViewState extends State<BudgetingView> {
           const SizedBox(height: AppTheme.spacingXs),
           Text(
             'Add your first category to start building your budget',
-            style: AppTheme.bodyMedium.copyWith(color: context.colors.textTertiary),
+            style: AppTheme.bodyMedium
+                .copyWith(color: context.colors.textTertiary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -694,7 +715,8 @@ class _BudgetingViewState extends State<BudgetingView> {
                             .pop(); // Close template history modal
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text('Template adopted successfully!'),
+                            content:
+                                const Text('Template adopted successfully!'),
                             backgroundColor: context.colors.success,
                           ),
                         );
@@ -902,8 +924,8 @@ class _BudgetingViewState extends State<BudgetingView> {
                 if (context.mounted) {
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                       SnackBar(
-                        content:const Text('Template saved successfully!'),
+                      SnackBar(
+                        content: const Text('Template saved successfully!'),
                         backgroundColor: context.colors.success,
                       ),
                     );
@@ -981,7 +1003,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                 if (context.mounted) {
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                       SnackBar(
+                      SnackBar(
                         content: const Text('Template updated successfully!'),
                         backgroundColor: context.colors.success,
                       ),
@@ -1014,6 +1036,83 @@ class _BudgetingViewState extends State<BudgetingView> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
+  }
+
+  Widget _buildPeriodSelector(
+      BuildContext context, BudgetingViewModel viewModel) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Budget Period',
+          style: AppTheme.h3,
+        ),
+        const SizedBox(height: AppTheme.spacingSm),
+        Text(
+          'Select the duration for this budget',
+          style:
+              AppTheme.bodySmall.copyWith(color: context.colors.textSecondary),
+        ),
+        const SizedBox(height: AppTheme.spacingMd),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: context.colors.surface,
+                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                border: Border.all(color: context.colors.border),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: viewModel.selectedPeriod,
+                  items: viewModel.availablePeriods.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        value,
+                        style: AppTheme.bodyMedium,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    if (newValue != null) {
+                      viewModel.setPeriod(newValue);
+                    }
+                  },
+                  dropdownColor: context.colors.surface,
+                ),
+              ),
+            ),
+            if (viewModel.selectedPeriod == 'Custom') ...[
+              const SizedBox(width: AppTheme.spacingMd),
+              SizedBox(
+                width: 120,
+                child: TextField(
+                  controller: _customPeriodController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Months',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  onChanged: (value) {
+                    final months = int.tryParse(value);
+                    if (months != null) {
+                      viewModel.setCustomPeriodMonths(months);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
   }
 }
 

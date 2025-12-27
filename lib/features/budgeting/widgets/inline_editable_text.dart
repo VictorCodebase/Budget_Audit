@@ -108,10 +108,15 @@ class _InlineEditableTextState extends State<InlineEditableText> {
     }
   }
 
+  String? _lastSubmittedValue;
+
   void _submit() {
     final newValue = _controller.text.trim();
     if (newValue.isNotEmpty && newValue != widget.text) {
-      widget.onSubmitted(newValue);
+      if (newValue != _lastSubmittedValue) {
+        _lastSubmittedValue = newValue;
+        widget.onSubmitted(newValue);
+      }
     } else if (newValue.isEmpty) {
       // Revert if empty
       _controller.text = widget.text;
@@ -133,15 +138,15 @@ class _InlineEditableTextState extends State<InlineEditableText> {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusXs),
-          borderSide:  BorderSide(color: context.colors.border, width: 1),
+          borderSide: BorderSide(color: context.colors.border, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusXs),
-          borderSide:  BorderSide(color: context.colors.border, width: 1),
+          borderSide: BorderSide(color: context.colors.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusXs),
-          borderSide:  BorderSide(color: context.colors.primary, width: 1),
+          borderSide: BorderSide(color: context.colors.primary, width: 1),
         ),
         prefixText: widget.prefixText,
         hintText: widget.hintText,

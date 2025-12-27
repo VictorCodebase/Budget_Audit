@@ -68,6 +68,8 @@ class Templates extends drift.Table {
   drift.IntColumn get creatorParticipantId =>
       integer().references(Participants, #participantId)();
 
+  drift.TextColumn get period => text().withLength(min: 1, max: 100)();
+
   drift.DateTimeColumn get dateCreated => dateTime()();
 
   drift.IntColumn get timesUsed => integer().nullable()();
@@ -286,7 +288,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration {
@@ -384,6 +386,11 @@ class AppDatabase extends _$AppDatabase {
               );
               print(
                   "Migrated Accounts: responsibleParticipantId is now nullable.");
+              break;
+
+            case 8: // Migrating from v8 to v9
+              await m.addColumn(templates, templates.period);
+              print("Migrated Templates: Added 'period' column.");
               break;
           }
         }

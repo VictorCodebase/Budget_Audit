@@ -43,6 +43,7 @@ class TemplateService {
                 creatorParticipantId: t.creatorParticipantId,
                 dateCreated: t.dateCreated,
                 timesUsed: t.timesUsed,
+                period: t.period,
               ))
           .toList();
     } catch (e, st) {
@@ -68,6 +69,7 @@ class TemplateService {
         creatorParticipantId: result.creatorParticipantId,
         dateCreated: result.dateCreated,
         timesUsed: result.timesUsed,
+        period: result.period,
       );
     } catch (e, st) {
       _logger.severe("Error fetching template $templateId", e, st);
@@ -85,6 +87,7 @@ class TemplateService {
         creatorParticipantId: newTemplate.creatorParticipantId,
         dateCreated: newTemplate.dateCreated ?? DateTime.now(),
         timesUsed: const drift.Value(timesUsed),
+        period: newTemplate.period,
       );
 
       final id = await _appDatabase.into(_appDatabase.templates).insert(entry);
@@ -93,6 +96,24 @@ class TemplateService {
     } catch (e, st) {
       _logger.severe("Error creating template", e, st);
       return null;
+    }
+  }
+
+  Future<bool> updateTemplate(models.Template template) async {
+    try {
+      final updated = await (_appDatabase.update(_appDatabase.templates)
+            ..where((t) => t.templateId.equals(template.templateId)))
+          .write(TemplatesCompanion(
+        templateName: drift.Value(template.templateName),
+        period: drift.Value(template.period),
+        // Add other fields if necessary, but typically we only update name/period here
+      ));
+
+      _logger.info("Updated template ${template.templateId} ($updated rows)");
+      return updated > 0;
+    } catch (e, st) {
+      _logger.severe("Error updating template ${template.templateId}", e, st);
+      return false;
     }
   }
 

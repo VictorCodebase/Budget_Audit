@@ -224,7 +224,7 @@ void main() {
       expect(viewModel.categories[1].totalBudget, 200.0);
 
       // Sort by Total Budget DESC (High to Low)
-      viewModel.toggleSortOrder();
+      viewModel.setFilter(FilterType.totalBudget);
       expect(viewModel.sortOrder, SortOrder.desc);
 
       expect(viewModel.categories[0].totalBudget, 200.0);

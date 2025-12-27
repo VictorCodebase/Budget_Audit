@@ -251,6 +251,7 @@ class Template {
   final String templateName;
   final int creatorParticipantId;
   final DateTime dateCreated;
+  final String period;
 
   Template({
     this.syncId,
@@ -258,6 +259,7 @@ class Template {
     required this.templateName,
     required this.creatorParticipantId,
     required this.dateCreated,
+    this.period = 'Monthly',
   });
 }
 
