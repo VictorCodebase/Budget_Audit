@@ -9,7 +9,6 @@ import 'home_viewmodel.dart';
 import 'widgets/document_ingestion_widget.dart';
 import 'widgets/extracted_transactions_widget.dart';
 import 'widgets/side_panel.dart';
-import '../../core/widgets/theme_toggle.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -55,11 +54,6 @@ class _HomeViewState extends State<HomeView> {
           top: 12, // Align with AppHeader padding
           left: 24,
           child: Menu(),
-        ),
-        const Positioned(
-          top: 12,
-          right: 24,
-          child: ThemeToggle(),
         ),
       ])),
     );

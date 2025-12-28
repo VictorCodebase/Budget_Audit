@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/theme_provider.dart';
 import './menu_viewmodel.dart';
 
 class Menu extends StatelessWidget {
@@ -35,6 +36,12 @@ class Menu extends StatelessWidget {
           ),
           onSelected: (String route) {
             viewModel.menuToggled();
+
+            if (route == 'toggle_theme') {
+              Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
+              return;
+            }
+
             // ⭐️ LOGIC IS NOW IN THE VIEW MODEL ⭐️
             // Call the VM method to execute business logic (like signing out)
             final requiresFullReset =
@@ -70,7 +77,37 @@ class Menu extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList();
+            }).toList()
+              ..add(
+                PopupMenuItem<String>(
+                  value: 'toggle_theme',
+                  child: Consumer<ThemeProvider>(
+                    builder: (context, themeProvider, _) {
+                      final isDark = themeProvider.isDarkMode;
+                      return Row(
+                        children: [
+                          Icon(
+                            isDark
+                                ? Icons.light_mode_outlined
+                                : Icons.dark_mode_outlined,
+                            color: context.colors.textPrimary,
+                          ),
+                          const SizedBox(width: AppTheme.spacingXs),
+                          Text(
+                            isDark
+                                ? 'Switch to Light Mode'
+                                : 'Switch to Dark Mode',
+                            style: AppTheme.bodyMedium.copyWith(
+                              color: context.colors.textPrimary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              );
           },
         );
       },
