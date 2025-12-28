@@ -7,7 +7,6 @@ import 'widgets/participant_form.dart';
 import 'widgets/participant_grid.dart';
 import 'widgets/sign_in_form.dart';
 import '../../core/theme/app_theme.dart';
-import '../../features/menu/menu.dart';
 
 class OnboardingView extends StatefulWidget {
   const OnboardingView({Key? key}) : super(key: key);
@@ -28,7 +27,7 @@ class _OnboardingViewState extends State<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Stack(
           children: [
@@ -47,11 +46,6 @@ class _OnboardingViewState extends State<OnboardingView> {
                   child: _buildContent(),
                 ),
               ],
-            ),
-            const Positioned(
-              top: 12,
-              left: 24,
-              child: Menu(),
             ),
           ],
         ),
@@ -88,7 +82,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                             : SignInForm(viewModel: viewModel),
                         const SizedBox(height: 24),
                         // Continue Button
-                        if (viewModel.canProceed())
+                        if (viewModel.canProceedDev())
                           _buildContinueButton(viewModel),
                       ],
                     ),
@@ -119,7 +113,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          if (viewModel.canProceed())
+                          if (viewModel.canProceedDev())
                             _buildContinueButton(viewModel),
                         ],
                       ),
@@ -154,9 +148,9 @@ class _OnboardingViewState extends State<OnboardingView> {
   Widget _buildModeTabs(OnboardingViewModel viewModel) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppTheme.border, width: 1),
+        border: Border.all(color: context.colors.border, width: 1),
       ),
       child: Row(
         children: [
@@ -194,9 +188,9 @@ class _OnboardingViewState extends State<OnboardingView> {
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           border: isSelected
-              ? const Border(
+              ? Border(
                   bottom: BorderSide(
-                    color: AppTheme.primaryPink,
+                    color: context.colors.primary,
                     width: 3,
                   ),
                 )
@@ -205,7 +199,9 @@ class _OnboardingViewState extends State<OnboardingView> {
         child: Text(
           label,
           style: AppTheme.label.copyWith(
-            color: isSelected ? AppTheme.primaryPink : AppTheme.textSecondary,
+            color: isSelected
+                ? context.colors.textPrimary
+                : context.colors.textSecondary,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
           ),
           textAlign: TextAlign.center,
@@ -225,8 +221,8 @@ class _OnboardingViewState extends State<OnboardingView> {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryBlue,
-          foregroundColor: AppTheme.textPrimary,
+          backgroundColor: context.colors.secondary,
+          foregroundColor: context.colors.textPrimary,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusMd),

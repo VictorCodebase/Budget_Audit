@@ -25,10 +25,10 @@ class ImportOptionCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(AppTheme.spacingLg),
           decoration: BoxDecoration(
-            color: AppTheme.backgroundColor,
+            color: context.colors.background,
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
             border: Border.all(
-              color: AppTheme.border,
+              color: context.colors.border,
               width: 1,
             ),
             boxShadow: [
@@ -54,7 +54,7 @@ class ImportOptionCard extends StatelessWidget {
               Text(
                 description,
                 style: AppTheme.bodySmall.copyWith(
-                  color: AppTheme.textSecondary,
+                  color: context.colors.textSecondary,
                 ),
               ),
               const SizedBox(height: AppTheme.spacingMd),

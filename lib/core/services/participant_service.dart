@@ -162,4 +162,160 @@ class ParticipantService {
       rethrow;
     }
   }
+
+  
+/// Fetch all participants associated with a specific template
+  Future<List<models.Participant>> getTemplateParticipants(
+      int templateId) async {
+    try {
+      final query = _database.select(_database.participants).join([
+        drift.innerJoin(
+          _database.templateParticipants,
+          _database.templateParticipants.participantId
+              .equalsExp(_database.participants.participantId),
+        )
+      ])
+        ..where(_database.templateParticipants.templateId.equals(templateId));
+
+      final results = await query.get();
+
+      final participants = results.map((row) {
+        final p = row.readTable(_database.participants);
+        return models.Participant(
+          participantId: p.participantId,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          nickname: p.nickName,
+          role: models.Role.fromString(p.role),
+          email: p.email,
+        );
+      }).toList();
+
+      _logger.info(
+          "Fetched ${participants.length} participants for template $templateId");
+      return participants;
+    } catch (e, stack) {
+      _logger.severe(
+          "Error fetching participants for template $templateId", e, stack);
+      rethrow;
+    }
+  }
+
+  /// Get participants who have made transactions in a template
+  /// This is the key method needed for analytics
+  Future<List<models.Participant>> getParticipantsWithTransactionsInTemplate(
+      int templateId) async {
+    try {
+      // Get all accounts for the template
+      final accountsQuery = _database.select(_database.accounts)
+        ..where((tbl) => tbl.templateId.equals(templateId));
+      final accounts = await accountsQuery.get();
+      final accountIds = accounts.map((a) => a.accountId).toList();
+
+      if (accountIds.isEmpty) {
+        _logger.info("No accounts found for template $templateId");
+        return [];
+      }
+
+      // Get distinct participant IDs from transactions
+      final transactionsQuery = _database.selectOnly(_database.transactions)
+        ..addColumns([_database.transactions.participantId])
+        ..where(_database.transactions.accountId.isIn(accountIds))
+        ..groupBy([_database.transactions.participantId]);
+
+      final participantIdResults = await transactionsQuery.get();
+      final participantIds = participantIdResults
+          .map((row) => row.read(_database.transactions.participantId))
+          .whereType<int>()
+          .toSet()
+          .toList();
+
+      if (participantIds.isEmpty) {
+        _logger.info("No transactions found for template $templateId");
+        return [];
+      }
+
+      // Fetch the actual participant records
+      final participantsQuery = _database.select(_database.participants)
+        ..where((tbl) => tbl.participantId.isIn(participantIds));
+      final results = await participantsQuery.get();
+
+      final participants = results
+          .map((p) => models.Participant(
+                participantId: p.participantId,
+                firstName: p.firstName,
+                lastName: p.lastName,
+                nickname: p.nickName,
+                role: models.Role.fromString(p.role),
+                email: p.email,
+              ))
+          .toList();
+
+      _logger.info(
+          "Fetched ${participants.length} participants with transactions for template $templateId");
+      return participants;
+    } catch (e, stack) {
+      _logger.severe(
+          "Error fetching participants with transactions for template $templateId",
+          e,
+          stack);
+      rethrow;
+    }
+  }
+
+  /// Add a participant to a template (useful for template management)
+  Future<bool> addParticipantToTemplate({
+    required int templateId,
+    required int participantId,
+    required String permissionRole,
+  }) async {
+    try {
+      await _database.into(_database.templateParticipants).insert(
+            db.TemplateParticipantsCompanion.insert(
+              templateId: templateId,
+              participantId: participantId,
+              permissionRole: permissionRole,
+            ),
+          );
+      _logger.info(
+          "Added participant $participantId to template $templateId with role $permissionRole");
+      return true;
+    } catch (e, stack) {
+      _logger.severe(
+          "Error adding participant $participantId to template $templateId",
+          e,
+          stack);
+      rethrow;
+    }
+  }
+
+  /// Remove a participant from a template
+  Future<bool> removeParticipantFromTemplate({
+    required int templateId,
+    required int participantId,
+  }) async {
+    try {
+      final deleted = await (_database.delete(_database.templateParticipants)
+            ..where((tbl) =>
+                tbl.templateId.equals(templateId) &
+                tbl.participantId.equals(participantId)))
+          .go();
+
+      final success = deleted > 0;
+      if (success) {
+        _logger.info(
+            "Removed participant $participantId from template $templateId");
+      } else {
+        _logger.warning("No participant removed from template $templateId");
+      }
+      return success;
+    } catch (e, stack) {
+      _logger.severe(
+          "Error removing participant $participantId from template $templateId",
+          e,
+          stack);
+      rethrow;
+    }
+  }
+
 }

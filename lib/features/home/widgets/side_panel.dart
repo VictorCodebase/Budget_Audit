@@ -19,12 +19,12 @@ class SidePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Participants Section
-          _buildParticipantsSection(viewModel),
+          _buildParticipantsSection(context, viewModel),
           const SizedBox(height: AppTheme.spacingXl),
 
-          // Template Actions Section
-          _buildTemplateActionsSection(),
-          const SizedBox(height: AppTheme.spacingXl),
+          //TODO: Template Actions Section (deactivated for now)
+          // _buildTemplateActionsSection(),
+          // const SizedBox(height: AppTheme.spacingXl),
 
           // Template History Section
           _buildTemplateHistorySection(context, viewModel),
@@ -33,7 +33,7 @@ class SidePanel extends StatelessWidget {
     );
   }
 
-  Widget _buildParticipantsSection(HomeViewModel viewModel) {
+  Widget _buildParticipantsSection(BuildContext context, HomeViewModel viewModel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -55,13 +55,13 @@ class SidePanel extends StatelessWidget {
               children: [
                 CircleAvatar(
                   backgroundColor: isCurrentUser
-                      ? AppTheme.primaryPink
-                      : AppTheme.primaryBlue,
+                      ? context.colors.primary
+                      : context.colors.secondary,
                   radius: 20,
                   child: Text(
                     initials,
                     style: AppTheme.bodySmall.copyWith(
-                      color: Colors.white,
+                      color: context.colors.surface,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -93,13 +93,13 @@ class SidePanel extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryPink.withOpacity(0.1),
+                      color: context.colors.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(AppTheme.radiusXs),
                     ),
                     child: Text(
                       'You',
                       style: AppTheme.caption.copyWith(
-                        color: AppTheme.primaryPink,
+                        color: context.colors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -116,8 +116,8 @@ class SidePanel extends StatelessWidget {
           icon: const Icon(Icons.add, size: 18),
           label: const Text('Add participant'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppTheme.primaryBlue,
-            side: BorderSide(color: AppTheme.primaryBlue, width: 1),
+            foregroundColor: context.colors.secondary,
+            side: BorderSide(color: context.colors.secondary, width: 1),
             minimumSize: const Size(double.infinity, 40),
           ),
         ),
@@ -125,11 +125,12 @@ class SidePanel extends StatelessWidget {
     );
   }
 
-  Widget _buildTemplateActionsSection() {
+  Widget _buildTemplateActionsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildActionButton(
+          context: context,
           label: 'Download your current template',
           buttonLabel: 'Download Template',
           onPressed: () {
@@ -138,6 +139,7 @@ class SidePanel extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacingMd),
         _buildActionButton(
+          context: context,
           label: 'Download your current budget',
           buttonLabel: 'Download Budget',
           onPressed: () {
@@ -146,6 +148,7 @@ class SidePanel extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacingMd),
         _buildActionButton(
+          context: context,
           label: 'Open your current template',
           buttonLabel: 'Open Template',
           onPressed: () {
@@ -154,6 +157,7 @@ class SidePanel extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacingMd),
         _buildActionButton(
+          context: context,
           label: 'Open your current budget',
           buttonLabel: 'Open Budget',
           onPressed: () {
@@ -165,6 +169,7 @@ class SidePanel extends StatelessWidget {
   }
 
   Widget _buildActionButton({
+    required BuildContext context,  
     required String label,
     required String buttonLabel,
     required VoidCallback onPressed,
@@ -175,17 +180,17 @@ class SidePanel extends StatelessWidget {
         Text(
           label,
           style: AppTheme.bodySmall.copyWith(
-            color: AppTheme.textSecondary,
+            color: context.colors.textSecondary,
           ),
         ),
         const SizedBox(height: AppTheme.spacingXs),
         ElevatedButton(
           onPressed: onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.surface,
-            foregroundColor: AppTheme.textPrimary,
+            backgroundColor: context.colors.surface,
+            foregroundColor: context.colors.textPrimary,
             elevation: 0,
-            side: BorderSide(color: AppTheme.border, width: 1),
+            side: BorderSide(color: context.colors.border, width: 1),
             minimumSize: const Size(double.infinity, 40),
           ),
           child: Text(buttonLabel),
@@ -214,7 +219,7 @@ class SidePanel extends StatelessWidget {
               child: Text(
                 'No templates yet',
                 style: AppTheme.bodySmall.copyWith(
-                  color: AppTheme.textSecondary,
+                  color: context.colors.textSecondary,
                 ),
               ),
             ),
@@ -247,7 +252,7 @@ class SidePanel extends StatelessWidget {
             action: ContentBoxAction.preview,
             onPressed: () => _showPreview(context, viewModel, template),
           ),
-          ContentBoxControl(
+          const ContentBoxControl(
             action: ContentBoxAction.minimize,
             // ContentBox handles toggle internally if we don't override onPressed,
             // but we want to be explicit or let it handle it.
@@ -261,29 +266,36 @@ class SidePanel extends StatelessWidget {
                 _confirmDeleteTemplate(context, viewModel, template),
           ),
         ],
+        headerWidgets: [
+          Flexible(child: Text(
+            template.templateName,
+            style: AppTheme.bodyLarge.copyWith(
+              fontWeight: FontWeight.w600,
+            )
+          ))
+        ],
         previewWidgets: [
           // Template Name
-          Flexible(
-            child: Text(
+          Text(
               template.templateName,
               style: AppTheme.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
             ),
-          ),
+          
           // Budget Amount or Current Status
           if (isCurrent)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: AppTheme.success.withOpacity(0.1),
+                color: context.colors.success.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 'Current',
                 style: AppTheme.caption.copyWith(
-                  color: AppTheme.success,
+                  color: context.colors.success,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -292,7 +304,7 @@ class SidePanel extends StatelessWidget {
             Text(
               budgetAmount,
               style: AppTheme.bodySmall.copyWith(
-                color: AppTheme.textSecondary,
+                color: context.colors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -302,7 +314,7 @@ class SidePanel extends StatelessWidget {
           children: [
             Text(
               'Created: ${DateFormat('MMM d, yyyy').format(template.dateCreated)}',
-              style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+              style: AppTheme.bodySmall.copyWith(color: context.colors.textSecondary),
             ),
             const SizedBox(height: AppTheme.spacingMd),
             ElevatedButton(
@@ -310,8 +322,8 @@ class SidePanel extends StatelessWidget {
                 // TODO: Implement adopt template
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                foregroundColor: Colors.white,
+                backgroundColor: context.colors.secondary,
+                foregroundColor: context.colors.textPrimary,
               ),
               child: const Text('Adopt Template'),
             ),
@@ -330,7 +342,7 @@ class SidePanel extends StatelessWidget {
           width: MediaQuery.of(context).size.width * 0.8,
           height: MediaQuery.of(context).size.height * 0.8,
           decoration: BoxDecoration(
-            color: AppTheme.backgroundColor,
+            color: context.colors.background,
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           ),
           child: Column(
@@ -367,7 +379,7 @@ class SidePanel extends StatelessWidget {
                         child: Text(
                           'Error loading template details',
                           style: AppTheme.bodyMedium
-                              .copyWith(color: AppTheme.error),
+                              .copyWith(color: context.colors.error),
                         ),
                       );
                     }
@@ -417,7 +429,7 @@ class SidePanel extends StatelessWidget {
               viewModel.deleteTemplate(template.templateId);
               Navigator.pop(context);
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.error),
+            style: TextButton.styleFrom(foregroundColor: context.colors.error),
             child: const Text('Delete'),
           ),
         ],

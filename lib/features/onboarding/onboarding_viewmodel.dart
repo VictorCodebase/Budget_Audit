@@ -355,9 +355,9 @@ class OnboardingViewModel extends ChangeNotifier {
 
   // ========== Navigation Helpers ==========
 
-  bool canProceed() {
-    // Must have at least one participant (the manager/owner)
-    return _participants.isNotEmpty;
+  bool canProceedDev() {
+    //! this is a dev option that is being phased out
+    return false;
   }
 
   String getNextRoute() {

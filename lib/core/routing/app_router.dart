@@ -1,5 +1,7 @@
 import 'package:budget_audit/core/services/budget_service.dart';
 import 'package:budget_audit/core/services/document_service.dart';
+import 'package:budget_audit/features/analytics/analytics_view.dart';
+import 'package:budget_audit/features/analytics/analytics_viewmodel.dart';
 import 'package:budget_audit/features/budgeting/budgeting_view.dart';
 import 'package:budget_audit/features/home/home_view.dart';
 import 'package:budget_audit/features/home/home_viewmodel.dart';
@@ -71,26 +73,42 @@ class AppRouter {
           },
         );
 
-      case '/dev':
+      case '/analytics':
         return MaterialPageRoute(
-          builder: (context)  {
+          builder: (context) {
             final appContext = Provider.of<AppContext>(context, listen: false);
-            if (!appContext.isProduction){
-              debugPrint("Not in production, redirecting to onboarding");
+
+            if (!appContext.hasValidSession) {
               return const OnboardingView();
             }
+
             return ChangeNotifierProvider(
-              create: (_) => DevViewModel(
-                DevService(
-                  sl<AppDatabase>(),
-                  Provider.of<AppContext>(_, listen: false),
-                ),
-              )..loadTables(),
-              child: const DevView(),
+              create: (_) => AnalyticsViewModel(
+                budgetService: sl<BudgetService>(),
+                appContext: appContext,
+              ),
+              child: const AnalyticsView(),
             );
-          }
+          },
         );
 
+      case '/dev':
+        return MaterialPageRoute(builder: (context) {
+          final appContext = Provider.of<AppContext>(context, listen: false);
+          if (appContext.isProduction) {
+            debugPrint("In production, redirecting to onboarding");
+            return const OnboardingView();
+          }
+          return ChangeNotifierProvider(
+            create: (_) => DevViewModel(
+              DevService(
+                sl<AppDatabase>(),
+                Provider.of<AppContext>(_, listen: false),
+              ),
+            )..loadTables(),
+            child: const DevView(),
+          );
+        });
 
       default:
         return MaterialPageRoute(

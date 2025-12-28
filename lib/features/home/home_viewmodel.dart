@@ -3,6 +3,7 @@
 import 'package:budget_audit/core/models/client_models.dart';
 import 'package:budget_audit/core/models/client_models.dart' as client_models;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:logging/logging.dart';
 import '../../core/context.dart';
 import '../../core/models/client_models.dart';
@@ -10,6 +11,37 @@ import '../../core/models/models.dart' as models;
 import '../../core/services/document_service.dart';
 import '../../core/services/participant_service.dart';
 import '../../core/services/budget_service.dart';
+import '../../core/utils/fuzzy_search.dart';
+
+/// Groups transactions by their source document
+class DocumentTransactionGroup {
+  final UploadedDocument document;
+  final List<ParsedTransaction> transactions;
+  bool isComplete;
+
+  DocumentTransactionGroup({
+    required this.document,
+    required this.transactions,
+    this.isComplete = false,
+  });
+
+  /// Check if all transactions have been assigned accounts
+  bool get hasAllAccountsAssigned {
+    return transactions.isNotEmpty &&
+        transactions.every((txn) =>
+            txn.suggestedAccount != null &&
+            (txn.userModified || txn.autoUpdated));
+  }
+
+  /// Count of unassigned transactions
+  int get unassignedCount {
+    return transactions
+        .where((txn) =>
+            txn.suggestedAccount == null ||
+            (!txn.userModified && !txn.autoUpdated))
+        .length;
+  }
+}
 
 class HomeViewModel extends ChangeNotifier {
   final DocumentService _documentService;
@@ -20,12 +52,15 @@ class HomeViewModel extends ChangeNotifier {
 
   // State
   List<UploadedDocument> _uploadedDocuments = [];
-  List<ParsedTransaction> _extractedTransactions = [];
+  Map<String, List<ParsedTransaction>> _transactionsByDocument = {};
   List<models.Participant> _participants = [];
   List<models.Template> _templateHistory = [];
   bool _isLoading = false;
   bool _hasRunAudit = false;
   String? _errorMessage;
+  int _currentDocumentIndex = 0;
+  Set<String> _completedDocumentIds = {};
+  bool _autoUpdateVendorAssociations = true; // Toggle for vendor auto-update
 
   HomeViewModel({
     required DocumentService documentService,
@@ -41,18 +76,76 @@ class HomeViewModel extends ChangeNotifier {
 
   // Getters
   List<UploadedDocument> get uploadedDocuments => _uploadedDocuments;
-  List<ParsedTransaction> get extractedTransactions => _extractedTransactions;
   List<models.Participant> get participants => _participants;
   List<models.Template> get templateHistory => _templateHistory;
   bool get isLoading => _isLoading;
   bool get hasRunAudit => _hasRunAudit;
   String? get errorMessage => _errorMessage;
   bool get hasDocuments => _uploadedDocuments.isNotEmpty;
-  bool get hasTransactions => _extractedTransactions.isNotEmpty;
+  int get currentDocumentIndex => _currentDocumentIndex;
+  int get totalDocuments => _uploadedDocuments.length;
+  bool get autoUpdateVendorAssociations => _autoUpdateVendorAssociations;
+
+  /// Get all document groups with auto-computed completion status
+  List<DocumentTransactionGroup> get documentGroups {
+    return _uploadedDocuments.map((doc) {
+      final transactions = _transactionsByDocument[doc.id] ?? [];
+      final group = DocumentTransactionGroup(
+        document: doc,
+        transactions: transactions,
+        isComplete: _completedDocumentIds.contains(doc.id),
+      );
+
+      // Auto-mark as complete if all accounts assigned
+      if (group.hasAllAccountsAssigned && !group.isComplete) {
+        _completedDocumentIds.add(doc.id);
+        group.isComplete = true;
+      }
+
+      return group;
+    }).toList();
+  }
+
+  /// Get current document group
+  DocumentTransactionGroup? get currentDocumentGroup {
+    if (_uploadedDocuments.isEmpty ||
+        _currentDocumentIndex >= _uploadedDocuments.length) {
+      return null;
+    }
+    final groups = documentGroups;
+    return groups.isNotEmpty && _currentDocumentIndex < groups.length
+        ? groups[_currentDocumentIndex]
+        : null;
+  }
+
+  /// Get transactions for current document
+  List<ParsedTransaction> get currentDocumentTransactions {
+    return currentDocumentGroup?.transactions ?? [];
+  }
+
+  /// Check if current document is complete
+  bool get isCurrentDocumentComplete {
+    return currentDocumentGroup?.hasAllAccountsAssigned ?? false;
+  }
+
+  /// Check if all documents are complete
+  bool get areAllDocumentsComplete {
+    return documentGroups.every((group) => group.hasAllAccountsAssigned);
+  }
+
+  /// Check if can proceed to next document
+  bool get canProceedToNext {
+    return isCurrentDocumentComplete &&
+        _currentDocumentIndex < _uploadedDocuments.length - 1;
+  }
+
+  /// Check if can go to previous document
+  bool get canGoToPrevious {
+    return _currentDocumentIndex > 0;
+  }
 
   int? get currentParticipantId =>
       _appContext.currentParticipant?.participantId;
-
   models.Template? get currentTemplate => _appContext.currentTemplate;
   bool get hasActiveTemplate => _appContext.currentTemplate != null;
 
@@ -61,7 +154,220 @@ class HomeViewModel extends ChangeNotifier {
     await loadTemplateHistory();
   }
 
-  /// Loads all participants from the database
+  /// Toggle vendor auto-update feature
+  void toggleAutoUpdateVendorAssociations() {
+    _autoUpdateVendorAssociations = !_autoUpdateVendorAssociations;
+    _logger.info(
+        'Vendor auto-update ${_autoUpdateVendorAssociations ? "enabled" : "disabled"}');
+    notifyListeners();
+  }
+
+  /// Navigate to next document
+  void goToNextDocument() {
+    if (!canProceedToNext) {
+      _errorMessage =
+          'Please complete all transactions for this document before proceeding.';
+      notifyListeners();
+      return;
+    }
+
+    // Mark current document as complete
+    if (currentDocumentGroup != null) {
+      _completedDocumentIds.add(currentDocumentGroup!.document.id);
+    }
+
+    _currentDocumentIndex++;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  /// Navigate to previous document
+  void goToPreviousDocument() {
+    if (canGoToPrevious) {
+      _currentDocumentIndex--;
+      _errorMessage = null;
+      notifyListeners();
+    }
+  }
+
+  /// Jump to specific document
+  void goToDocument(int index) {
+    if (index >= 0 && index < _uploadedDocuments.length) {
+      _currentDocumentIndex = index;
+      _errorMessage = null;
+      notifyListeners();
+    }
+  }
+
+  /// Mark current document as complete (called when user manually confirms)
+  void markCurrentDocumentComplete() {
+    if (currentDocumentGroup != null && isCurrentDocumentComplete) {
+      _completedDocumentIds.add(currentDocumentGroup!.document.id);
+      notifyListeners();
+    }
+  }
+
+  /// Complete entire audit - save all transactions to database
+  Future<bool> completeAudit() async {
+    if (!areAllDocumentsComplete) {
+      _errorMessage =
+          'Please complete all documents before finishing the audit.';
+      notifyListeners();
+      return false;
+    }
+
+    if (currentParticipantId == null || currentTemplate == null) {
+      _errorMessage = 'Please select a participant and template.';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      // Get or create sync log for this batch
+      final syncId =
+          await _budgetService.transactionService.getOrCreateSyncLog();
+      int savedCount = 0;
+
+      // Process each document group
+      for (final group in documentGroups) {
+        for (final transaction in group.transactions) {
+          // Skip transactions without accounts
+          if (transaction.suggestedAccount == null) continue;
+
+          // Get or create vendor
+          int vendorId = transaction.vendorId ??
+              await _getOrCreateVendor(transaction.vendorName);
+
+          // Parse account ID
+          final accountId = int.tryParse(transaction.suggestedAccount!.id);
+          if (accountId == null) {
+            _logger.warning(
+                'Invalid account ID: ${transaction.suggestedAccount!.id}');
+            continue;
+          }
+
+          // Save transaction to database
+          await _budgetService.transactionService.createTransaction(
+            syncId: syncId,
+            accountId: accountId,
+            vendorId: vendorId,
+            amount: transaction.amount,
+            date: transaction.date,
+            participantId: group.document.ownerParticipantId,
+            editorParticipantId: currentParticipantId!,
+          );
+
+          // Record vendor match history if user wants to remember
+          if (transaction.useMemory) {
+            await _budgetService.transactionService.recordVendorMatch(
+              vendorId: vendorId,
+              accountId: accountId,
+              participantId: currentParticipantId!,
+            );
+          }
+
+          savedCount++;
+        }
+      }
+
+      _logger.info(
+          'Audit completed successfully. Saved $savedCount transactions.');
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e, st) {
+      _logger.severe('Error completing audit', e, st);
+      _errorMessage = 'Failed to save transactions: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Helper: Get or create vendor
+  Future<int> _getOrCreateVendor(String vendorName) async {
+    final vendors = await _budgetService.transactionService.getAllVendors();
+    final existing = vendors.firstWhere(
+      (v) => v.vendorName.toLowerCase() == vendorName.toLowerCase(),
+      orElse: () => models.Vendor(vendorId: -1, vendorName: ''),
+    );
+
+    if (existing.vendorId != -1) {
+      return existing.vendorId;
+    }
+
+    final newVendorId =
+        await _budgetService.transactionService.createVendor(vendorName);
+    return newVendorId ?? -1;
+  }
+
+  /// Gets recommended accounts for a vendor based on history
+  Future<List<client_models.AccountData>> getVendorRecommendations(
+      int vendorId) async {
+    try {
+      final history = await _budgetService.transactionService
+          .getVendorMatchHistory(vendorId);
+      if (history.isEmpty) return [];
+
+      final accountIds = <int>[];
+      for (final entry in history) {
+        if (!accountIds.contains(entry.accountId)) {
+          accountIds.add(entry.accountId);
+        }
+      }
+
+      final recommendations = <client_models.AccountData>[];
+      if (_appContext.currentTemplate != null) {
+        final allAccounts = await _budgetService.accountService
+            .getAllAccountsForTemplate(_appContext.currentTemplate!.templateId);
+
+        for (final accountId in accountIds) {
+          final account =
+              allAccounts.where((a) => a.accountId == accountId).firstOrNull;
+          if (account != null) {
+            recommendations.add(client_models.AccountData(
+              id: account.accountId.toString(),
+              name: account.accountName,
+              budgetAmount: account.budgetAmount,
+              color: Color(int.parse(account.colorHex.substring(1), radix: 16) +
+                  0xFF000000),
+              participants: _participants
+                  .where((p) =>
+                      p.participantId == account.responsibleParticipantId)
+                  .toList(),
+            ));
+          }
+        }
+      }
+
+      return recommendations;
+    } catch (e, st) {
+      _logger.severe('Error getting vendor recommendations', e, st);
+      return [];
+    }
+  }
+
+  /// Deletes a vendor recommendation
+  Future<void> deleteVendorRecommendation(int vendorId, int accountId) async {
+    if (currentParticipantId == null) return;
+
+    try {
+      await _budgetService.transactionService.deleteVendorMatchHistory(
+        vendorId: vendorId,
+        accountId: accountId,
+        participantId: currentParticipantId!,
+      );
+      await matchTransactions();
+    } catch (e, st) {
+      _logger.severe('Error deleting vendor recommendation', e, st);
+    }
+  }
+
   Future<void> loadParticipants() async {
     try {
       _participants = await _participantService.getAllParticipants();
@@ -71,7 +377,6 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Loads template history for the current user
   Future<void> loadTemplateHistory() async {
     try {
       _templateHistory = await _budgetService.templateService.getAllTemplates();
@@ -81,13 +386,11 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Refreshes history data (participants and templates) without clearing document state
   Future<void> refreshHistory() async {
     await loadParticipants();
     await loadTemplateHistory();
   }
 
-  /// Adds a document to the upload queue
   Future<bool> addDocument({
     required String fileName,
     required String filePath,
@@ -98,14 +401,12 @@ class HomeViewModel extends ChangeNotifier {
     try {
       _errorMessage = null;
 
-      // Validate PDF
       if (!_documentService.isValidPdf(filePath)) {
         _errorMessage = 'Invalid PDF file. Please select a valid PDF document.';
         notifyListeners();
         return false;
       }
 
-      // Create document
       final document = _documentService.createUploadedDocument(
         fileName: fileName,
         filePath: filePath,
@@ -114,24 +415,20 @@ class HomeViewModel extends ChangeNotifier {
         institution: institution,
       );
 
-      // Validate document can be parsed
       _isLoading = true;
       notifyListeners();
 
       final validationResult =
           await _documentService.validateDocument(document);
-
       _isLoading = false;
 
       if (!validationResult.canParse) {
         _errorMessage = validationResult.errorMessage ??
-            'Document could not be understood. Please check:\n'
-                '${validationResult.missingCheckpoints.join('\n')}';
+            'Document could not be understood. Please check:\n${validationResult.missingCheckpoints.join('\n')}';
         notifyListeners();
         return false;
       }
 
-      // Add to list
       _uploadedDocuments.add(document);
       _logger.info('Document added: $fileName');
       notifyListeners();
@@ -145,7 +442,6 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Removes a document from the upload queue
   void removeDocument(String documentId) {
     final document = _uploadedDocuments.firstWhere(
       (doc) => doc.id == documentId,
@@ -153,12 +449,20 @@ class HomeViewModel extends ChangeNotifier {
     );
 
     _uploadedDocuments.removeWhere((doc) => doc.id == documentId);
+    _transactionsByDocument.remove(documentId);
+    _completedDocumentIds.remove(documentId);
     _documentService.cleanupDocument(document);
+
+    // Adjust current index if needed
+    if (_currentDocumentIndex >= _uploadedDocuments.length &&
+        _currentDocumentIndex > 0) {
+      _currentDocumentIndex--;
+    }
+
     _logger.info('Document removed: ${document.fileName}');
     notifyListeners();
   }
 
-  /// Runs audit on all uploaded documents
   Future<void> runAudit() async {
     if (_uploadedDocuments.isEmpty) {
       _errorMessage =
@@ -170,26 +474,58 @@ class HomeViewModel extends ChangeNotifier {
     try {
       _isLoading = true;
       _errorMessage = null;
-      _extractedTransactions.clear();
       notifyListeners();
 
-      // Parse each document
-      for (final document in _uploadedDocuments) {
+      // CRITICAL: Only parse NEW documents - preserve existing work
+      final existingDocIds = _transactionsByDocument.keys.toSet();
+      final newDocuments = _uploadedDocuments
+          .where((doc) => !existingDocIds.contains(doc.id))
+          .toList();
+
+      if (newDocuments.isEmpty && existingDocIds.isNotEmpty) {
+        _logger.info('No new documents to parse. Existing work preserved.');
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // Parse only new documents
+      for (final document in newDocuments) {
         final parseResult = await _documentService.parseDocument(document);
 
         if (parseResult.success) {
-          _extractedTransactions.addAll(parseResult.transactions);
+          _transactionsByDocument[document.id] = parseResult.transactions;
+          _logger.info(
+              'Parsed new document: ${document.fileName} (${parseResult.transactions.length} transactions)');
         } else {
           _logger.warning(
-            'Failed to parse ${document.fileName}: ${parseResult.errorMessage}',
-          );
+              'Failed to parse ${document.fileName}: ${parseResult.errorMessage}');
+          _transactionsByDocument[document.id] = [];
         }
       }
 
       _hasRunAudit = true;
       _isLoading = false;
+
+      final totalTransactions = _transactionsByDocument.values
+          .fold(0, (sum, list) => sum + list.length);
       _logger.info(
-          'Audit completed. Found ${_extractedTransactions.length} transactions.');
+          'Audit completed. Total: $totalTransactions transactions across ${_uploadedDocuments.length} documents.');
+
+      // Run matching for newly parsed documents
+      if (newDocuments.isNotEmpty) {
+        // Match transactions for new documents only
+        for (final doc in newDocuments) {
+          final originalIndex = _currentDocumentIndex;
+          _currentDocumentIndex =
+              _uploadedDocuments.indexWhere((d) => d.id == doc.id);
+          if (_currentDocumentIndex != -1) {
+            await matchTransactions();
+          }
+          _currentDocumentIndex = originalIndex;
+        }
+      }
+
       notifyListeners();
     } catch (e, st) {
       _logger.severe('Error running audit', e, st);
@@ -199,56 +535,265 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Updates a parsed transaction
-  void updateTransaction(ParsedTransaction updatedTransaction) {
-    final index = _extractedTransactions.indexWhere(
-      (t) => t.id == updatedTransaction.id,
+  Future<void> matchTransactions() async {
+    if (_appContext.currentTemplate == null || currentDocumentGroup == null)
+      return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final vendors = await _budgetService.transactionService.getAllVendors();
+      final vendorNames = vendors.map((v) => v.vendorName).toList();
+      final accounts = await _budgetService.accountService
+          .getAllAccountsForTemplate(_appContext.currentTemplate!.templateId);
+      final accountMap = {for (var a in accounts) a.accountId: a};
+
+      final documentId = currentDocumentGroup!.document.id;
+      final transactions = _transactionsByDocument[documentId] ?? [];
+      final updatedTransactions = <ParsedTransaction>[];
+
+      for (final transaction in transactions) {
+        var matchStatus = MatchStatus.critical;
+        List<String> potentialMatches = [];
+        client_models.AccountData? suggestedAccount;
+        String finalVendorName = transaction.vendorName;
+        int? vendorId;
+
+        final originalStatus =
+            transaction.originalStatus ?? transaction.matchStatus;
+
+        // Exact match
+        final exactMatch = vendors
+            .where((v) =>
+                v.vendorName.toLowerCase() ==
+                transaction.vendorName.toLowerCase())
+            .firstOrNull;
+
+        if (exactMatch != null) {
+          vendorId = exactMatch.vendorId;
+          finalVendorName = exactMatch.vendorName;
+
+          final history = await _budgetService.transactionService
+              .getVendorMatchHistory(exactMatch.vendorId);
+
+          if (history.isNotEmpty) {
+            final bestMatch = history.first;
+            final distinctAccounts = history.map((h) => h.accountId).toSet();
+
+            matchStatus = distinctAccounts.length > 1
+                ? MatchStatus.ambiguous
+                : MatchStatus.confident;
+
+            final account = accountMap[bestMatch.accountId];
+            if (account != null) {
+              suggestedAccount = client_models.AccountData(
+                id: account.accountId.toString(),
+                name: account.accountName,
+                budgetAmount: account.budgetAmount,
+                color: Color(
+                    int.parse(account.colorHex.substring(1), radix: 16) +
+                        0xFF000000),
+              );
+            }
+          } else {
+            matchStatus = MatchStatus.critical;
+          }
+        } else {
+          // Fuzzy match
+          potentialMatches =
+              FuzzySearch.findSimilar(transaction.vendorName, vendorNames);
+          if (potentialMatches.isNotEmpty) {
+            matchStatus = MatchStatus.potential;
+          }
+        }
+
+        updatedTransactions.add(transaction.copyWith(
+          vendorName: finalVendorName,
+          matchStatus: matchStatus,
+          potentialMatches: potentialMatches,
+          suggestedAccount: suggestedAccount,
+          account: suggestedAccount?.name,
+          vendorId: vendorId,
+          originalStatus: originalStatus,
+          userModified: transaction.userModified,
+          autoUpdated: transaction.autoUpdated,
+        ));
+      }
+
+      _transactionsByDocument[documentId] = updatedTransactions;
+    } catch (e, st) {
+      _logger.severe('Error matching transactions', e, st);
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void splitTransaction(
+      String originalTransactionId, double splitAmount, String newAccountName) {
+    if (currentDocumentGroup == null) return;
+
+    final documentId = currentDocumentGroup!.document.id;
+    final transactions = _transactionsByDocument[documentId] ?? [];
+    final index = transactions.indexWhere((t) => t.id == originalTransactionId);
+
+    if (index == -1) return;
+
+    final original = transactions[index];
+    final originalAmount = original.amount.abs();
+
+    if (splitAmount <= 0 || splitAmount >= originalAmount) return;
+
+    final remainingAmount = originalAmount - splitAmount;
+    final isNegative = original.amount < 0;
+
+    final updatedOriginal = original.copyWith(
+      amount: isNegative ? -remainingAmount : remainingAmount,
+      userModified: true,
     );
 
-    if (index != -1) {
-      _extractedTransactions[index] = updatedTransaction;
-      notifyListeners();
-    }
+    final splitId =
+        '${original.id}_split_${DateTime.now().millisecondsSinceEpoch}';
+    final newTransaction = original.copyWith(
+      id: splitId,
+      amount: isNegative ? -splitAmount : splitAmount,
+      account: newAccountName,
+      matchStatus: MatchStatus.critical,
+      userModified: true,
+      autoUpdated: false,
+      originalStatus: original.originalStatus ?? original.matchStatus,
+    );
+
+    transactions[index] = updatedOriginal;
+    transactions.insert(index + 1, newTransaction);
+    _transactionsByDocument[documentId] = transactions;
+
+    notifyListeners();
   }
 
-  /// Toggles the "Use Memory" checkbox for a transaction
+  /// Updates a transaction and prompts for vendor-wide update if enabled
+  void updateTransaction(ParsedTransaction updatedTransaction,
+      {bool propagateToOthers = false}) {
+    if (currentDocumentGroup == null) return;
+
+    final documentId = currentDocumentGroup!.document.id;
+    final transactions = _transactionsByDocument[documentId] ?? [];
+    final index = transactions.indexWhere((t) => t.id == updatedTransaction.id);
+
+    if (index == -1) return;
+
+    transactions[index] = updatedTransaction;
+
+    // Vendor auto-update logic: Only if enabled AND user wants to propagate
+    // Relaxed condition: Allow if vendorName is present, even if vendorId is null
+    if (_autoUpdateVendorAssociations &&
+        updatedTransaction.userModified &&
+        updatedTransaction.suggestedAccount != null) {
+      _logger.info('Propagating vendor-account association: '
+          'vendorId=${updatedTransaction.vendorId}, '
+          'vendorName=${updatedTransaction.vendorName}, '
+          'account=${updatedTransaction.suggestedAccount!.name}');
+
+      // Update ALL transactions across ALL documents with same vendor
+      for (final docId in _transactionsByDocument.keys) {
+        final docTransactions = _transactionsByDocument[docId] ?? [];
+
+        for (int i = 0; i < docTransactions.length; i++) {
+          final txn = docTransactions[i];
+
+          // Skip self
+          if (txn.id == updatedTransaction.id) continue;
+
+          // STRICT SAFETY:
+          // 1. Must NOT be user modified
+          // 2. Must NOT have an existing suggested account (only fill empty ones)
+          if (txn.userModified || txn.suggestedAccount != null) continue;
+
+          // MATCHING LOGIC:
+          // 1. Try match by vendorId if both exist
+          // 2. Fallback to vendorName match
+          bool isMatch = false;
+          if (updatedTransaction.vendorId != null && txn.vendorId != null) {
+            isMatch = txn.vendorId == updatedTransaction.vendorId;
+          } else {
+            isMatch = txn.vendorName.toLowerCase().trim() ==
+                updatedTransaction.vendorName.toLowerCase().trim();
+          }
+
+          if (isMatch) {
+            docTransactions[i] = txn.copyWith(
+              account: updatedTransaction.suggestedAccount!.name,
+              suggestedAccount: updatedTransaction.suggestedAccount,
+              matchStatus: MatchStatus.confident,
+              autoUpdated: true,
+              userModified: false, // Remains false as it's auto-updated
+            );
+
+            _logger.fine('Auto-updated transaction ${txn.id} in doc $docId');
+          }
+        }
+
+        _transactionsByDocument[docId] = docTransactions;
+      }
+    } else {
+      _logger.info('Not propagating vendor-account association: '
+          'vendor=${updatedTransaction.vendorId}, \n'
+          'account=${updatedTransaction.suggestedAccount!.name} \n'
+          'PARAMS: \n'
+          'autoUpdateVendorAssociations: $_autoUpdateVendorAssociations\n'
+          'userModified: ${updatedTransaction.userModified}\n'
+          'vendorId: ${updatedTransaction.vendorId}\n'
+          'suggestedAccount: ${updatedTransaction.suggestedAccount?.name}\n');
+    }
+
+    _transactionsByDocument[documentId] = transactions;
+    notifyListeners();
+  }
+
   void toggleUseMemory(String transactionId) {
-    final index =
-        _extractedTransactions.indexWhere((t) => t.id == transactionId);
+    if (currentDocumentGroup == null) return;
+
+    final documentId = currentDocumentGroup!.document.id;
+    final transactions = _transactionsByDocument[documentId] ?? [];
+    final index = transactions.indexWhere((t) => t.id == transactionId);
+
     if (index != -1) {
-      final transaction = _extractedTransactions[index];
-      _extractedTransactions[index] = transaction.copyWith(
+      final transaction = transactions[index];
+      transactions[index] = transaction.copyWith(
         useMemory: !transaction.useMemory,
+        userModified: true,
       );
+      _transactionsByDocument[documentId] = transactions;
       notifyListeners();
     }
   }
 
-  /// Refreshes the extracted transactions (re-parses documents)
   Future<void> refreshTransactions() async {
     await runAudit();
   }
 
-  /// Clears all extracted transactions
   void clearTransactions() {
-    _extractedTransactions.clear();
+    _transactionsByDocument.clear();
+    _completedDocumentIds.clear();
+    _currentDocumentIndex = 0;
     _hasRunAudit = false;
     notifyListeners();
   }
 
-  /// Clears all documents and resets state
   void reset() {
     for (final doc in _uploadedDocuments) {
       _documentService.cleanupDocument(doc);
     }
     _uploadedDocuments.clear();
-    _extractedTransactions.clear();
+    _transactionsByDocument.clear();
+    _completedDocumentIds.clear();
+    _currentDocumentIndex = 0;
     _hasRunAudit = false;
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// Deletes a template from history
   Future<void> deleteTemplate(int templateId) async {
     try {
       final success =
@@ -265,19 +810,14 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  /// Fetches full details (categories and accounts) for a specific template
   Future<List<client_models.CategoryData>> getTemplateDetails(
       int templateId) async {
     try {
-      // 1. Get all categories for this template
       final categories = await _budgetService.categoryService
           .getCategoriesForTemplate(templateId);
-
-      // 2. Get all accounts for this template
       final accounts = await _budgetService.accountService
           .getAllAccountsForTemplate(templateId);
 
-      // 3. Map accounts to their categories
       return categories.map((category) {
         final categoryAccounts = accounts
             .where((a) => a.categoryId == category.categoryId)
@@ -286,9 +826,6 @@ class HomeViewModel extends ChangeNotifier {
                   name: a.accountName,
                   budgetAmount: a.budgetAmount,
                   color: a.color,
-                  // We don't need participants for read-only preview usually,
-                  // but if needed we'd fetch them. For now leaving empty or fetching if critical.
-                  // The Account model has responsibleParticipantId, we could map it if we had the list.
                   participants: _participants
                       .where(
                           (p) => p.participantId == a.responsibleParticipantId)
@@ -311,7 +848,6 @@ class HomeViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    // Cleanup any temporary files
     for (final doc in _uploadedDocuments) {
       _documentService.cleanupDocument(doc);
     }

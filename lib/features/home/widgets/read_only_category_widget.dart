@@ -46,7 +46,7 @@ class ReadOnlyCategoryWidget extends StatelessWidget {
         Text(
           'Total: \$${category.totalBudget.toStringAsFixed(2)}',
           style: AppTheme.bodySmall.copyWith(
-            color: AppTheme.textSecondary,
+            color: context.colors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -61,7 +61,7 @@ class ReadOnlyCategoryWidget extends StatelessWidget {
               child: Text(
                 'No accounts in this category',
                 style:
-                    AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+                    AppTheme.bodySmall.copyWith(color: context.colors.textSecondary),
               ),
             )
           else
@@ -73,7 +73,7 @@ class ReadOnlyCategoryWidget extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: AppTheme.border, width: 1),
+                    bottom: BorderSide(color: context.colors.border, width: 1),
                   ),
                 ),
                 child: Row(
@@ -100,7 +100,7 @@ class ReadOnlyCategoryWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingSm),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             ),
             child: Row(
@@ -115,7 +115,7 @@ class ReadOnlyCategoryWidget extends StatelessWidget {
                 Text(
                   '\$${category.totalBudget.toStringAsFixed(2)}',
                   style: AppTheme.h4.copyWith(
-                    color: AppTheme.primaryPink,
+                    color: context.colors.primary,
                   ),
                 ),
               ],

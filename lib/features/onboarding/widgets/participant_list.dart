@@ -1,4 +1,5 @@
 
+import 'package:budget_audit/core/utils/color_palette.dart';
 import 'package:flutter/material.dart';
 import '../onboarding_viewmodel.dart';
 import '../../../core/theme/app_theme.dart';
@@ -26,17 +27,17 @@ class ParticipantList extends StatelessWidget {
           const SizedBox(height: 16),
           Expanded(
             child: viewModel.participants.isEmpty
-                ? _buildEmptyState()
+                ? _buildEmptyState(context)
                 : _buildParticipantsList(),
           ),
           const SizedBox(height: 16),
-          if (viewModel.canProceed()) _buildContinueButton(context),
+          if (viewModel.canProceedDev()) _buildContinueButton(context),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -44,20 +45,20 @@ class ParticipantList extends StatelessWidget {
           Icon(
             Icons.people_outline,
             size: 64,
-            color: AppTheme.textTertiary,
+            color: context.colors.textTertiary,
           ),
           const SizedBox(height: 16),
           Text(
             'No participants yet',
             style: AppTheme.bodyMedium.copyWith(
-              color: AppTheme.textSecondary,
+              color: context.colors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Add your first participant to get started',
             style: AppTheme.bodySmall.copyWith(
-              color: AppTheme.textTertiary,
+              color: context.colors.textTertiary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -87,10 +88,10 @@ class ParticipantList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isEditing ? AppTheme.primaryPink.withOpacity(0.05) : Colors.white,
+        color: isEditing ? context.colors.primary.withOpacity(0.05) : Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(
-          color: isEditing ? AppTheme.primaryPink : AppTheme.border,
+          color: isEditing ? context.colors.primary : context.colors.border,
           width: isEditing ? 2 : 1,
         ),
       ),
@@ -111,14 +112,14 @@ class ParticipantList extends StatelessWidget {
                         viewModel.getDisplayName(participant),
                         style: AppTheme.label.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          color: context.colors.textPrimary,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (isOwner) ...[
                       const SizedBox(width: 8),
-                      _buildOwnerBadge(),
+                      _buildOwnerBadge(context),
                     ],
                   ],
                 ),
@@ -126,7 +127,7 @@ class ParticipantList extends StatelessWidget {
                 Text(
                   viewModel.getFullName(participant),
                   style: AppTheme.bodySmall.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: context.colors.textSecondary,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -134,7 +135,7 @@ class ParticipantList extends StatelessWidget {
                 Text(
                   participant.email,
                   style: AppTheme.caption.copyWith(
-                    color: AppTheme.textTertiary,
+                    color: context.colors.textTertiary,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -143,7 +144,7 @@ class ParticipantList extends StatelessWidget {
           ),
           // Actions
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: AppTheme.textSecondary),
+            icon: Icon(Icons.more_vert, color: context.colors.textSecondary),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             ),
@@ -152,7 +153,7 @@ class ParticipantList extends StatelessWidget {
                 value: 'edit',
                 child: Row(
                   children: [
-                    Icon(Icons.edit_outlined, size: 20, color: AppTheme.info),
+                    Icon(Icons.edit_outlined, size: 20, color: context.colors.info),
                     const SizedBox(width: 12),
                     Text('Edit', style: AppTheme.bodyMedium),
                   ],
@@ -163,7 +164,7 @@ class ParticipantList extends StatelessWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
+                      Icon(Icons.delete_outline, size: 20, color: context.colors.error),
                       const SizedBox(width: 12),
                       Text('Delete', style: AppTheme.bodyMedium),
                     ],
@@ -185,19 +186,14 @@ class ParticipantList extends StatelessWidget {
 
   Widget _buildAvatar(models.Participant participant) {
     final initials = _getInitials(participant);
-    final colors = [
-      AppTheme.primaryPink,
-      AppTheme.primaryBlue,
-      AppTheme.primaryPurple,
-      AppTheme.primaryTurquoise,
-    ];
-    final colorIndex = participant.participantId % colors.length;
+
+    final color = ColorPalette.getRandom();
 
     return Container(
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: colors[colorIndex],
+        color: color,
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -223,17 +219,17 @@ class ParticipantList extends StatelessWidget {
     return '$firstName$lastName';
   }
 
-  Widget _buildOwnerBadge() {
+  Widget _buildOwnerBadge(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: AppTheme.primaryPink.withOpacity(0.1),
+        color: context.colors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusXs),
       ),
       child: Text(
         'Editor, Owner',
         style: AppTheme.caption.copyWith(
-          color: AppTheme.primaryPink,
+          color: context.colors.primary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -260,7 +256,7 @@ class ParticipantList extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: AppTheme.button.copyWith(color: AppTheme.textSecondary),
+              style: AppTheme.button.copyWith(color: context.colors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -269,7 +265,7 @@ class ParticipantList extends StatelessWidget {
               await viewModel.removeParticipant(participant.participantId);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.error,
+              backgroundColor: context.colors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -293,8 +289,8 @@ class ParticipantList extends StatelessWidget {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryBlue,
-          foregroundColor: AppTheme.textPrimary,
+          backgroundColor: context.colors.secondary,
+          foregroundColor: context.colors.textPrimary,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusMd),

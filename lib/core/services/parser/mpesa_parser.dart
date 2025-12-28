@@ -122,7 +122,7 @@ class MPesaParser extends StatementParser {
       // print('--- RAW PDF EXTRACTED TEXT START ---');
       // print(fullText);
       // print('--- RAW PDF EXTRACTED TEXT END ---');
-      int times = 2;
+      // int times = 2;
 
       // 🏆 NEW LOGIC: Iterate over all matches found in the entire document text (fullText).
       // The multi-line and dotAll flags allow a single transaction to span multiple lines.

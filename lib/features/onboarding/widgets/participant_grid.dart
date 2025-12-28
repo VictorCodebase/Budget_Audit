@@ -1,3 +1,4 @@
+import 'package:budget_audit/core/utils/color_palette.dart';
 import 'package:flutter/material.dart';
 import '../onboarding_viewmodel.dart';
 import '../../../core/theme/app_theme.dart';
@@ -16,7 +17,7 @@ class ParticipantGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Participants',
           style: AppTheme.h4,
         ),
@@ -41,7 +42,7 @@ class ParticipantGrid extends StatelessWidget {
                 }),
                 // Add new participant box (only in add participants mode)
                 if (viewModel.mode == OnboardingMode.addParticipants)
-                  _buildAddParticipantBox(),
+                  _buildAddParticipantBox(context),
               ],
             );
           },
@@ -66,10 +67,10 @@ class ParticipantGrid extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color:
-              isEditing ? AppTheme.primaryPink.withOpacity(0.05) : Colors.white,
+              isEditing ? context.colors.primary.withOpacity(0.05) : Colors.white,
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           border: Border.all(
-            color: isEditing ? AppTheme.primaryPink : AppTheme.border,
+            color: isEditing ? context.colors.primary : context.colors.border,
             width: isEditing ? 2 : 1,
           ),
         ),
@@ -84,7 +85,7 @@ class ParticipantGrid extends StatelessWidget {
               nickname,
               style: AppTheme.label.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
+                color: context.colors.textPrimary,
               ),
               textAlign: TextAlign.center,
               maxLines: 2,
@@ -96,14 +97,14 @@ class ParticipantGrid extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: isOwner
-                    ? AppTheme.primaryPink.withOpacity(0.1)
-                    : AppTheme.primaryBlue.withOpacity(0.1),
+                    ? context.colors.primary.withOpacity(0.1)
+                    : context.colors.secondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(AppTheme.radiusXs),
               ),
               child: Text(
                 roleText,
                 style: AppTheme.caption.copyWith(
-                  color: isOwner ? AppTheme.primaryPink : AppTheme.primaryBlue,
+                  color: isOwner ? context.colors.primary : context.colors.secondary,
                   fontWeight: FontWeight.w600,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -117,19 +118,13 @@ class ParticipantGrid extends StatelessWidget {
 
   Widget _buildAvatar(models.Participant participant) {
     final initials = _getInitials(participant);
-    final colors = [
-      AppTheme.primaryPink,
-      AppTheme.primaryBlue,
-      AppTheme.primaryPurple,
-      AppTheme.primaryTurquoise,
-    ];
-    final colorIndex = participant.participantId % colors.length;
+    final color = ColorPalette.getRandom();
 
     return Container(
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: colors[colorIndex],
+        color: color,
         shape: BoxShape.circle,
       ),
       child: Center(
@@ -155,15 +150,15 @@ class ParticipantGrid extends StatelessWidget {
     return '$firstName$lastName';
   }
 
-  Widget _buildAddParticipantBox() {
+  Widget _buildAddParticipantBox(BuildContext context) {
     return Container(
       width: 140,
       height: 140,
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(
-          color: AppTheme.border,
+          color: context.colors.border,
           width: 1,
           style: BorderStyle.solid,
         ),
@@ -183,20 +178,20 @@ class ParticipantGrid extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryPink.withOpacity(0.1),
+                  color: context.colors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.add,
                   size: 28,
-                  color: AppTheme.primaryPink,
+                  color: context.colors.primary,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 'Add New',
                 style: AppTheme.label.copyWith(
-                  color: AppTheme.primaryPink,
+                  color: context.colors.primary,
                   fontWeight: FontWeight.w600,
                 ),
                 textAlign: TextAlign.center,
@@ -241,7 +236,7 @@ class ParticipantGrid extends StatelessWidget {
                       Text(
                         viewModel.getFullName(participant),
                         style: AppTheme.bodySmall.copyWith(
-                          color: AppTheme.textSecondary,
+                          color: context.colors.textSecondary,
                         ),
                       ),
                     ],
@@ -252,7 +247,7 @@ class ParticipantGrid extends StatelessWidget {
             const SizedBox(height: 24),
             // Actions
             ListTile(
-              leading: Icon(Icons.edit_outlined, color: AppTheme.info),
+              leading: Icon(Icons.edit_outlined, color: context.colors.info),
               title: Text('Edit', style: AppTheme.bodyMedium),
               onTap: () {
                 Navigator.pop(context);
@@ -264,7 +259,7 @@ class ParticipantGrid extends StatelessWidget {
             ),
             if (!isOwner)
               ListTile(
-                leading: Icon(Icons.delete_outline, color: AppTheme.error),
+                leading: Icon(Icons.delete_outline, color: context.colors.error),
                 title: Text('Delete', style: AppTheme.bodyMedium),
                 onTap: () {
                   Navigator.pop(context);
@@ -300,7 +295,7 @@ class ParticipantGrid extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: Text(
               'Cancel',
-              style: AppTheme.button.copyWith(color: AppTheme.textSecondary),
+              style: AppTheme.button.copyWith(color: context.colors.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -309,7 +304,7 @@ class ParticipantGrid extends StatelessWidget {
               await viewModel.removeParticipant(participant.participantId);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.error,
+              backgroundColor: context.colors.error,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),

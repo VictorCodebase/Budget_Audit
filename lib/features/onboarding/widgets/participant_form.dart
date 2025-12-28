@@ -18,7 +18,7 @@ class ParticipantForm extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-          border: Border.all(color: AppTheme.border, width: 1),
+          border: Border.all(color: context.colors.border, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,18 +33,18 @@ class ParticipantForm extends StatelessWidget {
             Text(
               'Participants are individuals whose financial statements will be included in the budgeting',
               style: AppTheme.bodySmall.copyWith(
-                color: AppTheme.textSecondary,
+                color: context.colors.textSecondary,
               ),
             ),
             const SizedBox(height: 24),
             if (viewModel.isFirstParticipant) ...[
-              _buildAdminNotification(),
+              _buildAdminNotification(context),
               const SizedBox(height: 24),
             ],
             _buildForm(context),
             if (viewModel.error != null) ...[
               const SizedBox(height: 16),
-              _buildError(),
+              _buildError(context),
             ],
             const SizedBox(height: 24),
             _buildSubmitButton(context),
@@ -54,26 +54,27 @@ class ParticipantForm extends StatelessWidget {
     );
   }
 
-  Widget _buildEditModeHeader(OnboardingViewModel viewModel) {
+  Widget _buildEditModeHeader(
+      BuildContext context, OnboardingViewModel viewModel) {
     if (!viewModel.isEditMode) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.primaryPink.withOpacity(0.1),
+        color: context.colors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppTheme.primaryPink.withOpacity(0.3)),
+        border: Border.all(color: context.colors.primary.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.edit, color: AppTheme.primaryPink, size: 20),
+          Icon(Icons.edit, color: context.colors.primary, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Editing participant',
               style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.primaryPink,
+                color: context.colors.primary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -82,7 +83,7 @@ class ParticipantForm extends StatelessWidget {
             onPressed: () => viewModel.cancelEditing(),
             child: Text(
               'Cancel',
-              style: AppTheme.button.copyWith(color: AppTheme.primaryPink),
+              style: AppTheme.button.copyWith(color: context.colors.primary),
             ),
           ),
         ],
@@ -97,8 +98,9 @@ class ParticipantForm extends StatelessWidget {
           children: [
             Expanded(
               child: _buildTextField(
+                context: context,
                 label: 'First Name',
-                hint: 'Stevie',
+                hint: 'Mark',
                 isRequired: true,
                 value: viewModel.getFormValue('firstName'),
                 onChanged: (value) =>
@@ -108,8 +110,9 @@ class ParticipantForm extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: _buildTextField(
+                context: context,
                 label: 'Second Name',
-                hint: 'Doe',
+                hint: 'Kithinji',
                 value: viewModel.getFormValue('lastName'),
                 onChanged: (value) =>
                     viewModel.updateFormField('lastName', value),
@@ -119,15 +122,17 @@ class ParticipantForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           label: 'Preferred Nickname',
-          hint: 'JohnieD',
+          hint: 'VictorCodebase',
           value: viewModel.getFormValue('nickname'),
           onChanged: (value) => viewModel.updateFormField('nickname', value),
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           label: 'Email',
-          hint: 'johndoe@mail.com',
+          hint: 'yourmail@mail.com',
           isRequired: true,
           keyboardType: TextInputType.emailAddress,
           value: viewModel.getFormValue('email'),
@@ -135,6 +140,7 @@ class ParticipantForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _buildTextField(
+          context: context,
           label: viewModel.isEditMode
               ? 'Password (leave blank to keep current)'
               : 'Password',
@@ -153,6 +159,7 @@ class ParticipantForm extends StatelessWidget {
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required String label,
     required String hint,
     bool isRequired = false,
@@ -171,14 +178,14 @@ class ParticipantForm extends StatelessWidget {
             Text(
               label,
               style: AppTheme.label.copyWith(
-                color: AppTheme.textPrimary,
+                color: context.colors.textPrimary,
               ),
             ),
             if (isRequired)
               Text(
                 '*',
                 style: AppTheme.label.copyWith(
-                  color: AppTheme.error,
+                  color: context.colors.error,
                 ),
               ),
             if (showVisibilityToggle)
@@ -202,21 +209,21 @@ class ParticipantForm extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTheme.bodyMedium.copyWith(
-              color: AppTheme.textTertiary,
+              color: context.colors.textTertiary,
             ),
             filled: true,
-            fillColor: AppTheme.surface,
+            fillColor: context.colors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-              borderSide: BorderSide(color: AppTheme.border, width: 1),
+              borderSide: BorderSide(color: context.colors.border, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-              borderSide: BorderSide(color: AppTheme.primaryPink, width: 2),
+              borderSide: BorderSide(color: context.colors.primary, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -228,22 +235,22 @@ class ParticipantForm extends StatelessWidget {
     );
   }
 
-  Widget _buildError() {
+  Widget _buildError(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.error.withOpacity(0.1),
+        color: context.colors.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-        border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+        border: Border.all(color: context.colors.error.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: AppTheme.error, size: 20),
+          Icon(Icons.error_outline, color: context.colors.error, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               viewModel.error!,
-              style: AppTheme.bodySmall.copyWith(color: AppTheme.error),
+              style: AppTheme.bodySmall.copyWith(color: context.colors.error),
             ),
           ),
         ],
@@ -251,6 +258,7 @@ class ParticipantForm extends StatelessWidget {
     );
   }
 
+  @override
   Widget _buildSubmitButton(BuildContext context) {
     final isEditing = viewModel.editingParticipantId != null;
 
@@ -272,13 +280,13 @@ class ParticipantForm extends StatelessWidget {
                             ? 'Participant updated successfully'
                             : 'Participant created successfully',
                       ),
-                      backgroundColor: AppTheme.success,
+                      backgroundColor: context.colors.success,
                     ),
                   );
                 }
               },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryPink,
+          backgroundColor: context.colors.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -303,18 +311,18 @@ class ParticipantForm extends StatelessWidget {
     );
   }
 
-  Widget _buildAdminNotification() {
+  Widget _buildAdminNotification(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.primaryBlue.withOpacity(0.1),
+        color: context.colors.secondary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppTheme.primaryBlue.withOpacity(0.3)),
+        border: Border.all(color: context.colors.secondary.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           Icon(Icons.admin_panel_settings_outlined,
-              color: AppTheme.primaryBlue, size: 24),
+              color: context.colors.secondary, size: 24),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -323,7 +331,7 @@ class ParticipantForm extends StatelessWidget {
                 Text(
                   'Admin Role',
                   style: AppTheme.label.copyWith(
-                    color: AppTheme.primaryBlue,
+                    color: context.colors.secondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -331,7 +339,7 @@ class ParticipantForm extends StatelessWidget {
                 Text(
                   'As the first participant, you will be assigned the Admin role with full access to manage the budget.',
                   style: AppTheme.bodySmall.copyWith(
-                    color: AppTheme.textSecondary,
+                    color: context.colors.textSecondary,
                   ),
                 ),
               ],

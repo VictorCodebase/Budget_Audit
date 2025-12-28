@@ -5,22 +5,25 @@ import '../models/models.dart' as models;
 import '../models/client_models.dart' as clientModels;
 import '../data/database.dart';
 import 'package:drift/drift.dart' as drift;
+// import 'transaction_service.dart';
 
 class BudgetService {
   final TemplateService _templateService;
   final AccountService _accountService;
   final CategoryService _categoryService;
+  final TransactionService _transactionService;
 
   BudgetService(AppDatabase db)
       : _templateService = TemplateService(db),
         _accountService = AccountService(db),
-        _categoryService = CategoryService(db);
+        _categoryService = CategoryService(db),
+        _transactionService = TransactionService(db);
 
   TemplateService get templateService => _templateService;
   AccountService get accountService => _accountService;
   CategoryService get categoryService => _categoryService;
+  TransactionService get transactionService => _transactionService;
 }
-
 
 class TemplateService {
   final AppDatabase _appDatabase;
@@ -33,14 +36,15 @@ class TemplateService {
       final templates = await _appDatabase.select(_appDatabase.templates).get();
       return templates
           .map((t) => models.Template(
-        templateId: t.templateId,
-        syncId: t.syncId,
-        spreadSheetId: t.spreadSheetId,
-        templateName: t.templateName,
-        creatorParticipantId: t.creatorParticipantId,
-        dateCreated: t.dateCreated,
-        timesUsed: t.timesUsed,
-      ))
+                templateId: t.templateId,
+                syncId: t.syncId,
+                spreadSheetId: t.spreadSheetId,
+                templateName: t.templateName,
+                creatorParticipantId: t.creatorParticipantId,
+                dateCreated: t.dateCreated,
+                timesUsed: t.timesUsed,
+                period: t.period,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching all templates", e, st);
@@ -65,6 +69,7 @@ class TemplateService {
         creatorParticipantId: result.creatorParticipantId,
         dateCreated: result.dateCreated,
         timesUsed: result.timesUsed,
+        period: result.period,
       );
     } catch (e, st) {
       _logger.severe("Error fetching template $templateId", e, st);
@@ -82,6 +87,7 @@ class TemplateService {
         creatorParticipantId: newTemplate.creatorParticipantId,
         dateCreated: newTemplate.dateCreated ?? DateTime.now(),
         timesUsed: const drift.Value(timesUsed),
+        period: newTemplate.period,
       );
 
       final id = await _appDatabase.into(_appDatabase.templates).insert(entry);
@@ -93,15 +99,33 @@ class TemplateService {
     }
   }
 
+  Future<bool> updateTemplate(models.Template template) async {
+    try {
+      final updated = await (_appDatabase.update(_appDatabase.templates)
+            ..where((t) => t.templateId.equals(template.templateId)))
+          .write(TemplatesCompanion(
+        templateName: drift.Value(template.templateName),
+        period: drift.Value(template.period),
+        // Add other fields if necessary, but typically we only update name/period here
+      ));
+
+      _logger.info("Updated template ${template.templateId} ($updated rows)");
+      return updated > 0;
+    } catch (e, st) {
+      _logger.severe("Error updating template ${template.templateId}", e, st);
+      return false;
+    }
+  }
+
   Future<bool> deleteTemplate(int templateId) async {
     try {
       // Cascade delete accounts linked to this template
       await (_appDatabase.delete(_appDatabase.accounts)
-        ..where((tbl) => tbl.templateId.equals(templateId)))
+            ..where((tbl) => tbl.templateId.equals(templateId)))
           .go();
 
       final deleted = await (_appDatabase.delete(_appDatabase.templates)
-        ..where((tbl) => tbl.templateId.equals(templateId)))
+            ..where((tbl) => tbl.templateId.equals(templateId)))
           .go();
 
       _logger.info("Deleted template $templateId ($deleted rows)");
@@ -124,22 +148,23 @@ class AccountService {
     try {
       final query = _appDatabase.select(_appDatabase.accounts)
         ..where((tbl) =>
-        tbl.templateId.equals(templateId) &
-        tbl.responsibleParticipantId.equals(participantId));
+            tbl.templateId.equals(templateId) &
+            tbl.responsibleParticipantId.equals(participantId));
       final results = await query.get();
 
       return results
           .map((a) => models.Account(
-        accountId: a.accountId,
-        categoryId: a.categoryId,
-        templateId: a.templateId,
-        accountName: a.accountName,
-        colorHex: a.colorHex,
-        budgetAmount: a.budgetAmount,
-        expenditureTotal: a.expenditureTotal ?? 0.0,
-        responsibleParticipantId: a.responsibleParticipantId,
-        dateCreated: a.dateCreated,
-      ))
+                accountId: a.accountId,
+                categoryId: a.categoryId,
+                templateId: a.templateId,
+                accountName: a.accountName,
+                colorHex: a.colorHex,
+                budgetAmount: a.budgetAmount,
+                expenditureTotal: a.expenditureTotal ?? 0.0,
+                responsibleParticipantId:
+                    a.responsibleParticipantId, // Now nullable
+                dateCreated: a.dateCreated,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching accounts for template $templateId", e, st);
@@ -153,22 +178,23 @@ class AccountService {
     try {
       final query = _appDatabase.select(_appDatabase.accounts)
         ..where((tbl) =>
-        tbl.templateId.equals(templateId) &
-        tbl.categoryId.equals(categoryId));
+            tbl.templateId.equals(templateId) &
+            tbl.categoryId.equals(categoryId));
       final results = await query.get();
 
       return results
           .map((a) => models.Account(
-        accountId: a.accountId,
-        categoryId: a.categoryId,
-        templateId: a.templateId,
-        accountName: a.accountName,
-        colorHex: a.colorHex,
-        budgetAmount: a.budgetAmount,
-        expenditureTotal: a.expenditureTotal ?? 0.0,
-        responsibleParticipantId: a.responsibleParticipantId,
-        dateCreated: a.dateCreated,
-      ))
+                accountId: a.accountId,
+                categoryId: a.categoryId,
+                templateId: a.templateId,
+                accountName: a.accountName,
+                colorHex: a.colorHex,
+                budgetAmount: a.budgetAmount,
+                expenditureTotal: a.expenditureTotal ?? 0.0,
+                responsibleParticipantId:
+                    a.responsibleParticipantId, // Now nullable
+                dateCreated: a.dateCreated,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching accounts for category $categoryId", e, st);
@@ -185,19 +211,21 @@ class AccountService {
 
       return results
           .map((a) => models.Account(
-        accountId: a.accountId,
-        categoryId: a.categoryId,
-        accountName: a.accountName,
-        templateId: a.templateId,
-        colorHex: a.colorHex,
-        budgetAmount: a.budgetAmount,
-        expenditureTotal: a.expenditureTotal ?? 0.0,
-        responsibleParticipantId: a.responsibleParticipantId,
-        dateCreated: a.dateCreated,
-      ))
+                accountId: a.accountId,
+                categoryId: a.categoryId,
+                accountName: a.accountName,
+                templateId: a.templateId,
+                colorHex: a.colorHex,
+                budgetAmount: a.budgetAmount,
+                expenditureTotal: a.expenditureTotal ?? 0.0,
+                responsibleParticipantId:
+                    a.responsibleParticipantId, // Now nullable
+                dateCreated: a.dateCreated,
+              ))
           .toList();
     } catch (e, st) {
-      _logger.severe("Error fetching all accounts for template $templateId", e, st);
+      _logger.severe(
+          "Error fetching all accounts for template $templateId", e, st);
       return [];
     }
   }
@@ -210,16 +238,17 @@ class AccountService {
         budgetAmount: drift.Value(modifiedAccount.budgetAmount),
         expenditureTotal: drift.Value(modifiedAccount.expenditureTotal),
         responsibleParticipantId:
-        drift.Value(modifiedAccount.responsibleParticipantId),
+            drift.Value(modifiedAccount.responsibleParticipantId),
       );
 
       final rows = await (_appDatabase.update(_appDatabase.accounts)
-        ..where((tbl) => tbl.accountId.equals(modifiedAccount.accountId)))
+            ..where((tbl) => tbl.accountId.equals(modifiedAccount.accountId)))
           .write(update);
 
       return rows > 0;
     } catch (e, st) {
-      _logger.severe("Error modifying account ${modifiedAccount.accountId}", e, st);
+      _logger.severe(
+          "Error modifying account ${modifiedAccount.accountId}", e, st);
       return false;
     }
   }
@@ -227,7 +256,7 @@ class AccountService {
   Future<bool> deleteAccount(int id) async {
     try {
       final deleted = await (_appDatabase.delete(_appDatabase.accounts)
-        ..where((tbl) => tbl.accountId.equals(id)))
+            ..where((tbl) => tbl.accountId.equals(id)))
           .go();
       return deleted > 0;
     } catch (e, st) {
@@ -245,7 +274,8 @@ class AccountService {
         colorHex: newAccount.colorHex,
         budgetAmount: newAccount.budgetAmount,
         expenditureTotal: drift.Value(newAccount.expenditureTotal ?? 0.0),
-        responsibleParticipantId: newAccount.responsibleParticipantId,
+        responsibleParticipantId:
+            drift.Value(newAccount.responsibleParticipantId), // Now nullable
         dateCreated: newAccount.dateCreated ?? DateTime.now(),
       );
 
@@ -303,11 +333,11 @@ class CategoryService {
 
       return results
           .map((c) => models.Category(
-        categoryId: c.categoryId,
-        templateId: c.templateId,
-        categoryName: c.categoryName,
-        colorHex: c.colorHex,
-      ))
+                categoryId: c.categoryId,
+                templateId: c.templateId,
+                categoryName: c.categoryName,
+                colorHex: c.colorHex,
+              ))
           .toList();
     } catch (e, st) {
       _logger.severe("Error fetching categories", e, st);
@@ -326,20 +356,22 @@ class CategoryService {
       debugPrint("Sampled category: ${results[0]}");
       return results
           .map((c) => models.Category(
-        categoryId: c.categoryId,
-        templateId: c.templateId,
-        categoryName: c.categoryName,
-        colorHex: c.colorHex,
-      ))
+                categoryId: c.categoryId,
+                templateId: c.templateId,
+                categoryName: c.categoryName,
+                colorHex: c.colorHex,
+              ))
           .toList();
     } catch (e, st) {
-      _logger.severe("Error fetching categories for template $templateId", e, st);
+      _logger.severe(
+          "Error fetching categories for template $templateId", e, st);
       return [];
     }
   }
 
   Future<int?> createCategory(clientModels.Category newCategory) async {
-    print("Attempting to create category. Details:\n Name: ${newCategory.categoryName} \n Template ID: ${newCategory.templateId} \n Color: ${newCategory.colorHex}");
+    print(
+        "Attempting to create category. Details:\n Name: ${newCategory.categoryName} \n Template ID: ${newCategory.templateId} \n Color: ${newCategory.colorHex}");
     try {
       final entry = CategoriesCompanion.insert(
         categoryName: newCategory.categoryName,
@@ -359,12 +391,12 @@ class CategoryService {
     try {
       // First, delete all accounts in this category
       await (_appDatabase.delete(_appDatabase.accounts)
-        ..where((tbl) => tbl.categoryId.equals(categoryId)))
+            ..where((tbl) => tbl.categoryId.equals(categoryId)))
           .go();
 
       // Then delete the category
       final deleted = await (_appDatabase.delete(_appDatabase.categories)
-        ..where((tbl) => tbl.categoryId.equals(categoryId)))
+            ..where((tbl) => tbl.categoryId.equals(categoryId)))
           .go();
 
       _logger.info("Deleted category $categoryId and its accounts");
@@ -372,6 +404,239 @@ class CategoryService {
     } catch (e, st) {
       _logger.severe("Error deleting category $categoryId", e, st);
       return false;
+    }
+  }
+}
+
+class TransactionService {
+  final AppDatabase _appDatabase;
+  final Logger _logger = Logger("TransactionService");
+
+  TransactionService(this._appDatabase);
+
+  /// Fetch all known vendors
+  Future<List<models.Vendor>> getAllVendors() async {
+    try {
+      final vendors = await _appDatabase.select(_appDatabase.vendors).get();
+      return vendors
+          .map((v) => models.Vendor(
+                vendorId: v.vendorId,
+                vendorName: v.vendorName,
+              ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe("Error fetching vendors", e, st);
+      return [];
+    }
+  }
+
+  /// Fetch match history for a specific vendor
+  Future<List<VendorMatchHistory>> getVendorMatchHistory(int vendorId) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.vendorMatchHistories)
+        ..where((tbl) => tbl.vendorId.equals(vendorId))
+        ..orderBy([
+          (t) => drift.OrderingTerm(
+              expression: t.lastUsed, mode: drift.OrderingMode.desc),
+        ]);
+
+      return await query.get();
+    } catch (e, st) {
+      _logger.severe(
+          "Error fetching match history for vendor $vendorId", e, st);
+      return [];
+    }
+  }
+
+  
+/// Fetch all transactions for a list of account IDs
+  Future<List<models.Transaction>> getTransactionsForAccounts(
+      List<int> accountIds) async {
+    try {
+      if (accountIds.isEmpty) return [];
+
+      final query = _appDatabase.select(_appDatabase.transactions)
+        ..where((tbl) => tbl.accountId.isIn(accountIds))
+        ..orderBy([
+          (t) => drift.OrderingTerm(
+              expression: t.date, mode: drift.OrderingMode.desc)
+        ]);
+
+      final results = await query.get();
+
+      return results
+          .map((t) => models.Transaction(
+                transactionId: t.transactionId,
+                syncId: t.syncId,
+                accountId: t.accountId,
+                isIgnored: t.isIgnored,
+                date: t.date,
+                vendorId: t.vendorId,
+                amount: t.amount,
+                participantId: t.participantId,
+                editorParticipantId: t.editorParticipantId,
+                reason: t.reason,
+              ))
+          .toList();
+    } catch (e, st) {
+      _logger.severe('Error fetching transactions for accounts', e, st);
+      return [];
+    }
+  }
+
+  /// Fetch all transactions for a specific template
+  Future<List<models.Transaction>> getTransactionsForTemplate(
+      int templateId) async {
+    try {
+      // First, get all accounts for this template
+      final accountsQuery = _appDatabase.select(_appDatabase.accounts)
+        ..where((tbl) => tbl.templateId.equals(templateId));
+      final accounts = await accountsQuery.get();
+      final accountIds = accounts.map((a) => a.accountId).toList();
+
+      // Then get all transactions for these accounts
+      return await getTransactionsForAccounts(accountIds);
+    } catch (e, st) {
+      _logger.severe(
+          'Error fetching transactions for template $templateId', e, st);
+      return [];
+    }
+  }
+
+  /// Deletes a vendor match history entry
+  Future<bool> deleteVendorMatchHistory({
+    required int vendorId,
+    required int accountId,
+    required int participantId,
+  }) async {
+    try {
+      final deleted =
+          await (_appDatabase.delete(_appDatabase.vendorMatchHistories)
+                ..where((t) =>
+                    t.vendorId.equals(vendorId) &
+                    t.accountId.equals(accountId) &
+                    t.participantId.equals(participantId)))
+              .go();
+
+      return deleted > 0;
+    } catch (e) {
+      _logger.severe('Error deleting vendor match history', e);
+      return false;
+    }
+  }
+
+  /// Record a vendor match (create or update stats)
+  Future<void> recordVendorMatch({
+    required int vendorId,
+    required int accountId,
+    required int participantId,
+  }) async {
+    try {
+      // Check if exists
+      final existing =
+          await (_appDatabase.select(_appDatabase.vendorMatchHistories)
+                ..where((tbl) =>
+                    tbl.vendorId.equals(vendorId) &
+                    tbl.accountId.equals(accountId) &
+                    tbl.participantId.equals(participantId)))
+              .getSingleOrNull();
+
+      if (existing != null) {
+        // Update
+        await (_appDatabase.update(_appDatabase.vendorMatchHistories)
+              ..where(
+                  (tbl) => tbl.vendorMatchId.equals(existing.vendorMatchId)))
+            .write(VendorMatchHistoriesCompanion(
+          useCount: drift.Value(existing.useCount + 1),
+          lastUsed: drift.Value(DateTime.now()),
+        ));
+      } else {
+        // Insert
+        await _appDatabase.into(_appDatabase.vendorMatchHistories).insert(
+              VendorMatchHistoriesCompanion.insert(
+                vendorId: vendorId,
+                accountId: accountId,
+                participantId: participantId,
+                lastUsed: DateTime.now(),
+                useCount: const drift.Value(1),
+              ),
+            );
+      }
+    } catch (e, st) {
+      _logger.severe("Error recording vendor match", e, st);
+    }
+  }
+
+  /// Create a new transaction in the database
+  Future<int?> createTransaction({
+    required int syncId,
+    required int accountId,
+    required DateTime date,
+    required int vendorId,
+    required double amount,
+    required int participantId,
+    required int editorParticipantId,
+    String? reason,
+    bool isIgnored = false,
+  }) async {
+    try {
+      final transactionId =
+          await _appDatabase.into(_appDatabase.transactions).insert(
+                TransactionsCompanion.insert(
+                  syncId: syncId,
+                  accountId: accountId,
+                  date: date,
+                  vendorId: vendorId,
+                  amount: amount,
+                  participantId: participantId,
+                  editorParticipantId: editorParticipantId,
+                  reason: drift.Value(reason),
+                  isIgnored: drift.Value(isIgnored),
+                ),
+              );
+
+      _logger.info(
+          'Transaction created: ID=$transactionId, vendor=$vendorId, amount=$amount');
+      return transactionId;
+    } catch (e, st) {
+      _logger.severe('Error creating transaction', e, st);
+      return null;
+    }
+  }
+
+  /// Get or create a sync log entry for batch operations
+  Future<int> getOrCreateSyncLog() async {
+    //throw UnimplementedError("Synclog date not implemented  ");
+    try {
+      final syncId = await _appDatabase.into(_appDatabase.syncLog).insert(
+            // TODO: add date to synclog in db
+            SyncLogCompanion.insert(
+              dateSynced: DateTime.now(),
+              syncDirection: models.SyncDirection.upload.value,
+              synced: false,
+              success: false,
+              sheetUrl: "",
+
+              // Add other required fields based on your SyncLog table structure
+            ),
+          );
+      return syncId;
+    } catch (e, st) {
+      _logger.severe('Error creating sync log', e, st);
+      rethrow;
+    }
+  }
+
+  /// Create a new vendor
+  Future<int?> createVendor(String name) async {
+    try {
+      final id = await _appDatabase.into(_appDatabase.vendors).insert(
+            VendorsCompanion.insert(vendorName: name),
+          );
+      return id;
+    } catch (e, st) {
+      _logger.severe("Error creating vendor $name", e, st);
+      return null;
     }
   }
 }

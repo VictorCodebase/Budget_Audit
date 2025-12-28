@@ -35,9 +35,15 @@ class MenuViewModel extends ChangeNotifier {
           icon: Icons.account_balance_wallet_outlined,
           route: '/budgeting'),
       MenuDestination(
+          label: 'Analytics',
+          icon: Icons.analytics_outlined,
+          route: '/analytics'),
+      MenuDestination(
           label: 'Settings', icon: Icons.settings_outlined, route: '/settings'),
       MenuDestination(
-          label: 'Dev Tools', icon: Icons.developer_mode_outlined, route: '/dev'),
+          label: 'Dev Tools',
+          icon: Icons.developer_mode_outlined,
+          route: '/dev'),
       MenuDestination(
           label: 'Sign Out', icon: Icons.logout_outlined, route: '/onboarding'),
     ];
@@ -45,16 +51,18 @@ class MenuViewModel extends ChangeNotifier {
     return allDestinations.where((dest) {
       switch (dest.route) {
         case '/budgeting':
-        // Only available if the user is logged in
+        case '/analytics':
+          // Only available if the user is logged in
           return _appContext.hasValidSession;
         case '/dev':
-        // Only available if NOT in production
-          return _appContext.isProduction == true; //TODO: remember to change this to actually check env for app state
+          // Only available if NOT in production
+          return _appContext.isProduction ==
+              true; //TODO: remember to change this to actually check env for app state
         case '/home':
-        // Only show home after a valid session is established
+          // Only show home after a valid session is established
           return _appContext.hasValidSession;
         case '/onboarding':
-        // Only show "Sign Out" if logged in
+          // Only show "Sign Out" if logged in
           return _appContext.hasValidSession;
         default:
           return true;

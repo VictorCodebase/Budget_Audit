@@ -25,8 +25,8 @@ class DocumentCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border.all(color: AppTheme.border, width: 1),
+        color: context.colors.surface,
+        border: Border.all(color: context.colors.border, width: 1),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       ),
       child: Row(
@@ -35,12 +35,12 @@ class DocumentCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingSm),
             decoration: BoxDecoration(
-              color: AppTheme.error.withOpacity(0.1),
+              color: context.colors.error.withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             ),
             child: Icon(
               Icons.picture_as_pdf,
-              color: AppTheme.error,
+              color: context.colors.error,
               size: 24,
             ),
           ),
@@ -68,13 +68,13 @@ class DocumentCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryPink.withOpacity(0.1),
+                        color: context.colors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(AppTheme.radiusXs),
                       ),
                       child: Text(
                         document.institution.displayName,
                         style: AppTheme.caption.copyWith(
-                          color: AppTheme.primaryPink,
+                          color: context.colors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -95,7 +95,7 @@ class DocumentCard extends StatelessWidget {
             onPressed: () => _confirmDelete(context, viewModel),
             icon: Icon(
               Icons.delete_outline,
-              color: AppTheme.error,
+              color: context.colors.error,
               size: 20,
             ),
             constraints: const BoxConstraints(
@@ -126,7 +126,7 @@ class DocumentCard extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: AppTheme.error,
+              foregroundColor: context.colors.error,
             ),
             child: const Text('Remove'),
           ),

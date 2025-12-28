@@ -33,7 +33,7 @@ class _SignInFormState extends State<SignInForm> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-          border: Border.all(color: AppTheme.border, width: 1),
+          border: Border.all(color: context.colors.border, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +46,7 @@ class _SignInFormState extends State<SignInForm> {
             Text(
               'Enter your credentials to access your account',
               style: AppTheme.bodySmall.copyWith(
-                color: AppTheme.textSecondary,
+                color: context.colors.textSecondary,
               ),
             ),
             const SizedBox(height: 32),
@@ -80,7 +80,7 @@ class _SignInFormState extends State<SignInForm> {
                 child: Text(
                   'Don\'t have an account? Add participant',
                   style: AppTheme.bodySmall.copyWith(
-                    color: AppTheme.primaryPink,
+                    color: context.colors.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -106,7 +106,7 @@ class _SignInFormState extends State<SignInForm> {
         Text(
           label,
           style: AppTheme.label.copyWith(
-            color: AppTheme.textPrimary,
+            color: context.colors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -117,24 +117,24 @@ class _SignInFormState extends State<SignInForm> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTheme.bodyMedium.copyWith(
-              color: AppTheme.textTertiary,
+              color: context.colors.textTertiary,
             ),
             prefixIcon: icon != null
-                ? Icon(icon, color: AppTheme.textSecondary)
+                ? Icon(icon, color: context.colors.textSecondary)
                 : null,
             filled: true,
-            fillColor: AppTheme.surface,
+            fillColor: context.colors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-              borderSide: BorderSide(color: AppTheme.border, width: 1),
+              borderSide: BorderSide(color: context.colors.border, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-              borderSide: BorderSide(color: AppTheme.primaryPink, width: 2),
+              borderSide: BorderSide(color: context.colors.primary, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -150,18 +150,18 @@ class _SignInFormState extends State<SignInForm> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.error.withOpacity(0.1),
+        color: context.colors.error.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-        border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+        border: Border.all(color: context.colors.error.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: AppTheme.error, size: 20),
+          Icon(Icons.error_outline, color: context.colors.error, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               widget.viewModel.error!,
-              style: AppTheme.bodySmall.copyWith(color: AppTheme.error),
+              style: AppTheme.bodySmall.copyWith(color: context.colors.error),
             ),
           ),
         ],
@@ -192,7 +192,7 @@ class _SignInFormState extends State<SignInForm> {
           // If success is false, the error is already displayed via viewModel.error
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryPink,
+          backgroundColor: context.colors.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(

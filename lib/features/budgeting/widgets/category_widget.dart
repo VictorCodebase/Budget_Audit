@@ -78,7 +78,7 @@ class CategoryWidget extends StatelessWidget {
         Text(
           'Total: \$${category.totalBudget.toStringAsFixed(2)}',
           style: AppTheme.bodySmall.copyWith(
-            color: AppTheme.textSecondary,
+            color: context.colors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -105,7 +105,7 @@ class CategoryWidget extends StatelessWidget {
           Text(
             'Incomplete',
             style: AppTheme.bodySmall.copyWith(
-              color: AppTheme.warning,
+              color: context.colors.warning,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -126,19 +126,20 @@ class CategoryWidget extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: AppTheme.spacingSm),
               padding: const EdgeInsets.all(AppTheme.spacingSm),
               decoration: BoxDecoration(
-                color: AppTheme.error.withOpacity(0.1),
+                color: context.colors.error.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: AppTheme.error, width: 1),
+                border: Border.all(color: context.colors.error, width: 1),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline,
-                      color: AppTheme.error, size: 16),
+                    Icon(Icons.error_outline,
+                      color: context.colors.error, size: 16),
                   const SizedBox(width: AppTheme.spacingXs),
                   Expanded(
                     child: Text(
                       category.validationError!,
-                      style: AppTheme.bodySmall.copyWith(color: AppTheme.error),
+                      style: AppTheme.bodySmall
+                          .copyWith(color: context.colors.error),
                     ),
                   ),
                 ],
@@ -147,11 +148,14 @@ class CategoryWidget extends StatelessWidget {
 
           // Account rows
           if (category.accounts.isNotEmpty)
-            ...category.accounts.map((account) {
+            ...category.accounts.asMap().entries.map((entry) {
+              final index = entry.key;
+              final account = entry.value;
               return AccountRow(
                 key: ValueKey(account.id),
                 categoryId: category.id,
                 account: account,
+                isLast: index == category.accounts.length - 1,
               );
             }),
 
@@ -168,7 +172,7 @@ class CategoryWidget extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: AppTheme.primaryPink,
+                  color: context.colors.primary,
                   width: 1,
                 ),
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -176,16 +180,16 @@ class CategoryWidget extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.add,
                     size: 16,
-                    color: AppTheme.primaryPink,
+                    color: context.colors.primary,
                   ),
                   const SizedBox(width: AppTheme.spacing2xs),
                   Text(
                     'Add Account',
                     style: AppTheme.bodySmall.copyWith(
-                      color: AppTheme.primaryPink,
+                      color: context.colors.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -200,7 +204,7 @@ class CategoryWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingSm),
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: context.colors.surface,
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             ),
             child: Row(
@@ -215,7 +219,7 @@ class CategoryWidget extends StatelessWidget {
                 Text(
                   '\$${category.totalBudget.toStringAsFixed(2)}',
                   style: AppTheme.h4.copyWith(
-                    color: AppTheme.primaryPink,
+                    color: context.colors.primary,
                   ),
                 ),
               ],
@@ -270,6 +274,9 @@ class CategoryWidget extends StatelessWidget {
         isNew: isNew,
         onSubmitted: (value) {
           viewModel.updateCategoryName(category.id, value);
+          if (category.accounts.isEmpty) {
+            viewModel.addAccount(category.id);
+          }
         },
       ),
     );
@@ -324,7 +331,7 @@ class CategoryWidget extends StatelessWidget {
                 Navigator.of(context).pop();
               },
               style: TextButton.styleFrom(
-                foregroundColor: AppTheme.error,
+                foregroundColor: context.colors.error,
               ),
               child: const Text('Delete'),
             ),

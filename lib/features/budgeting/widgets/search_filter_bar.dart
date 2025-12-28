@@ -15,9 +15,9 @@ class SearchFilterBar extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(AppTheme.spacingMd),
           decoration: BoxDecoration(
-            color: AppTheme.backgroundColor,
+            color: context.colors.background,
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(color: AppTheme.border, width: 1),
+            border: Border.all(color: context.colors.border, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,8 +70,8 @@ class SearchFilterBar extends StatelessWidget {
               // Filter and sort options
               Row(
                 children: [
-                  const Icon(Icons.filter_list,
-                      size: 20, color: AppTheme.textSecondary),
+                  Icon(Icons.filter_list,
+                      size: 20, color: context.colors.textSecondary),
                   const SizedBox(width: AppTheme.spacingXs),
                   Expanded(
                     child: SingleChildScrollView(
@@ -98,13 +98,6 @@ class SearchFilterBar extends StatelessWidget {
                           const SizedBox(width: AppTheme.spacingXs),
                           _buildColorFilter(context, viewModel),
                           const SizedBox(width: AppTheme.spacingXs),
-                          _buildFilterChip(
-                            context,
-                            label: 'Filter by Category Editor',
-                            icon: Icons.person,
-                            isActive: false,
-                            onTap: () {},
-                          ),
                         ],
                       ),
                     ),
@@ -135,11 +128,11 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isActive
-              ? AppTheme.primaryPink.withOpacity(0.1)
+              ? context.colors.primary.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(
-            color: isActive ? AppTheme.primaryPink : AppTheme.border,
+            color: isActive ? context.colors.primary : context.colors.border,
             width: 1,
           ),
         ),
@@ -149,13 +142,17 @@ class SearchFilterBar extends StatelessWidget {
             Icon(
               icon,
               size: 16,
-              color: isActive ? AppTheme.primaryPink : AppTheme.textSecondary,
+              color: isActive
+                  ? context.colors.primary
+                  : context.colors.textSecondary,
             ),
             const SizedBox(width: AppTheme.spacing2xs),
             Text(
               label,
               style: AppTheme.bodySmall.copyWith(
-                color: isActive ? AppTheme.primaryPink : AppTheme.textSecondary,
+                color: isActive
+                    ? context.colors.primary
+                    : context.colors.textSecondary,
               ),
             ),
           ],
@@ -174,11 +171,7 @@ class SearchFilterBar extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        if (isActive) {
-          viewModel.toggleSortOrder();
-        } else {
-          viewModel.setFilter(filterType, order: SortOrder.asc);
-        }
+        viewModel.setFilter(filterType, order: SortOrder.asc);
       },
       borderRadius: BorderRadius.circular(AppTheme.radiusSm),
       child: Container(
@@ -188,11 +181,11 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isActive
-              ? AppTheme.primaryPink.withOpacity(0.1)
+              ? context.colors.primary.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(
-            color: isActive ? AppTheme.primaryPink : AppTheme.border,
+            color: isActive ? context.colors.primary : context.colors.border,
             width: 1,
           ),
         ),
@@ -202,7 +195,9 @@ class SearchFilterBar extends StatelessWidget {
             Text(
               label,
               style: AppTheme.bodySmall.copyWith(
-                color: isActive ? AppTheme.primaryPink : AppTheme.textSecondary,
+                color: isActive
+                    ? context.colors.primary
+                    : context.colors.textSecondary,
               ),
             ),
             if (isActive) ...[
@@ -212,7 +207,7 @@ class SearchFilterBar extends StatelessWidget {
                     ? Icons.arrow_upward
                     : Icons.arrow_downward,
                 size: 14,
-                color: AppTheme.primaryPink,
+                color: context.colors.primary,
               ),
             ],
           ],
@@ -237,11 +232,11 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: hasFilter
-              ? AppTheme.primaryPink.withOpacity(0.1)
+              ? context.colors.primary.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(
-            color: hasFilter ? AppTheme.primaryPink : AppTheme.border,
+            color: hasFilter ? context.colors.primary : context.colors.border,
             width: 1,
           ),
         ),
@@ -251,21 +246,26 @@ class SearchFilterBar extends StatelessWidget {
             Icon(
               Icons.person,
               size: 16,
-              color: hasFilter ? AppTheme.primaryPink : AppTheme.textSecondary,
+              color: hasFilter
+                  ? context.colors.primary
+                  : context.colors.textSecondary,
             ),
             const SizedBox(width: AppTheme.spacing2xs),
             Text(
               viewModel.filterParticipant?.nickname ?? 'Filter by Participant',
               style: AppTheme.bodySmall.copyWith(
-                color:
-                    hasFilter ? AppTheme.primaryPink : AppTheme.textSecondary,
+                color: hasFilter
+                    ? context.colors.primary
+                    : context.colors.textSecondary,
               ),
             ),
             const SizedBox(width: AppTheme.spacing2xs),
             Icon(
               Icons.arrow_drop_down,
               size: 16,
-              color: hasFilter ? AppTheme.primaryPink : AppTheme.textSecondary,
+              color: hasFilter
+                  ? context.colors.primary
+                  : context.colors.textSecondary,
             ),
           ],
         ),
@@ -320,11 +320,11 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: hasFilter
-              ? AppTheme.primaryPink.withOpacity(0.1)
+              ? context.colors.primary.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(
-            color: hasFilter ? AppTheme.primaryPink : AppTheme.border,
+            color: hasFilter ? context.colors.primary : context.colors.border,
             width: 1,
           ),
         ),
@@ -345,21 +345,24 @@ class SearchFilterBar extends StatelessWidget {
               Icon(
                 Icons.palette,
                 size: 16,
-                color: AppTheme.textSecondary,
+                color: context.colors.textSecondary,
               ),
             const SizedBox(width: AppTheme.spacing2xs),
             Text(
               'Filter by Color',
               style: AppTheme.bodySmall.copyWith(
-                color:
-                    hasFilter ? AppTheme.primaryPink : AppTheme.textSecondary,
+                color: hasFilter
+                    ? context.colors.primary
+                    : context.colors.textSecondary,
               ),
             ),
             const SizedBox(width: AppTheme.spacing2xs),
             Icon(
               Icons.arrow_drop_down,
               size: 16,
-              color: hasFilter ? AppTheme.primaryPink : AppTheme.textSecondary,
+              color: hasFilter
+                  ? context.colors.primary
+                  : context.colors.textSecondary,
             ),
           ],
         ),
@@ -381,7 +384,7 @@ class SearchFilterBar extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.border, width: 1),
+                    border: Border.all(color: context.colors.border, width: 1),
                   ),
                 ),
                 const SizedBox(width: AppTheme.spacingXs),

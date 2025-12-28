@@ -1,3 +1,4 @@
+import 'package:budget_audit/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// Defines the available control actions for a ContentBox
@@ -63,6 +64,9 @@ class ContentBox extends StatefulWidget {
   /// Padding inside the content area
   final EdgeInsets contentPadding;
 
+  /// Whether to expand the content fully without scrolling (default: false)
+  final bool expandContent;
+
   const ContentBox({
     Key? key,
     required this.content,
@@ -76,6 +80,7 @@ class ContentBox extends StatefulWidget {
     this.previewSpacing = 60.0,
     this.initiallyMinimized = false,
     this.contentPadding = const EdgeInsets.all(16.0),
+    this.expandContent = false,
   }) : super(key: key);
 
   @override
@@ -298,6 +303,11 @@ class _ContentBoxState extends State<ContentBox>
     final double defaultMaxHeight = MediaQuery.of(context).size.height * 0.8;
     final double maxBoxHeight = widget.maxHeight ?? defaultMaxHeight;
 
+    final contentWidget = Padding(
+      padding: widget.contentPadding,
+      child: widget.content,
+    );
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,17 +342,17 @@ class _ContentBoxState extends State<ContentBox>
           ),
         ),
 
-        // Main content area (scrollable if too tall)
-        ConstrainedBox(
-          constraints: BoxConstraints(
-              maxHeight: maxBoxHeight - 64), // Adjusted for header height
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: widget.contentPadding,
-              child: widget.content,
+        // Main content area
+        if (widget.expandContent)
+          contentWidget
+        else
+          ConstrainedBox(
+            constraints: BoxConstraints(
+                maxHeight: maxBoxHeight - 64), // Adjusted for header height
+            child: SingleChildScrollView(
+              child: contentWidget,
             ),
           ),
-        ),
       ],
     );
   }
@@ -363,10 +373,10 @@ class _ContentBoxState extends State<ContentBox>
                 )
               : null,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFFFF),
+            color: context.colors.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFFC7C7C7),
+              color: context.colors.border,
               width: 1,
             ),
           ),

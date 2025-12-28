@@ -46,7 +46,7 @@ class TemplateHistoryItem extends StatelessWidget {
         Text(
           '\$${totalBudget.toStringAsFixed(2)}',
           style: AppTheme.bodyMedium.copyWith(
-            color: AppTheme.primaryBlue,
+            color: context.colors.secondary,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -57,21 +57,23 @@ class TemplateHistoryItem extends StatelessWidget {
               vertical: 2,
             ),
             decoration: BoxDecoration(
-              color: AppTheme.success,
+              color: context.colors.success,
               borderRadius: BorderRadius.circular(AppTheme.radiusXs),
             ),
             child: Text(
               'Current',
-              style: AppTheme.caption.copyWith(color: Colors.white),
+              style: AppTheme.caption.copyWith(color: context.colors.primary),
             ),
           ),
       ],
       headerWidgets: [
         _buildInfoRow(
+          context,
           'Date Created',
           _formatDate(template.dateCreated),
         ),
         _buildInfoRow(
+          context,
           'Total Budget',
           '\$${totalBudget.toStringAsFixed(2)}',
         ),
@@ -89,23 +91,23 @@ class TemplateHistoryItem extends StatelessWidget {
                 vertical: AppTheme.spacingXs,
               ),
               decoration: BoxDecoration(
-                color: AppTheme.success.withOpacity(0.1),
+                color: context.colors.success.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(color: AppTheme.success, width: 1),
+                border: Border.all(color: context.colors.success, width: 1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.check_circle,
                     size: 16,
-                    color: AppTheme.success,
+                    color: context.colors.success,
                   ),
                   const SizedBox(width: AppTheme.spacingXs),
                   Text(
                     'Currently Active Template',
                     style: AppTheme.bodySmall.copyWith(
-                      color: AppTheme.success,
+                      color: context.colors.success,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -114,7 +116,7 @@ class TemplateHistoryItem extends StatelessWidget {
             ),
 
           // Participants section
-          Text(
+          const Text(
             'Participants:',
             style: AppTheme.label,
           ),
@@ -124,7 +126,7 @@ class TemplateHistoryItem extends StatelessWidget {
             Text(
               'No participants',
               style: AppTheme.bodySmall.copyWith(
-                color: AppTheme.textSecondary,
+                color: context.colors.textSecondary,
                 fontStyle: FontStyle.italic,
               ),
             )
@@ -156,14 +158,14 @@ class TemplateHistoryItem extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           '$label: ',
           style: AppTheme.bodySmall.copyWith(
-            color: AppTheme.textSecondary,
+            color: context.colors.textSecondary,
           ),
         ),
         Text(

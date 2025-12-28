@@ -42,7 +42,7 @@ dependencies:
   # Utilities
   intl: ^0.19.0
   equatable: ^2.0.5
-  uuid: ^4.2.1
+  uuid: ^4.5.2
 
   # Other
   flutter_dotenv: ^5.1.0
@@ -51,6 +51,7 @@ dependencies:
   flutter_colorpicker: ^1.0.3
   url_launcher: ^6.1.0
   shared_preferences: ^2.5.3
+  fl_chart: ^1.1.1
 
 
   # The following adds the Cupertino Icons font to your application.

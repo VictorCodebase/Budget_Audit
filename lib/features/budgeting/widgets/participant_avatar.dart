@@ -1,6 +1,7 @@
+import 'package:budget_audit/core/theme/app_theme.dart';
+import 'package:budget_audit/core/utils/color_palette.dart';
 import 'package:flutter/material.dart';
 import '../../../core/models/models.dart' as models;
-import '../../../core/theme/app_theme.dart';
 
 class ParticipantAvatar extends StatelessWidget {
   final models.Participant participant;
@@ -34,7 +35,7 @@ class ParticipantAvatar extends StatelessWidget {
         child: Text(
           initials,
           style: TextStyle(
-            color: Colors.white,
+            color: context.colors.textPrimary,
             fontSize: size * 0.4,
             fontWeight: FontWeight.w600,
           ),
@@ -68,17 +69,7 @@ class ParticipantAvatar extends StatelessWidget {
   }
 
   Color _generateColor() {
-    // Generate consistent color based on participant ID
-    final colors = [
-      AppTheme.primaryPink,
-      AppTheme.primaryBlue,
-      AppTheme.primaryPurple,
-      AppTheme.primaryTurquoise,
-      const Color(0xFFFBBF24),
-      const Color(0xFFF87171),
-      const Color(0xFF34D399),
-    ];
-
-    return colors[participant.participantId % colors.length];
+    // Generate random color
+    return ColorPalette.getRandom();
   }
 }
