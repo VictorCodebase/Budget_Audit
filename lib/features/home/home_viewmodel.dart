@@ -609,6 +609,43 @@ class HomeViewModel extends ChangeNotifier {
           if (potentialMatches.isNotEmpty) {
             matchStatus = MatchStatus.potential;
             markAsAutoUpdated = true;
+
+            final bestFuzzyMatch = vendors
+                .where((v) => v.vendorName == potentialMatches.first)
+                .firstOrNull;
+
+            if (bestFuzzyMatch != null) {
+              matchStatus = MatchStatus.potential;
+
+              final bestFuzzyMatch = vendors
+                  .where((v) => v.vendorName == potentialMatches.first)
+                  .firstOrNull;
+
+              if (bestFuzzyMatch != null) {
+                vendorId = bestFuzzyMatch.vendorId;
+
+                final history = await _budgetService.transactionService
+                    .getVendorMatchHistory(bestFuzzyMatch.vendorId);
+
+                if (history.isNotEmpty) {
+                  final bestMatch = history.first;
+                  final account = accountMap[bestMatch.accountId];
+
+                  if (account != null) {
+                    suggestedAccount = client_models.AccountData(
+                      id: account.accountId.toString(),
+                      name: account.accountName,
+                      budgetAmount: account.budgetAmount,
+                      color: Color(
+                          int.parse(account.colorHex.substring(1), radix: 16) +
+                              0xFF000000),
+                    );
+
+                    markAsAutoUpdated = true;
+                  }
+                }
+              }
+            }
           }
         }
 

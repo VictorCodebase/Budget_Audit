@@ -149,6 +149,7 @@ class Transactions extends drift.Table {
 
   drift.IntColumn get accountId => integer().references(Accounts, #accountId)();
 
+//! BEWARE: This column is used to ignore MONEY IN/ DEPOSIT transactions
   drift.BoolColumn get isIgnored =>
       boolean().withDefault(const drift.Constant(false))();
 
