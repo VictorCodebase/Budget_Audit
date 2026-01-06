@@ -42,6 +42,7 @@ class DocumentService {
       if (!await file.exists()) {
         return const ValidationResult.failure(
           error: 'File not found. Please upload the document again.',
+          type: ValidationErrorType.fileNotFound,
         );
       }
 

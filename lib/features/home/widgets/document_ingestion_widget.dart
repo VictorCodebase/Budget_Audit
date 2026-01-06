@@ -439,7 +439,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     if (_selectedFilePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please select a PDF document'),
+          content: const Text('Please select a PDF document'),
           backgroundColor: context.colors.error,
         ),
       );
@@ -449,7 +449,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     if (_selectedInstitution == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please select a financial institution'),
+          content: const Text('Please select a financial institution'),
           backgroundColor: context.colors.error,
         ),
       );
@@ -457,7 +457,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     }
 
     final viewModel = context.read<HomeViewModel>();
-    final success = await viewModel.addDocument(
+    final validationResult = await viewModel.addDocument(
       fileName: _selectedFileName!,
       filePath: _selectedFilePath!,
       password:
@@ -466,7 +466,9 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       institution: _selectedInstitution!,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (validationResult.canParse) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Document verified and added: $_selectedFileName'),
@@ -481,6 +483,49 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         _passwordController.clear();
         _selectedInstitution = null;
       });
+    } else {
+      String message;
+      switch (validationResult.type) {
+        case ValidationErrorType.passwordRequired:
+          message =
+              'This document is password protected. Please enter the password.';
+          break;
+        case ValidationErrorType.passwordIncorrect:
+          message = 'The password provided is incorrect. Please try again.';
+          break;
+        case ValidationErrorType.fileNotFound:
+          message = 'The selected file could not be found. Please try again.';
+          break;
+        case ValidationErrorType.invalidFormat:
+          message = 'Invalid file format. Please select a valid PDF document.';
+          break;
+        case ValidationErrorType.parsingFailed:
+          message =
+              'Failed to parse the document. identifying details could not be found.';
+          break;
+        case ValidationErrorType.none:
+        case ValidationErrorType.unknown:
+          message = validationResult.errorMessage ??
+              'An unknown error occurred during validation.';
+          break;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: context.colors.error,
+          duration: const Duration(seconds: 4),
+          action: validationResult.type == ValidationErrorType.passwordRequired
+              ? SnackBarAction(
+                  label: 'Focus Input',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    // Focus logic could go here, or just let user tap
+                  },
+                )
+              : null,
+        ),
+      );
     }
   }
 

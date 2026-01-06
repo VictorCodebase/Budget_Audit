@@ -1,17 +1,15 @@
 // lib/core/services/parser/equity_parser.dart
 
 import 'dart:io';
+import 'package:budget_audit/core/services/parser/parser_mixin.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/client_models.dart';
 import 'parser_interface.dart';
 
-/**
- * TODO: Issue
- * the parser does not distinguish money out from money in. It records them as moey out
- */
 
-class EquityParser extends StatementParser {
+
+class EquityParser with ParserMixin implements StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.equity;
 
@@ -24,7 +22,7 @@ class EquityParser extends StatementParser {
   /// Group 4: Money Out (optional amount)
   /// Group 5: Money In (optional amount)
   /// Group 6: Balance (with Cr/Dr indicator)
-  /// 
+  ///
   /// I am trying to use the balance to determine if the transaction is a deposit or withdrawal
   static final RegExp _transactionRowPattern = RegExp(
     // 1. Date: DD-MM-YYYY
@@ -55,6 +53,18 @@ class EquityParser extends StatementParser {
   }) async {
     PdfDocument? document;
     try {
+      // Validate PDF openability/security
+      final unlockResult = await unlockPdf(pdfFile, password);
+      if (unlockResult != ValidationErrorType.none) {
+        return ValidationResult.failure(
+          error: unlockResult == ValidationErrorType.passwordRequired
+              ? 'Document is password protected'
+              : 'Incorrect password',
+          missing: ['PDF unlock failed'],
+          type: unlockResult,
+        );
+      }
+
       document = PdfDocument(
           inputBytes: pdfFile.readAsBytesSync(), password: password);
       String text = PdfTextExtractor(document).extractText();
@@ -104,7 +114,7 @@ class EquityParser extends StatementParser {
   }
 
   @override
-@override
+  @override
   Future<ParseResult> parseDocument(
     File pdfFile,
     UploadedDocument documentMetadata, {
@@ -249,6 +259,7 @@ class EquityParser extends StatementParser {
       document?.dispose();
     }
   }
+
   @override
   String normalizeVendorName(String rawVendor) {
     // Clean up the particulars field to extract meaningful vendor names

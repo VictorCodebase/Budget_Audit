@@ -1,17 +1,14 @@
 // lib/core/services/parser/mpesa_parser.dart
 
 import 'dart:io';
+import 'package:budget_audit/core/services/parser/parser_mixin.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/client_models.dart';
 import 'parser_interface.dart';
 
-/**
- * Current implementation ignores all money in transactions
- * TODO: move that logic to the parent so that all parsers can be toggled to accept
- */
 
-class MPesaParser extends StatementParser {
+class MPesaParser with ParserMixin implements StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.mpesa;
 
@@ -58,6 +55,18 @@ class MPesaParser extends StatementParser {
   }) async {
     PdfDocument? document;
     try {
+      // Validate PDF openability/security
+      final unlockResult = await unlockPdf(pdfFile, password);
+      if (unlockResult != ValidationErrorType.none) {
+        return ValidationResult.failure(
+          error: unlockResult == ValidationErrorType.passwordRequired
+              ? 'Document is password protected'
+              : 'Incorrect password',
+          missing: ['PDF unlock failed'],
+          type: unlockResult,
+        );
+      }
+
       document = PdfDocument(
           inputBytes: pdfFile.readAsBytesSync(), password: password);
       String text = PdfTextExtractor(document).extractText();

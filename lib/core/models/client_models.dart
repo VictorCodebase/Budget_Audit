@@ -190,32 +190,47 @@ class ParseResult extends Equatable {
   List<Object?> get props => [success, errorMessage, transactions, document];
 }
 
+/// Types of validation errors for document ingestion
+enum ValidationErrorType {
+  none,
+  passwordRequired,
+  passwordIncorrect,
+  fileNotFound,
+  parsingFailed,
+  invalidFormat,
+  unknown
+}
+
 /// Validation result for document parseability
 class ValidationResult extends Equatable {
   final bool canParse;
   final String? errorMessage;
   final List<String> missingCheckpoints;
+  final ValidationErrorType type;
 
   const ValidationResult({
     required this.canParse,
     this.errorMessage,
     this.missingCheckpoints = const [],
+    this.type = ValidationErrorType.unknown,
   });
 
   const ValidationResult.success()
       : canParse = true,
         errorMessage = null,
-        missingCheckpoints = const [];
+        missingCheckpoints = const [],
+        type = ValidationErrorType.none;
 
   const ValidationResult.failure({
     required String error,
     List<String> missing = const [],
+    this.type = ValidationErrorType.unknown,
   })  : canParse = false,
         errorMessage = error,
         missingCheckpoints = missing;
 
   @override
-  List<Object?> get props => [canParse, errorMessage, missingCheckpoints];
+  List<Object?> get props => [canParse, errorMessage, missingCheckpoints, type];
 }
 
 class Account {

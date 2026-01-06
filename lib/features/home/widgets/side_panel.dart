@@ -264,11 +264,12 @@ class SidePanel extends StatelessWidget {
               const ContentBoxControl(
                 action: ContentBoxAction.minimize,
               ),
-              ContentBoxControl(
-                action: ContentBoxAction.delete,
-                onPressed: () =>
-                    _confirmDeleteTemplate(context, viewModel, template),
-              ),
+              if (!isCurrent)
+                ContentBoxControl(
+                  action: ContentBoxAction.delete,
+                  onPressed: () =>
+                      _confirmDeleteTemplate(context, viewModel, template),
+                ),
             ],
             headerWidgets: [
               Flexible(
@@ -316,24 +317,35 @@ class SidePanel extends StatelessWidget {
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Added Total Budget display here
+                Text(
+                  'Total Budget: $budgetAmount',
+                  style: AppTheme.bodySmall.copyWith(
+                    color: context.colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingXs),
                 Text(
                   'Created: ${DateFormat('MMM d, yyyy').format(template.dateCreated)}',
                   style: AppTheme.bodySmall
                       .copyWith(color: context.colors.textSecondary),
                 ),
                 const SizedBox(height: AppTheme.spacingMd),
-                ElevatedButton(
-                  onPressed: () {
-                    // TODO: Implement adopt template
-                    Provider.of<AppContext>(context, listen: false)
-                        .setCurrentTemplate(template);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: context.colors.secondary,
-                    foregroundColor: context.colors.textPrimary,
+                // Adopt button only if not current
+                if (!isCurrent)
+                  ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implement adopt template
+                      Provider.of<AppContext>(context, listen: false)
+                          .setCurrentTemplate(template);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: context.colors.secondary,
+                      foregroundColor: context.colors.textPrimary,
+                    ),
+                    child: const Text('Adopt Template'),
                   ),
-                  child: const Text('Adopt Template'),
-                ),
               ],
             ),
           ),

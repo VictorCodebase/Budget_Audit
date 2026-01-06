@@ -674,7 +674,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                       // Capture messenger and colors before async
                       final messenger = ScaffoldMessenger.of(this.context);
                       final successColor = this.context.colors.success;
-                      final nav = Navigator.of(modalContext);
+                      // final nav = Navigator.of(modalContext);
 
                       // After saving, adopt the template
                       final appContext =
@@ -686,7 +686,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                         appContext.setCurrentTemplate(template);
 
                         // Use captured references
-                        if (nav.canPop()) nav.pop();
+                        // if (nav.canPop()) nav.pop();
                         messenger.showSnackBar(
                           SnackBar(
                             content:
@@ -706,7 +706,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                   // Capture references
                   final messenger = ScaffoldMessenger.of(this.context);
                   final successColor = this.context.colors.success;
-                  final nav = Navigator.of(modalContext);
+                  // final nav = Navigator.of(modalContext);
 
                   // Get current participant
                   final appContext =
@@ -718,7 +718,11 @@ class _BudgetingViewState extends State<BudgetingView> {
                         template, currentParticipant.participantId);
                     appContext.setCurrentTemplate(template);
 
-                    if (nav.canPop()) nav.pop();
+                    // if (nav.canPop())
+                    //   nav.pop(); // Pop the "Unsaved Changes" dialog only
+
+                    // Keep modal open as per user request
+                    // if (nav.canPop()) nav.pop();
 
                     messenger.showSnackBar(
                       SnackBar(
@@ -755,7 +759,7 @@ class _BudgetingViewState extends State<BudgetingView> {
     final messenger = ScaffoldMessenger.of(this.context);
     final errorColor = this.context.colors.error;
     final successColor = this.context.colors.success;
-    final nav = Navigator.of(modalContext);
+    // final nav = Navigator.of(modalContext);
 
     if (currentParticipant == null) {
       messenger.showSnackBar(
@@ -771,7 +775,7 @@ class _BudgetingViewState extends State<BudgetingView> {
     appContext.setCurrentTemplate(template);
 
     // Use captured references
-    if (nav.canPop()) nav.pop();
+    // if (nav.canPop()) nav.pop();
 
     messenger.showSnackBar(
       SnackBar(

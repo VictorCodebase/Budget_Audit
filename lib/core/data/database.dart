@@ -285,6 +285,7 @@ class ChartSnapshots extends drift.Table {
     SyncLog
   ],
 )
+
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

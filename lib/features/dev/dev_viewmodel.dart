@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:budget_audit/core/services/dev_service.dart';
 
 class DevViewModel extends ChangeNotifier {
@@ -34,7 +35,9 @@ class DevViewModel extends ChangeNotifier {
 
   Future<void> logTable(String name) async {
     final data = await _devService.getTableDump(name);
-    final logMsg = "TABLE: $name\n${data.toString()}";
+    // Use proper JSON encoding with indentation for readability
+    const encoder = JsonEncoder.withIndent('  ');
+    final logMsg = "TABLE: $name\n${encoder.convert(data)}";
     debugPrint(logMsg);
     _output = "Table $name logged to debug console.";
     notifyListeners();
@@ -42,7 +45,8 @@ class DevViewModel extends ChangeNotifier {
 
   Future<void> logContext() async {
     final ctx = _devService.dumpContext();
-    final logMsg = "APP CONTEXT:\n$ctx";
+    const encoder = JsonEncoder.withIndent('  ');
+    final logMsg = "APP CONTEXT:\n${encoder.convert(ctx)}";
     debugPrint(logMsg);
     _output = "App Context logged to debug console.";
     notifyListeners();

@@ -399,7 +399,7 @@ class HomeViewModel extends ChangeNotifier {
     await loadTemplateHistory();
   }
 
-  Future<bool> addDocument({
+  Future<ValidationResult> addDocument({
     required String fileName,
     required String filePath,
     String? password,
@@ -410,9 +410,11 @@ class HomeViewModel extends ChangeNotifier {
       _errorMessage = null;
 
       if (!_documentService.isValidPdf(filePath)) {
-        _errorMessage = 'Invalid PDF file. Please select a valid PDF document.';
+        const error = 'Invalid PDF file. Please select a valid PDF document.';
+        _errorMessage = error;
         notifyListeners();
-        return false;
+        return const ValidationResult.failure(
+            error: error, type: ValidationErrorType.invalidFormat);
       }
 
       final document = _documentService.createUploadedDocument(
@@ -431,22 +433,28 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = false;
 
       if (!validationResult.canParse) {
-        _errorMessage = validationResult.errorMessage ??
-            'Document could not be understood. Please check:\n${validationResult.missingCheckpoints.join('\n')}';
+        // Only set generic error message if it's not a specific handled type
+        // This allows the UI to show custom popups for specific types
+        if (validationResult.type == ValidationErrorType.unknown ||
+            validationResult.type == ValidationErrorType.none) {
+          _errorMessage = validationResult.errorMessage ??
+              'Document could not be understood. Please check:\n${validationResult.missingCheckpoints.join('\n')}';
+        }
         notifyListeners();
-        return false;
+        return validationResult;
       }
 
       _uploadedDocuments.add(document);
       _logger.info('Document added: $fileName');
       notifyListeners();
-      return true;
+      return validationResult;
     } catch (e, st) {
       _logger.severe('Error adding document', e, st);
-      _errorMessage = 'Failed to add document: $e';
+      final error = 'Failed to add document: $e';
+      _errorMessage = error;
       _isLoading = false;
       notifyListeners();
-      return false;
+      return ValidationResult.failure(error: error);
     }
   }
 
