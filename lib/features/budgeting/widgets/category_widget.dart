@@ -27,6 +27,7 @@ class CategoryWidget extends StatelessWidget {
     return ContentBox(
       minimizedHeight: 60,
       initiallyMinimized: !isExpanded,
+      expandContent: true,
       // We need to key the ContentBox to force rebuild when expansion state changes externally
       // or rely on didUpdateWidget in ContentBox if it supports it.
       // Since ContentBox uses initiallyMinimized in initState, we might need to force a rebuild
@@ -132,7 +133,7 @@ class CategoryWidget extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                    Icon(Icons.error_outline,
+                  Icon(Icons.error_outline,
                       color: context.colors.error, size: 16),
                   const SizedBox(width: AppTheme.spacingXs),
                   Expanded(

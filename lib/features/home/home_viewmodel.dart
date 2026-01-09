@@ -61,6 +61,7 @@ class HomeViewModel extends ChangeNotifier {
   int _currentDocumentIndex = 0;
   Set<String> _completedDocumentIds = {};
   bool _autoUpdateVendorAssociations = true; // Toggle for vendor auto-update
+  bool _auditCompletedSuccessfully = false;
 
   HomeViewModel({
     required DocumentService documentService,
@@ -85,6 +86,7 @@ class HomeViewModel extends ChangeNotifier {
   int get currentDocumentIndex => _currentDocumentIndex;
   int get totalDocuments => _uploadedDocuments.length;
   bool get autoUpdateVendorAssociations => _autoUpdateVendorAssociations;
+  bool get auditCompletedSuccessfully => _auditCompletedSuccessfully;
 
   /// Get all document groups with auto-computed completion status
   List<DocumentTransactionGroup> get documentGroups {
@@ -278,6 +280,7 @@ class HomeViewModel extends ChangeNotifier {
           'Audit completed successfully. Saved $savedCount transactions.');
 
       _isLoading = false;
+      _auditCompletedSuccessfully = true;
       notifyListeners();
       return true;
     } catch (e, st) {
@@ -386,12 +389,17 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
+  Future<double> getTemplateTotalBudget(int templateId) async {
+    return await _budgetService.accountService
+        .getTemplateTotalBudget(templateId);
+  }
+
   Future<void> refreshHistory() async {
     await loadParticipants();
     await loadTemplateHistory();
   }
 
-  Future<bool> addDocument({
+  Future<ValidationResult> addDocument({
     required String fileName,
     required String filePath,
     String? password,
@@ -402,9 +410,11 @@ class HomeViewModel extends ChangeNotifier {
       _errorMessage = null;
 
       if (!_documentService.isValidPdf(filePath)) {
-        _errorMessage = 'Invalid PDF file. Please select a valid PDF document.';
+        const error = 'Invalid PDF file. Please select a valid PDF document.';
+        _errorMessage = error;
         notifyListeners();
-        return false;
+        return const ValidationResult.failure(
+            error: error, type: ValidationErrorType.invalidFormat);
       }
 
       final document = _documentService.createUploadedDocument(
@@ -423,22 +433,28 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = false;
 
       if (!validationResult.canParse) {
-        _errorMessage = validationResult.errorMessage ??
-            'Document could not be understood. Please check:\n${validationResult.missingCheckpoints.join('\n')}';
+        // Only set generic error message if it's not a specific handled type
+        // This allows the UI to show custom popups for specific types
+        if (validationResult.type == ValidationErrorType.unknown ||
+            validationResult.type == ValidationErrorType.none) {
+          _errorMessage = validationResult.errorMessage ??
+              'Document could not be understood. Please check:\n${validationResult.missingCheckpoints.join('\n')}';
+        }
         notifyListeners();
-        return false;
+        return validationResult;
       }
 
       _uploadedDocuments.add(document);
       _logger.info('Document added: $fileName');
       notifyListeners();
-      return true;
+      return validationResult;
     } catch (e, st) {
       _logger.severe('Error adding document', e, st);
-      _errorMessage = 'Failed to add document: $e';
+      final error = 'Failed to add document: $e';
+      _errorMessage = error;
       _isLoading = false;
       notifyListeners();
-      return false;
+      return ValidationResult.failure(error: error);
     }
   }
 
@@ -451,7 +467,7 @@ class HomeViewModel extends ChangeNotifier {
     _uploadedDocuments.removeWhere((doc) => doc.id == documentId);
     _transactionsByDocument.remove(documentId);
     _completedDocumentIds.remove(documentId);
-    _documentService.cleanupDocument(document);
+    // _documentService.cleanupDocument(document); // Commented to prevent deletion of user files
 
     // Adjust current index if needed
     if (_currentDocumentIndex >= _uploadedDocuments.length &&
@@ -555,13 +571,11 @@ class HomeViewModel extends ChangeNotifier {
 
       for (final transaction in transactions) {
         var matchStatus = MatchStatus.critical;
+        bool markAsAutoUpdated = false;
         List<String> potentialMatches = [];
         client_models.AccountData? suggestedAccount;
         String finalVendorName = transaction.vendorName;
         int? vendorId;
-
-        final originalStatus =
-            transaction.originalStatus ?? transaction.matchStatus;
 
         // Exact match
         final exactMatch = vendors
@@ -573,6 +587,8 @@ class HomeViewModel extends ChangeNotifier {
         if (exactMatch != null) {
           vendorId = exactMatch.vendorId;
           finalVendorName = exactMatch.vendorName;
+          markAsAutoUpdated = true;
+          // debugPrint('Exact match found: ${exactMatch.vendorName}');
 
           final history = await _budgetService.transactionService
               .getVendorMatchHistory(exactMatch.vendorId);
@@ -597,7 +613,7 @@ class HomeViewModel extends ChangeNotifier {
               );
             }
           } else {
-            matchStatus = MatchStatus.critical;
+            matchStatus = MatchStatus.critical; //*
           }
         } else {
           // Fuzzy match
@@ -605,9 +621,49 @@ class HomeViewModel extends ChangeNotifier {
               FuzzySearch.findSimilar(transaction.vendorName, vendorNames);
           if (potentialMatches.isNotEmpty) {
             matchStatus = MatchStatus.potential;
+            markAsAutoUpdated = true;
+
+            final bestFuzzyMatch = vendors
+                .where((v) => v.vendorName == potentialMatches.first)
+                .firstOrNull;
+
+            if (bestFuzzyMatch != null) {
+              matchStatus = MatchStatus.potential;
+
+              final bestFuzzyMatch = vendors
+                  .where((v) => v.vendorName == potentialMatches.first)
+                  .firstOrNull;
+
+              if (bestFuzzyMatch != null) {
+                vendorId = bestFuzzyMatch.vendorId;
+
+                final history = await _budgetService.transactionService
+                    .getVendorMatchHistory(bestFuzzyMatch.vendorId);
+
+                if (history.isNotEmpty) {
+                  final bestMatch = history.first;
+                  final account = accountMap[bestMatch.accountId];
+
+                  if (account != null) {
+                    suggestedAccount = client_models.AccountData(
+                      id: account.accountId.toString(),
+                      name: account.accountName,
+                      budgetAmount: account.budgetAmount,
+                      color: Color(
+                          int.parse(account.colorHex.substring(1), radix: 16) +
+                              0xFF000000),
+                    );
+
+                    markAsAutoUpdated = true;
+                  }
+                }
+              }
+            }
           }
         }
 
+        final originalStatus = transaction.originalStatus ?? matchStatus;
+        debugPrint('Match status: $matchStatus');
         updatedTransactions.add(transaction.copyWith(
           vendorName: finalVendorName,
           matchStatus: matchStatus,
@@ -617,7 +673,7 @@ class HomeViewModel extends ChangeNotifier {
           vendorId: vendorId,
           originalStatus: originalStatus,
           userModified: transaction.userModified,
-          autoUpdated: transaction.autoUpdated,
+          autoUpdated: markAsAutoUpdated,
         ));
       }
 
@@ -782,14 +838,15 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   void reset() {
-    for (final doc in _uploadedDocuments) {
-      _documentService.cleanupDocument(doc);
-    }
+    // for (final doc in _uploadedDocuments) {
+    //   _documentService.cleanupDocument(doc); // Commented to prevent deletion of user files
+    // }
     _uploadedDocuments.clear();
     _transactionsByDocument.clear();
     _completedDocumentIds.clear();
     _currentDocumentIndex = 0;
     _hasRunAudit = false;
+    _auditCompletedSuccessfully = false;
     _errorMessage = null;
     notifyListeners();
   }

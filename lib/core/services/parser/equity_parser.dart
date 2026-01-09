@@ -1,17 +1,15 @@
 // lib/core/services/parser/equity_parser.dart
 
 import 'dart:io';
+import 'package:budget_audit/core/services/parser/parser_mixin.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/client_models.dart';
 import 'parser_interface.dart';
 
-/**
- * TODO: Issue
- * the parser does not distinguish money out from money in. It records them as moey out
- */
 
-class EquityParser extends StatementParser {
+
+class EquityParser with ParserMixin implements StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.equity;
 
@@ -24,6 +22,8 @@ class EquityParser extends StatementParser {
   /// Group 4: Money Out (optional amount)
   /// Group 5: Money In (optional amount)
   /// Group 6: Balance (with Cr/Dr indicator)
+  ///
+  /// I am trying to use the balance to determine if the transaction is a deposit or withdrawal
   static final RegExp _transactionRowPattern = RegExp(
     // 1. Date: DD-MM-YYYY
     r'(\d{2}-\d{2}-\d{4})'
@@ -53,6 +53,18 @@ class EquityParser extends StatementParser {
   }) async {
     PdfDocument? document;
     try {
+      // Validate PDF openability/security
+      final unlockResult = await unlockPdf(pdfFile, password);
+      if (unlockResult != ValidationErrorType.none) {
+        return ValidationResult.failure(
+          error: unlockResult == ValidationErrorType.passwordRequired
+              ? 'Document is password protected'
+              : 'Incorrect password',
+          missing: ['PDF unlock failed'],
+          type: unlockResult,
+        );
+      }
+
       document = PdfDocument(
           inputBytes: pdfFile.readAsBytesSync(), password: password);
       String text = PdfTextExtractor(document).extractText();
@@ -102,6 +114,7 @@ class EquityParser extends StatementParser {
   }
 
   @override
+  @override
   Future<ParseResult> parseDocument(
     File pdfFile,
     UploadedDocument documentMetadata, {
@@ -117,58 +130,117 @@ class EquityParser extends StatementParser {
       String fullText = PdfTextExtractor(document).extractText();
       final uuid = const Uuid();
 
-      // Debug: Uncomment to see extracted text
-      // print('--- RAW PDF EXTRACTED TEXT START ---');
-      // print(fullText);
-      // print('--- RAW PDF EXTRACTED TEXT END ---');
+      // New regex that captures: Date, Particulars (everything in between), ONE amount, and Balance
+      final rowPattern = RegExp(
+        r'(\d{2}-\d{2}-\d{4})' // Date
+        r'\s+'
+        r'(?:\d{2}-\d{2}\s+)?' // Optional value date
+        r'(.+?)' // Particulars (non-greedy)
+        r'\s+'
+        r'([\d,]+\.\d{2})' // The amount (either Money Out or Money In - we'll determine from balance)
+        r'\s+'
+        r'([\d,]+\.\d{2})\s+(Cr|Dr)', // Balance with indicator
+        multiLine: true,
+      );
 
-      // Iterate over all transaction matches
-      for (final match in _transactionRowPattern.allMatches(fullText)) {
+      double? previousBalance;
+
+      // First, find the initial balance (opening balance row)
+      final openingBalancePattern = RegExp(
+        r'(?:Balance Brought Forward|Opening Balance|B/F).*?([\d,]+\.\d{2})\s+(Cr|Dr)',
+        caseSensitive: false,
+      );
+
+      final openingMatch = openingBalancePattern.firstMatch(fullText);
+      if (openingMatch != null) {
+        previousBalance = parseAmount(openingMatch.group(1)!);
+        // Handle Dr balances as negative if needed
+        if (openingMatch.group(2)?.toUpperCase() == 'DR') {
+          previousBalance = -previousBalance!;
+        }
+      }
+
+      // If no explicit opening balance, use the first transaction's balance as reference
+      final allMatches = rowPattern.allMatches(fullText).toList();
+
+      for (int i = 0; i < allMatches.length; i++) {
+        final match = allMatches[i];
+
         final rawDate = match.group(1);
-        final rawParticulars = match.group(3);
-        final rawMoneyOut = match.group(4);
-        final rawMoneyIn = match.group(5);
+        final rawParticulars = match.group(2);
+        final rawAmount = match.group(3);
+        final rawBalance = match.group(4);
+        final balanceIndicator = match.group(5);
 
-        if (rawDate == null || rawParticulars == null) continue;
+        if (rawDate == null ||
+            rawParticulars == null ||
+            rawAmount == null ||
+            rawBalance == null) continue;
 
-        // Skip non-transaction rows (like "Page Total:", "Grand Total:", etc.)
+        // Skip non-transaction rows
         if (rawParticulars.contains('Total:') ||
             rawParticulars.contains('Uncleared') ||
             rawParticulars.contains('Foreign exchange') ||
-            rawParticulars.contains('Contact your Manager')) {
+            rawParticulars.contains('Contact your Manager') ||
+            rawParticulars.contains('Balance Brought Forward') ||
+            rawParticulars.contains('Opening Balance')) {
           continue;
         }
 
         final transactionDate = parseDate(rawDate);
-        if (transactionDate == null) {
-          continue;
+        if (transactionDate == null) continue;
+
+        final amount = parseAmount(rawAmount);
+        final currentBalance = parseAmount(rawBalance);
+
+        if (amount == null || currentBalance == null) continue;
+
+        // Initialize previousBalance if this is the first transaction
+        if (previousBalance == null) {
+          // Work backwards: if current balance is higher than amount, it was income
+          // if current balance is lower, we need to figure it out from the pattern
+          previousBalance = currentBalance - amount; // Assume income first
+          if (previousBalance < 0) {
+            previousBalance =
+                currentBalance + amount; // It was actually expense
+          }
         }
 
-        // Parse amounts
-        double? moneyOut =
-            rawMoneyOut != null ? parseAmount(rawMoneyOut) : null;
-        double? moneyIn = rawMoneyIn != null ? parseAmount(rawMoneyIn) : null;
+        // Determine transaction type by comparing balances
+        double finalAmount;
+        bool isIncome;
 
-        // Determine final amount (Income vs Expense)
-        double finalAmount = 0.0;
+        if (currentBalance > previousBalance) {
+          // Balance increased = Money In
+          isIncome = true;
 
-        if (moneyIn != null && moneyIn > 0) {
-          finalAmount = moneyIn; // Positive for income
-        } else if (moneyOut != null && moneyOut > 0) {
-          finalAmount = -moneyOut; // Negative for expenses
+          finalAmount = currentBalance - previousBalance;
         } else {
-          // Skip zero-value transactions
-          continue;
+          // Balance decreased = Money Out
+          isIncome = false;
+          finalAmount = previousBalance - currentBalance;
+        }
+
+        // Verify the amount matches what we extracted
+        // (there might be small rounding differences)
+        if ((finalAmount - amount).abs() > 0.02) {
+          // Amount mismatch - log warning but continue
+          print(
+              'Warning: Calculated amount ($finalAmount) differs from extracted amount ($amount)');
         }
 
         transactions.add(ParsedTransaction(
           id: uuid.v4(),
           date: transactionDate,
           vendorName: normalizeVendorName(rawParticulars),
-          amount: finalAmount,
+          amount: isIncome ? finalAmount : -finalAmount,
+          ignoreTransaction: isIncome, //! Ignore income transactions
           originalDescription: rawParticulars.trim(),
-          useMemory: false,
+          useMemory: true,
         ));
+
+        // Update previousBalance for next iteration
+        previousBalance = currentBalance;
       }
 
       return ParseResult(

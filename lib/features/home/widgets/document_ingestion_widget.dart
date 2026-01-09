@@ -64,12 +64,15 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
             _buildBrowseDocument(),
             const SizedBox(height: AppTheme.spacingMd),
 
-            // Password (optional)
-            _buildPasswordField(),
-            const SizedBox(height: AppTheme.spacingMd),
-
-            // Document Owner
-            _buildDocumentOwner(viewModel),
+            // Password and Document Owner in a Row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildPasswordField()),
+                const SizedBox(width: AppTheme.spacingMd),
+                Expanded(child: _buildDocumentOwner(viewModel)),
+              ],
+            ),
             const SizedBox(height: AppTheme.spacingMd),
 
             // Financial Institution
@@ -113,7 +116,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         InkWell(
           onTap: _isPickingFile ? null : _pickFile,
           child: Container(
-            height: 120,
+            height: 80,
             decoration: BoxDecoration(
               color: context.colors.surface,
               border: Border.all(
@@ -179,15 +182,19 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       children: [
         Row(
           children: [
-            Text(
-              'Document Password (if applicable)',
+            const Text(
+              'Document Password',
               style: AppTheme.label,
             ),
             const SizedBox(width: AppTheme.spacing2xs),
-            Icon(
-              Icons.info_outline,
-              size: 16,
-              color: context.colors.textSecondary,
+            Tooltip(
+              message:
+                  'Allows the software to read the document if it is password protected',
+              child: Icon(
+                Icons.info_outline,
+                size: 16,
+                color: context.colors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -199,9 +206,6 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
             hintStyle: AppTheme.bodyMedium.copyWith(
               color: context.colors.textTertiary,
             ),
-            helperText:
-                'Allows the software to read the document if it is password protected',
-            helperStyle: AppTheme.caption,
           ),
           obscureText: true,
         ),
@@ -216,7 +220,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         Row(
           children: [
             const Text(
-              'Select the document owner',
+              'Document Owner',
               style: AppTheme.label,
             ),
             const SizedBox(width: 4),
@@ -224,16 +228,22 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
               '*',
               style: AppTheme.label.copyWith(color: context.colors.error),
             ),
+            const SizedBox(width: AppTheme.spacing2xs),
+            Tooltip(
+              message:
+                  'Contents of the document shall be associated with this participant',
+              child: Icon(
+                Icons.info_outline,
+                size: 16,
+                color: context.colors.textSecondary,
+              ),
+            ),
           ],
-        ),
-        const SizedBox(height: AppTheme.spacingXs),
-        Text(
-          'Contents of the document shall be associated with this participant',
-          style: AppTheme.caption,
         ),
         const SizedBox(height: AppTheme.spacingXs),
         DropdownButtonFormField<int>(
           value: _selectedOwnerId,
+          isExpanded: true,
           decoration: InputDecoration(
             hintText: 'Owner',
             hintStyle: AppTheme.bodyMedium.copyWith(
@@ -242,7 +252,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
           ),
           validator: (value) {
             if (value == null) {
-              return 'Please select a document owner';
+              return 'Required';
             }
             return null;
           },
@@ -252,6 +262,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
               child: Text(
                 participant.nickname ?? participant.firstName,
                 style: AppTheme.bodyMedium,
+                overflow: TextOverflow.ellipsis,
               ),
             );
           }).toList(),
@@ -428,7 +439,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     if (_selectedFilePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please select a PDF document'),
+          content: const Text('Please select a PDF document'),
           backgroundColor: context.colors.error,
         ),
       );
@@ -438,7 +449,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     if (_selectedInstitution == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please select a financial institution'),
+          content: const Text('Please select a financial institution'),
           backgroundColor: context.colors.error,
         ),
       );
@@ -446,7 +457,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     }
 
     final viewModel = context.read<HomeViewModel>();
-    final success = await viewModel.addDocument(
+    final validationResult = await viewModel.addDocument(
       fileName: _selectedFileName!,
       filePath: _selectedFilePath!,
       password:
@@ -455,7 +466,9 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       institution: _selectedInstitution!,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (validationResult.canParse) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Document verified and added: $_selectedFileName'),
@@ -470,6 +483,49 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         _passwordController.clear();
         _selectedInstitution = null;
       });
+    } else {
+      String message;
+      switch (validationResult.type) {
+        case ValidationErrorType.passwordRequired:
+          message =
+              'This document is password protected. Please enter the password.';
+          break;
+        case ValidationErrorType.passwordIncorrect:
+          message = 'The password provided is incorrect. Please try again.';
+          break;
+        case ValidationErrorType.fileNotFound:
+          message = 'The selected file could not be found. Please try again.';
+          break;
+        case ValidationErrorType.invalidFormat:
+          message = 'Invalid file format. Please select a valid PDF document.';
+          break;
+        case ValidationErrorType.parsingFailed:
+          message =
+              'Failed to parse the document. identifying details could not be found.';
+          break;
+        case ValidationErrorType.none:
+        case ValidationErrorType.unknown:
+          message = validationResult.errorMessage ??
+              'An unknown error occurred during validation.';
+          break;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: context.colors.error,
+          duration: const Duration(seconds: 4),
+          action: validationResult.type == ValidationErrorType.passwordRequired
+              ? SnackBarAction(
+                  label: 'Focus Input',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    // Focus logic could go here, or just let user tap
+                  },
+                )
+              : null,
+        ),
+      );
     }
   }
 

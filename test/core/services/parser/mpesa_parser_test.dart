@@ -107,6 +107,8 @@ void main() {
       );
 
       expect(incomeTx.amount, equals(1100.00)); // Should be positive
+      expect(incomeTx.ignoreTransaction, isTrue,
+          reason: 'Income transactions should be marked as ignored');
     });
   });
 
@@ -168,6 +170,8 @@ void main() {
       // Assert that the amount is correctly positive (income)
       expect(incomeTx.amount, equals(1100.00),
           reason: 'Income amount must be positive and correct.');
+      expect(incomeTx.ignoreTransaction, isTrue,
+          reason: 'Income transaction must be marked as ignored.');
     });
   });
 }

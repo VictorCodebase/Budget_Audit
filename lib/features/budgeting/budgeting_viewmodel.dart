@@ -1,3 +1,4 @@
+import 'package:budget_audit/core/services/parser/parser_factory.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart'; // Import uuid
 import '../../core/context.dart';
@@ -633,43 +634,132 @@ class BudgetingViewModel extends ChangeNotifier {
         throw Exception('Failed to update template details');
       }
 
-      // 1. Delete all existing categories and accounts for this template
+      // 1. Identify categories to delete
       final existingCategories = await _budgetService.categoryService
           .getCategoriesForTemplate(templateId);
-      for (var category in existingCategories) {
+      final currentCategoryIds = _categories
+          .map((c) => int.tryParse(c.id))
+          .where((id) => id != null)
+          .toSet();
+
+      final categoriesToDelete = existingCategories
+          .where((c) => !currentCategoryIds.contains(c.categoryId))
+          .toList();
+
+      for (var category in categoriesToDelete) {
         await _budgetService.categoryService
             .deleteCategory(category.categoryId);
       }
 
-      // 2. Create new categories and accounts (same as save)
-      for (var category in _categories) {
-        final newCategory = clientModels.Category(
-          categoryName: category.name,
-          colorHex: _colorToHex(category.color),
-          templateId: templateId,
-        );
+      // 2. Update or Create categories
+      for (var categoryData in _categories) {
+        final categoryIdInt = int.tryParse(categoryData.id);
 
-        final categoryId =
-            await _budgetService.categoryService.createCategory(newCategory);
-        if (categoryId == null) {
-          throw Exception('Failed to create category: ${category.name}');
-        }
-
-        for (var account in category.accounts) {
-          final newAccount = clientModels.Account(
-            categoryId: categoryId,
+        // Determine if we are updating an existing category or creating a new one
+        if (categoryIdInt != null &&
+            existingCategories.any((c) => c.categoryId == categoryIdInt)) {
+          // --- UPDATE Existing Category ---
+          final updatedCategory = models.Category(
+            categoryId: categoryIdInt,
             templateId: templateId,
-            accountName: account.name,
-            colorHex: _colorToHex(account.color),
-            budgetAmount: account.budgetAmount,
-            expenditureTotal: 0.0,
-            responsibleParticipantId: account.participants.isNotEmpty
-                ? account.participants.first.participantId
-                : null, // Don't default to current user
-            dateCreated: DateTime.now(),
+            categoryName: categoryData.name,
+            colorHex: _colorToHex(categoryData.color),
           );
 
-          await _budgetService.accountService.createAccount(newAccount);
+          await _budgetService.categoryService.updateCategory(updatedCategory);
+
+          // Handle Accounts for this Category
+          final existingAccounts = await _budgetService.accountService
+              .getAccountsForCategory(templateId, categoryIdInt);
+
+          final currentAccountIds = categoryData.accounts
+              .map((a) => int.tryParse(a.id))
+              .where((id) => id != null)
+              .toSet();
+
+          // Delete removed accounts
+          final accountsToDelete = existingAccounts
+              .where((a) => !currentAccountIds.contains(a.accountId))
+              .toList();
+
+          for (var account in accountsToDelete) {
+            await _budgetService.accountService
+                .deleteAccount(account.accountId);
+          }
+
+          // Update or Create accounts
+          for (var accountData in categoryData.accounts) {
+            final accountIdInt = int.tryParse(accountData.id);
+            if (accountIdInt != null &&
+                existingAccounts.any((a) => a.accountId == accountIdInt)) {
+              // Update existing account
+              final existingAccount = existingAccounts
+                  .firstWhere((a) => a.accountId == accountIdInt);
+
+              final modifiedAccount = models.Account(
+                accountId: accountIdInt,
+                categoryId: categoryIdInt,
+                templateId: templateId,
+                accountName: accountData.name,
+                colorHex: _colorToHex(accountData.color),
+                budgetAmount: accountData.budgetAmount,
+                expenditureTotal: existingAccount.expenditureTotal, // Preserve
+                responsibleParticipantId: accountData.participants.isNotEmpty
+                    ? accountData.participants.first.participantId
+                    : null,
+                dateCreated: existingAccount.dateCreated, // Preserve
+              );
+              await _budgetService.accountService
+                  .modifyAccount(modifiedAccount);
+            } else {
+              // Create new account in existing category
+              final newAccount = clientModels.Account(
+                categoryId: categoryIdInt,
+                templateId: templateId,
+                accountName: accountData.name,
+                colorHex: _colorToHex(accountData.color),
+                budgetAmount: accountData.budgetAmount,
+                expenditureTotal: 0.0,
+                responsibleParticipantId: accountData.participants.isNotEmpty
+                    ? accountData.participants.first.participantId
+                    : null,
+                dateCreated: DateTime.now(),
+              );
+              await _budgetService.accountService.createAccount(newAccount);
+            }
+          }
+        } else {
+          // --- CREATE New Category ---
+          final newCategory = clientModels.Category(
+            categoryName: categoryData.name,
+            colorHex: _colorToHex(categoryData.color),
+            templateId: templateId,
+          );
+
+          final newCategoryId =
+              await _budgetService.categoryService.createCategory(newCategory);
+
+          if (newCategoryId == null) {
+            throw Exception('Failed to create category: ${categoryData.name}');
+          }
+
+          // Create accounts for new category
+          for (var accountData in categoryData.accounts) {
+            final newAccount = clientModels.Account(
+              categoryId: newCategoryId,
+              templateId: templateId,
+              accountName: accountData.name,
+              colorHex: _colorToHex(accountData.color),
+              budgetAmount: accountData.budgetAmount,
+              expenditureTotal: 0.0,
+              responsibleParticipantId: accountData.participants.isNotEmpty
+                  ? accountData.participants.first.participantId
+                  : null,
+              dateCreated: DateTime.now(),
+            );
+
+            await _budgetService.accountService.createAccount(newAccount);
+          }
         }
       }
 
@@ -690,6 +780,7 @@ class BudgetingViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to update template: $e';
+      print("ERROR while updating template: $e");
       _isLoading = false;
       notifyListeners();
       return false;

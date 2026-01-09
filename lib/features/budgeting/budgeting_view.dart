@@ -70,56 +70,23 @@ class _BudgetingViewState extends State<BudgetingView> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Mobile breakpoint
-                    final isMobile = constraints.maxWidth < 800;
-
-                    if (isMobile) {
-                      // Mobile: Header scrolls away with content
-                      return SingleChildScrollView(
+                return SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const AppHeader(
+                        subtitle: 'Create and manage your budget templates',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(AppTheme.spacingLg),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const AppHeader(
-                              subtitle:
-                                  'Create and manage your budget templates',
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(AppTheme.spacingLg),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildMainContainer(
-                                      context, viewModel, appContext),
-                                ],
-                              ),
-                            ),
+                            _buildMainContainer(context, viewModel, appContext),
                           ],
                         ),
-                      );
-                    } else {
-                      // Desktop: Header fixed at top
-                      return Column(
-                        children: [
-                          const AppHeader(
-                            subtitle: 'Create and manage your budget templates',
-                          ),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(AppTheme.spacingLg),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildMainContainer(
-                                      context, viewModel, appContext),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                  },
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -614,22 +581,25 @@ class _BudgetingViewState extends State<BudgetingView> {
     BudgetingViewModel viewModel,
     int templateId,
   ) async {
-    // Load all accounts for the template to calculate total budget
-    final accounts =
-        await viewModel.accountService.getAllAccountsForTemplate(templateId);
-    final totalBudget = accounts.fold<double>(
-        0.0, (sum, account) => sum + account.budgetAmount);
+    // Load total budget using the service
+    final totalBudget =
+        await viewModel.accountService.getTemplateTotalBudget(templateId);
 
     // Get unique participants from accounts
+    // We still need to fetch accounts for participants, but let's optimize if possible or keep logic
+    final accounts =
+        await viewModel.accountService.getAllAccountsForTemplate(templateId);
     final participantIds =
         accounts.map((a) => a.responsibleParticipantId).toSet();
     final participants = <models.Participant>[];
 
     for (var participantId in participantIds) {
-      final participant =
-          await viewModel.participantService.getParticipant(participantId!);
-      if (participant != null) {
-        participants.add(participant);
+      if (participantId != null) {
+        final participant =
+            await viewModel.participantService.getParticipant(participantId);
+        if (participant != null) {
+          participants.add(participant);
+        }
       }
     }
 
@@ -640,197 +610,225 @@ class _BudgetingViewState extends State<BudgetingView> {
   }
 
   void _handleAdoptTemplate(
-    BuildContext context,
+    BuildContext modalContext,
     BudgetingViewModel viewModel,
     template,
   ) {
     if (viewModel.hasUnsavedChanges) {
       showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Unsaved Changes'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('You are currently working on a template.'),
-              const SizedBox(height: AppTheme.spacingSm),
-              if (viewModel.saveValidationMessage != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingXs),
-                  decoration: BoxDecoration(
-                    color: context.colors.warning.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusXs),
-                    border: Border.all(color: context.colors.warning),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.warning_amber,
-                        size: 16,
-                        color: context.colors.warning,
-                      ),
-                      const SizedBox(width: AppTheme.spacingXs),
-                      Expanded(
-                        child: Text(
-                          'Note: ${viewModel.saveValidationMessage}',
-                          style: AppTheme.bodySmall.copyWith(
-                            color: context.colors.warning,
+        context: modalContext,
+        builder: (dialogContext) {
+          // Capture colors from the dialog context (which is definitely mounted here)
+          final colors = dialogContext.colors;
+
+          return AlertDialog(
+            title: const Text('Unsaved Changes'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('You are currently working on a template.'),
+                const SizedBox(height: AppTheme.spacingSm),
+                if (viewModel.saveValidationMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(AppTheme.spacingXs),
+                    decoration: BoxDecoration(
+                      color: colors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+                      border: Border.all(color: colors.warning),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber,
+                          size: 16,
+                          color: colors.warning,
+                        ),
+                        const SizedBox(width: AppTheme.spacingXs),
+                        Expanded(
+                          child: Text(
+                            'Note: ${viewModel.saveValidationMessage}',
+                            style: AppTheme.bodySmall.copyWith(
+                              color: colors.warning,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppTheme.spacingSm),
+                  const SizedBox(height: AppTheme.spacingSm),
+                ],
+                const Text('What would you like to do?'),
               ],
-              const Text('What would you like to do?'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
             ),
-            if (viewModel.canSave)
+            actions: [
               TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _handleSave(context, viewModel, then: () async {
-                    // After saving, adopt the template
-                    final appContext =
-                        Provider.of<AppContext>(context, listen: false);
-                    final currentParticipant = appContext.currentParticipant;
-                    if (currentParticipant != null) {
-                      await viewModel.adoptTemplate(
-                          template, currentParticipant.participantId);
-                      appContext.setCurrentTemplate(template);
-                      if (context.mounted) {
-                        Navigator.of(context)
-                            .pop(); // Close template history modal
-                        ScaffoldMessenger.of(context).showSnackBar(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              if (viewModel.canSave)
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _handleSave(this.context, viewModel, then: () async {
+                      // Capture messenger and colors before async
+                      final messenger = ScaffoldMessenger.of(this.context);
+                      final successColor = this.context.colors.success;
+                      // final nav = Navigator.of(modalContext);
+
+                      // After saving, adopt the template
+                      final appContext =
+                          Provider.of<AppContext>(this.context, listen: false);
+                      final currentParticipant = appContext.currentParticipant;
+                      if (currentParticipant != null) {
+                        await viewModel.adoptTemplate(
+                            template, currentParticipant.participantId);
+                        appContext.setCurrentTemplate(template);
+
+                        // Use captured references
+                        // if (nav.canPop()) nav.pop();
+                        messenger.showSnackBar(
                           SnackBar(
                             content:
                                 const Text('Template adopted successfully!'),
-                            backgroundColor: context.colors.success,
+                            backgroundColor: successColor,
                           ),
                         );
                       }
-                    }
-                  });
-                },
-                child: const Text('Save & Adopt'),
-              ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
+                    });
+                  },
+                  child: const Text('Save & Adopt'),
+                ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
 
-                // Get current participant
-                final appContext =
-                    Provider.of<AppContext>(context, listen: false);
-                final currentParticipant = appContext.currentParticipant;
+                  // Capture references
+                  final messenger = ScaffoldMessenger.of(this.context);
+                  final successColor = this.context.colors.success;
+                  // final nav = Navigator.of(modalContext);
 
-                if (currentParticipant != null) {
-                  await viewModel.adoptTemplate(
-                      template, currentParticipant.participantId);
-                  appContext.setCurrentTemplate(template);
-                  if (context.mounted) {
-                    Navigator.of(context).pop(); // Close template history modal
+                  // Get current participant
+                  final appContext =
+                      Provider.of<AppContext>(this.context, listen: false);
+                  final currentParticipant = appContext.currentParticipant;
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  if (currentParticipant != null) {
+                    await viewModel.adoptTemplate(
+                        template, currentParticipant.participantId);
+                    appContext.setCurrentTemplate(template);
+
+                    // if (nav.canPop())
+                    //   nav.pop(); // Pop the "Unsaved Changes" dialog only
+
+                    // Keep modal open as per user request
+                    // if (nav.canPop()) nav.pop();
+
+                    messenger.showSnackBar(
                       SnackBar(
                         content: const Text('Template adopted successfully!'),
-                        backgroundColor: context.colors.success,
+                        backgroundColor: successColor,
                       ),
                     );
                   }
-                }
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: context.colors.error,
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.error,
+                ),
+                child: const Text('Discard & Adopt'),
               ),
-              child: const Text('Discard & Adopt'),
-            ),
-          ],
-        ),
+            ],
+          );
+        },
       );
     } else {
       // No unsaved changes, adopt directly
-      _adoptTemplateDirectly(context, viewModel, template);
+      _adoptTemplateDirectly(modalContext, viewModel, template);
     }
   }
 
   Future<void> _adoptTemplateDirectly(
-    BuildContext context,
+    BuildContext modalContext,
     BudgetingViewModel viewModel,
     template,
   ) async {
-    final appContext = Provider.of<AppContext>(context, listen: false);
+    final appContext = Provider.of<AppContext>(this.context, listen: false);
     final currentParticipant = appContext.currentParticipant;
 
+    // Capture references before async work
+    final messenger = ScaffoldMessenger.of(this.context);
+    final errorColor = this.context.colors.error;
+    final successColor = this.context.colors.success;
+    // final nav = Navigator.of(modalContext);
+
     if (currentParticipant == null) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('No participant logged in'),
-            backgroundColor: context.colors.error,
-          ),
-        );
-      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('No participant logged in'),
+          backgroundColor: errorColor,
+        ),
+      );
       return;
     }
 
     await viewModel.adoptTemplate(template, currentParticipant.participantId);
     appContext.setCurrentTemplate(template);
 
-    if (context.mounted) {
-      Navigator.of(context).pop(); // Close template history modal
+    // Use captured references
+    // if (nav.canPop()) nav.pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Template adopted successfully!'),
-          backgroundColor: context.colors.success,
-        ),
-      );
-    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Template adopted successfully!'),
+        backgroundColor: successColor,
+      ),
+    );
   }
 
   void _handleDeleteTemplate(
-    BuildContext context,
+    BuildContext modalContext,
     BudgetingViewModel viewModel,
     template,
   ) {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Template'),
-        content: Text(
-          'Are you sure you want to delete "${template.templateName}"? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+      context: modalContext,
+      builder: (dialogContext) {
+        // Capture colors
+        final colors = dialogContext.colors;
+
+        return AlertDialog(
+          title: const Text('Delete Template'),
+          content: Text(
+            'Are you sure you want to delete "${template.templateName}"? This action cannot be undone.',
           ),
-          TextButton(
-            onPressed: () async {
-              await viewModel.deleteTemplate(template.templateId);
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Capture references
+                final messenger = ScaffoldMessenger.of(this.context);
+                final nav = Navigator.of(modalContext);
+
+                await viewModel.deleteTemplate(template.templateId);
+
+                if (nav.canPop()) nav.pop();
+                messenger.showSnackBar(
                   const SnackBar(
                     content: Text('Template deleted successfully'),
                   ),
                 );
-              }
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: context.colors.error,
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: colors.error,
+              ),
+              child: const Text('Delete'),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 

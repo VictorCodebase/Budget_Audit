@@ -95,7 +95,7 @@ class AppRouter {
       case '/dev':
         return MaterialPageRoute(builder: (context) {
           final appContext = Provider.of<AppContext>(context, listen: false);
-          if (appContext.isProduction) {
+          if (appContext.isProduction) { //! route only available in dev env
             debugPrint("In production, redirecting to onboarding");
             return const OnboardingView();
           }

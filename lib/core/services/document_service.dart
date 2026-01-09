@@ -42,6 +42,7 @@ class DocumentService {
       if (!await file.exists()) {
         return const ValidationResult.failure(
           error: 'File not found. Please upload the document again.',
+          type: ValidationErrorType.fileNotFound,
         );
       }
 
@@ -100,9 +101,21 @@ class DocumentService {
       );
 
       if (result.success) {
+        // Filter out ignored transactions (income)
+        final filteredTransactions =
+            result.transactions.where((txn) => !txn.ignoreTransaction).toList();
+
         _logger.info(
           'Document parsed successfully: ${document.fileName}. '
-          'Found ${result.transactions.length} transactions.',
+          'Found ${result.transactions.length} total, '
+          'kept ${filteredTransactions.length} non-ignored transactions.',
+        );
+
+        return ParseResult(
+          success: true,
+          transactions: filteredTransactions,
+          document: document,
+          errorMessage: null,
         );
       } else {
         _logger.warning(

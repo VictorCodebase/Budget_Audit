@@ -37,17 +37,17 @@ class _HomeViewState extends State<HomeView> {
           Colors.transparent, // Transparent to show global gradient
       body: SafeArea(
           child: Stack(children: [
-        Column(
-          children: [
-            const AppHeader(
-              subtitle: 'Document Analysis & Transaction Extraction',
-            ),
-            Expanded(
-              child: isWideScreen
+        SingleChildScrollView(
+          child: Column(
+            children: [
+              const AppHeader(
+                subtitle: 'Document Analysis & Transaction Extraction',
+              ),
+              isWideScreen
                   ? _buildWideScreenLayout(context, viewModel)
                   : _buildNarrowScreenLayout(context, viewModel),
-            ),
-          ],
+            ],
+          ),
         ),
       ])),
     );
@@ -85,7 +85,7 @@ class _HomeViewState extends State<HomeView> {
     BuildContext context,
     HomeViewModel viewModel,
   ) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(AppTheme.spacingLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,6 +104,8 @@ class _HomeViewState extends State<HomeView> {
               padding: EdgeInsets.symmetric(vertical: AppTheme.spacingLg),
               child: Center(child: CircularProgressIndicator()),
             ),
+          ] else if (viewModel.auditCompletedSuccessfully) ...[
+            _buildSuccessView(context, viewModel),
           ] else if (viewModel.hasRunAudit) ...[
             // Extracted transactions (only shown after audit)
             const ExtractedTransactionsWidget(),
@@ -170,6 +172,74 @@ class _HomeViewState extends State<HomeView> {
               message,
               style: AppTheme.bodySmall.copyWith(color: context.colors.error),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSuccessView(BuildContext context, HomeViewModel viewModel) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingXl),
+      decoration: BoxDecoration(
+        color: context.colors.success.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        border: Border.all(color: context.colors.success.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacingLg),
+            decoration: BoxDecoration(
+              color: context.colors.success.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.check_circle_outline,
+              color: context.colors.success,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingLg),
+          Text(
+            'Audit Completed Successfully!',
+            style: AppTheme.h2.copyWith(color: context.colors.success),
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+          Text(
+            'All transactions have been verified and saved to the database. You can now view the detailed analysis.',
+            textAlign: TextAlign.center,
+            style: AppTheme.bodyMedium
+                .copyWith(color: context.colors.textSecondary),
+          ),
+          const SizedBox(height: AppTheme.spacingXl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => viewModel.reset(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Start New Audit'),
+                style: OutlinedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                ),
+              ),
+              const SizedBox(width: AppTheme.spacingMd),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/analytics');
+                },
+                icon: const Icon(Icons.analytics_outlined),
+                label: const Text('View Analysis'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                ),
+              ),
+            ],
           ),
         ],
       ),

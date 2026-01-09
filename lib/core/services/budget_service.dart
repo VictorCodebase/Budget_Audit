@@ -118,22 +118,59 @@ class TemplateService {
   }
 
   Future<bool> deleteTemplate(int templateId) async {
-    try {
-      // Cascade delete accounts linked to this template
-      await (_appDatabase.delete(_appDatabase.accounts)
-            ..where((tbl) => tbl.templateId.equals(templateId)))
-          .go();
+    return _appDatabase.transaction(() async {
+      try {
+        // 0. Fetch Account IDs to clean up their children
+        final accounts = await (_appDatabase.select(_appDatabase.accounts)
+              ..where((tbl) => tbl.templateId.equals(templateId)))
+            .get();
+        final accountIds = accounts.map((a) => a.accountId).toList();
 
-      final deleted = await (_appDatabase.delete(_appDatabase.templates)
-            ..where((tbl) => tbl.templateId.equals(templateId)))
-          .go();
+        if (accountIds.isNotEmpty) {
+          // 0a. Delete Transactions linked to these accounts
+          await (_appDatabase.delete(_appDatabase.transactions)
+                ..where((tbl) => tbl.accountId.isIn(accountIds)))
+              .go();
 
-      _logger.info("Deleted template $templateId ($deleted rows)");
-      return deleted > 0;
-    } catch (e, st) {
-      _logger.severe("Error deleting template $templateId", e, st);
-      return false;
-    }
+          // 0b. Delete VendorMatchHistories linked to these accounts
+          await (_appDatabase.delete(_appDatabase.vendorMatchHistories)
+                ..where((tbl) => tbl.accountId.isIn(accountIds)))
+              .go();
+        }
+
+        // 1. Delete Accounts
+        await (_appDatabase.delete(_appDatabase.accounts)
+              ..where((tbl) => tbl.templateId.equals(templateId)))
+            .go();
+
+        // 2. Delete Categories
+        await (_appDatabase.delete(_appDatabase.categories)
+              ..where((tbl) => tbl.templateId.equals(templateId)))
+            .go();
+
+        // 3. Delete Template Participants
+        await (_appDatabase.delete(_appDatabase.templateParticipants)
+              ..where((tbl) => tbl.templateId.equals(templateId)))
+            .go();
+
+        // 4. Delete Chart Snapshots
+        await (_appDatabase.delete(_appDatabase.chartSnapshots)
+              ..where((tbl) => tbl.associatedTemplate.equals(templateId)))
+            .go();
+
+        // 5. Finally, delete the Template
+        final deleted = await (_appDatabase.delete(_appDatabase.templates)
+              ..where((tbl) => tbl.templateId.equals(templateId)))
+            .go();
+
+        _logger.info("Deleted template $templateId and all dependencies");
+        return deleted > 0;
+      } catch (e, st) {
+        _logger.severe("Error deleting template $templateId", e, st);
+        // Rethrow to rollback transaction
+        throw e;
+      }
+    });
   }
 }
 
@@ -227,6 +264,25 @@ class AccountService {
       _logger.severe(
           "Error fetching all accounts for template $templateId", e, st);
       return [];
+    }
+  }
+
+  /// Get total budget amount for a template
+  Future<double> getTemplateTotalBudget(int templateId) async {
+    try {
+      final query = _appDatabase.select(_appDatabase.accounts)
+        ..where((tbl) => tbl.templateId.equals(templateId));
+      final accounts = await query.get();
+
+      double total = 0.0;
+      for (final account in accounts) {
+        total += account.budgetAmount;
+      }
+      return total;
+    } catch (e, st) {
+      _logger.severe(
+          "Error calculating total budget for template $templateId", e, st);
+      return 0.0;
     }
   }
 
@@ -387,6 +443,24 @@ class CategoryService {
     }
   }
 
+  Future<bool> updateCategory(models.Category category) async {
+    try {
+      final updated = await (_appDatabase.update(_appDatabase.categories)
+            ..where((t) => t.categoryId.equals(category.categoryId)))
+          .write(CategoriesCompanion(
+        categoryName: drift.Value(category.categoryName),
+        colorHex: drift.Value(category.colorHex),
+        templateId: drift.Value(category.templateId),
+      ));
+
+      _logger.info("Updated category ${category.categoryId} ($updated rows)");
+      return updated > 0;
+    } catch (e, st) {
+      _logger.severe("Error updating category ${category.categoryId}", e, st);
+      return false;
+    }
+  }
+
   Future<bool> deleteCategory(int categoryId) async {
     try {
       // First, delete all accounts in this category
@@ -448,8 +522,7 @@ class TransactionService {
     }
   }
 
-  
-/// Fetch all transactions for a list of account IDs
+  /// Fetch all transactions for a list of account IDs
   Future<List<models.Transaction>> getTransactionsForAccounts(
       List<int> accountIds) async {
     try {

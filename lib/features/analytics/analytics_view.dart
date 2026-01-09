@@ -33,19 +33,19 @@ class _AnalyticsViewState extends State<AnalyticsView> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: Column(
-          children: [
-            const AppHeader(
-              subtitle: 'Budget Insights & Spending Analysis',
-            ),
-            Expanded(
-              child: viewModel.isLoading
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const AppHeader(
+                subtitle: 'Budget Insights & Spending Analysis',
+              ),
+              viewModel.isLoading
                   ? _buildLoadingState()
                   : viewModel.errorMessage != null
                       ? _buildErrorState(viewModel.errorMessage!)
                       : _buildContent(context, viewModel, isWideScreen),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -124,11 +124,9 @@ class _AnalyticsViewState extends State<AnalyticsView> {
       children: [
         _buildTabSelector(context, viewModel),
         _buildTemplateSelector(context, viewModel),
-        Expanded(
-          child: viewModel.currentTab == AnalyticsTab.budgetAnalytics
-              ? const BudgetAnalyticsTab()
-              : const ExpenditureAnalyticsTab(),
-        ),
+        viewModel.currentTab == AnalyticsTab.budgetAnalytics
+            ? const BudgetAnalyticsTab()
+            : const ExpenditureAnalyticsTab(),
       ],
     );
   }

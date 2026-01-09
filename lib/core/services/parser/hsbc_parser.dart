@@ -1,6 +1,7 @@
 // lib/core/services/parser/hsbc_parser.dart
 
 import 'dart:io';
+import 'package:budget_audit/core/services/parser/parser_mixin.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
@@ -92,7 +93,7 @@ class RowGroup {
 }
 
 /// Parser for HSBC bank statements using word-level text extraction
-class HSBCParser extends StatementParser {
+class HSBCParser with ParserMixin implements StatementParser {
   final uuid = const Uuid();
 
   // Tunable thresholds
@@ -363,15 +364,16 @@ class HSBCParser extends StatementParser {
     final missingCheckpoints = <String>[];
 
     try {
-      if (password != null) {
-        final canUnlock = await unlockPdf(pdfFile, password);
-        if (!canUnlock) {
-          return const ValidationResult(
-            canParse: false,
-            errorMessage: 'Unable to unlock PDF with provided password',
-            missingCheckpoints: ['PDF unlock failed'],
-          );
-        }
+      // Validate PDF openability/security
+      final unlockResult = await unlockPdf(pdfFile, password);
+      if (unlockResult != ValidationErrorType.none) {
+        return ValidationResult.failure(
+          error: unlockResult == ValidationErrorType.passwordRequired
+              ? 'Document is password protected'
+              : 'Incorrect password',
+          missing: ['PDF unlock failed'],
+          type: unlockResult,
+        );
       }
 
       final PdfDocument document = PdfDocument(
@@ -692,8 +694,9 @@ class HSBCParser extends StatementParser {
       date: date,
       vendorName: normalizeVendorName(description),
       amount: isDR ? -amount.abs() : amount.abs(),
+      ignoreTransaction: isCR,
       originalDescription: description,
-      useMemory: false,
+      useMemory: true,
     );
   }
 

@@ -93,19 +93,21 @@ class ParsedTransaction extends Equatable {
   final AccountData? suggestedAccount;
   final MatchStatus? originalStatus;
   final bool autoUpdated;
+  final bool ignoreTransaction;
 
   const ParsedTransaction({
     required this.id,
     required this.date,
     required this.vendorName,
     required this.amount,
+    this.ignoreTransaction = false,
     this.originalDescription,
     this.userModified = false,
     this.vendorId,
     this.category,
     this.account,
     this.reason,
-    this.useMemory = false,
+    this.useMemory = true, //! Im thinking, let this be an opt out thing
     this.matchStatus = MatchStatus.critical,
     this.potentialMatches = const [],
     this.suggestedAccount,
@@ -188,32 +190,47 @@ class ParseResult extends Equatable {
   List<Object?> get props => [success, errorMessage, transactions, document];
 }
 
+/// Types of validation errors for document ingestion
+enum ValidationErrorType {
+  none,
+  passwordRequired,
+  passwordIncorrect,
+  fileNotFound,
+  parsingFailed,
+  invalidFormat,
+  unknown
+}
+
 /// Validation result for document parseability
 class ValidationResult extends Equatable {
   final bool canParse;
   final String? errorMessage;
   final List<String> missingCheckpoints;
+  final ValidationErrorType type;
 
   const ValidationResult({
     required this.canParse,
     this.errorMessage,
     this.missingCheckpoints = const [],
+    this.type = ValidationErrorType.unknown,
   });
 
   const ValidationResult.success()
       : canParse = true,
         errorMessage = null,
-        missingCheckpoints = const [];
+        missingCheckpoints = const [],
+        type = ValidationErrorType.none;
 
   const ValidationResult.failure({
     required String error,
     List<String> missing = const [],
+    this.type = ValidationErrorType.unknown,
   })  : canParse = false,
         errorMessage = error,
         missingCheckpoints = missing;
 
   @override
-  List<Object?> get props => [canParse, errorMessage, missingCheckpoints];
+  List<Object?> get props => [canParse, errorMessage, missingCheckpoints, type];
 }
 
 class Account {

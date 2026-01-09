@@ -24,11 +24,13 @@ class EnhancedAccountSelector extends StatefulWidget {
 
 class _EnhancedAccountSelectorState extends State<EnhancedAccountSelector> {
   late List<_AccountOption> _allAccounts;
+  late TextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
     _buildAccountOptions();
+    _controller = TextEditingController(text: _getInitialValue());
   }
 
   @override
@@ -37,6 +39,18 @@ class _EnhancedAccountSelectorState extends State<EnhancedAccountSelector> {
     if (oldWidget.categories != widget.categories) {
       _buildAccountOptions();
     }
+    if (oldWidget.selectedAccountId != widget.selectedAccountId) {
+      final newValue = _getInitialValue();
+      if (_controller.text != newValue) {
+        _controller.text = newValue;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void _buildAccountOptions() {
@@ -70,14 +84,11 @@ class _EnhancedAccountSelectorState extends State<EnhancedAccountSelector> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      // Key is crucial to force rebuild when selection changes from outside
       return Autocomplete<_AccountOption>(
-        key: ValueKey(widget.selectedAccountId),
         displayStringForOption: _getDisplayStringForOption,
-        initialValue: TextEditingValue(text: _getInitialValue()),
         optionsBuilder: (TextEditingValue textEditingValue) {
           if (textEditingValue.text == '') {
-            return const Iterable<_AccountOption>.empty();
+            return _allAccounts;
           }
           return _allAccounts.where((option) {
             final searchString =
@@ -90,9 +101,23 @@ class _EnhancedAccountSelectorState extends State<EnhancedAccountSelector> {
         },
         fieldViewBuilder:
             (context, textEditingController, focusNode, onFieldSubmitted) {
+          // Sync our internal controller with Autocomplete's controller
+          if (textEditingController.text != _controller.text &&
+              _controller.text.isNotEmpty &&
+              textEditingController.text.isEmpty) {
+            textEditingController.text = _controller.text;
+          }
+
           return TextField(
             controller: textEditingController,
             focusNode: focusNode,
+            onTap: () {
+              // Show all options when tapped if empty
+              if (textEditingController.text.isEmpty) {
+                // Focus then notify Autocomplete that text changed (it's already empty)
+                focusNode.requestFocus();
+              }
+            },
             decoration: InputDecoration(
               hintText: 'Select Account',
               border: OutlineInputBorder(

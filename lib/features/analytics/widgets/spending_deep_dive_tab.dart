@@ -15,7 +15,7 @@ class SpendingDeepDiveTab extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final isWideScreen = mediaQuery.size.width > 800;
 
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,12 +44,12 @@ class SpendingDeepDiveTab extends StatelessWidget {
       children: [
         Expanded(
           flex: 5,
-          child: _buildCategorySpendingBarChart(context),
+          child: _buildCategorySpendingPieChart(context),
         ),
         const SizedBox(width: AppTheme.spacingLg),
         Expanded(
           flex: 5,
-          child: _buildCategorySpendingPieChart(context),
+          child: _buildCategorySpendingBarChart(context),
         ),
       ],
     );
@@ -69,7 +69,11 @@ class SpendingDeepDiveTab extends StatelessWidget {
     final viewModel = context.watch<AnalyticsViewModel>();
 
     if (viewModel.categorySpendingData.isEmpty) {
-      return _buildEmptyState(context, 'No spending data available');
+      return _buildEmptyState(
+        context,
+        'No Transactions Found',
+        'Enter financial documents for analysis or',
+      );
     }
 
     return Container(
@@ -89,8 +93,8 @@ class SpendingDeepDiveTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppTheme.spacingLg),
-          AspectRatio(
-            aspectRatio: 1.3,
+          SizedBox(
+            height: 300,
             child: PieChart(
               PieChartData(
                 sections: _buildSpendingPieChartSections(context, viewModel),
@@ -234,8 +238,20 @@ class SpendingDeepDiveTab extends StatelessWidget {
     if (selectedCategory == null || selectedCategory.accounts.isEmpty) {
       return _buildEmptyState(
         context,
+        'No Account Data',
         'Select a category to view account spending',
       );
+    }
+
+    // Calculate max percentage to set maxY dynamically
+    double maxPercentage = 100;
+    if (selectedCategory.accounts.isNotEmpty) {
+      final maxVal = selectedCategory.accounts
+          .map((a) => a.budgeted > 0 ? (a.spent / a.budgeted) * 100 : 0.0)
+          .reduce((a, b) => a > b ? a : b);
+      if (maxVal > 100) {
+        maxPercentage = maxVal;
+      }
     }
 
     return Container(
@@ -257,109 +273,131 @@ class SpendingDeepDiveTab extends StatelessWidget {
           const SizedBox(height: AppTheme.spacingLg),
           SizedBox(
             height: 300,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: selectedCategory.accounts
-                        .map((a) => a.spent)
-                        .reduce((a, b) => a > b ? a : b) *
-                    1.2,
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (_) => context.colors.surfaceVariant,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final account = selectedCategory.accounts[group.x];
-                      final formatter = NumberFormat.currency(
-                        symbol: '\$',
-                        decimalDigits: 2,
-                      );
-                      return BarTooltipItem(
-                        '${account.account.accountName}\n',
-                        AppTheme.bodySmall.copyWith(
-                          color: context.colors.textPrimary,
-                          fontWeight: FontWeight.bold,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Calculate dynamic width
+                final totalAvailableWidth = constraints.maxWidth;
+                final count = selectedCategory.accounts.length;
+
+                // If we have accounts, calculate width, otherwise default
+                double barWidth = 20;
+                if (count > 0) {
+                  // Calculate width per slot (roughly)
+                  final widthPerSlot = totalAvailableWidth / count;
+                  // Take 80% of that slot
+                  barWidth = widthPerSlot * 0.8;
+                  // Clamp to reasonable min/max
+                  barWidth = barWidth.clamp(16.0, 80.0);
+                }
+
+                return BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: maxPercentage * 1.2,
+                    barTouchData: BarTouchData(
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (_) => context.colors.surfaceVariant,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          final account = selectedCategory.accounts[group.x];
+                          final formatter = NumberFormat.currency(
+                            symbol: '\$',
+                            decimalDigits: 2,
+                          );
+                          return BarTooltipItem(
+                            '${account.account.accountName}\n',
+                            AppTheme.bodySmall.copyWith(
+                              color: context.colors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            children: [
+                              TextSpan(
+                                text:
+                                    'Spent: ${formatter.format(account.spent)}\n',
+                                style: AppTheme.bodySmall.copyWith(
+                                  color: context.colors.textSecondary,
+                                ),
+                              ),
+                              TextSpan(
+                                text:
+                                    'Budget: ${formatter.format(account.budgeted)}',
+                                style: AppTheme.bodySmall.copyWith(
+                                  color: context.colors.textTertiary,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            if (value.toInt() >=
+                                selectedCategory.accounts.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final account =
+                                selectedCategory.accounts[value.toInt()];
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: SizedBox(
+                                width: barWidth * 1.5,
+                                child: Text(
+                                  account.account.accountName,
+                                  style: AppTheme.caption.copyWith(
+                                    color: context.colors.textSecondary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            );
+                          },
+                          reservedSize: 50,
                         ),
-                        children: [
-                          TextSpan(
-                            text: 'Spent: ${formatter.format(rod.toY)}\n',
-                            style: AppTheme.bodySmall.copyWith(
-                              color: context.colors.textSecondary,
-                            ),
-                          ),
-                          TextSpan(
-                            text:
-                                'Budget: ${formatter.format(account.budgeted)}',
-                            style: AppTheme.bodySmall.copyWith(
-                              color: context.colors.textTertiary,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= selectedCategory.accounts.length) {
-                          return const SizedBox.shrink();
-                        }
-                        final account =
-                            selectedCategory.accounts[value.toInt()];
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            account.account.accountName,
-                            style: AppTheme.caption.copyWith(
-                              color: context.colors.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      },
-                      reservedSize: 50,
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 50,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toInt().toString(),
+                              style: AppTheme.caption.copyWith(
+                                color: context.colors.textSecondary,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                     ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 50,
-                      getTitlesWidget: (value, meta) {
-                        final formatter = NumberFormat.compact();
-                        return Text(
-                          formatter.format(value),
-                          style: AppTheme.caption.copyWith(
-                            color: context.colors.textSecondary,
-                          ),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: 20,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: context.colors.border,
+                          strokeWidth: 1,
                         );
                       },
                     ),
+                    borderData: FlBorderData(show: false),
+                    barGroups:
+                        _buildSpendingBarGroups(selectedCategory, barWidth),
                   ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: context.colors.border,
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: _buildSpendingBarGroups(selectedCategory),
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -368,18 +406,30 @@ class SpendingDeepDiveTab extends StatelessWidget {
   }
 
   List<BarChartGroupData> _buildSpendingBarGroups(
-      CategorySpendingData category) {
+      CategorySpendingData category, double barWidth) {
     return List.generate(
       category.accounts.length,
       (index) {
         final account = category.accounts[index];
+        final percentage = account.budgeted > 0
+            ? (account.spent / account.budgeted) * 100
+            : 0.0;
+
+        // Color based on budget adherence
+        Color barColor = account.account.color;
+        if (percentage > 100) {
+          // Optional: Indicate overspending, though user didn't explicitly ask for color change,
+          // but implied "percentage changes" from previous. Previous didn't change color.
+          // I will stick to account color as per previous implementation unless specifically asked.
+        }
+
         return BarChartGroupData(
           x: index,
           barRods: [
             BarChartRodData(
-              toY: account.spent,
-              color: account.account.color,
-              width: 20,
+              toY: percentage,
+              color: barColor,
+              width: barWidth,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(6),
                 topRight: Radius.circular(6),
@@ -395,7 +445,11 @@ class SpendingDeepDiveTab extends StatelessWidget {
     final viewModel = context.watch<AnalyticsViewModel>();
 
     if (viewModel.expenditureRelativeToBudgetData.isEmpty) {
-      return _buildEmptyState(context, 'No expenditure data available');
+      return _buildEmptyState(
+        context,
+        'No Expenditure Data',
+        'Enter financial documents for analysis or',
+      );
     }
 
     final isStacked = viewModel.participantFilter == ParticipantFilter.all;
@@ -603,7 +657,8 @@ class SpendingDeepDiveTab extends StatelessWidget {
     return maxValue > 100 ? maxValue * 1.2 : 120;
   }
 
-  Widget _buildEmptyState(BuildContext context, String message) {
+  Widget _buildEmptyState(BuildContext context, String title, String message,
+      {bool showLearnMore = true}) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingXl),
       decoration: BoxDecoration(
@@ -616,17 +671,48 @@ class SpendingDeepDiveTab extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.bar_chart,
+              Icons.receipt_long_outlined,
               size: 64,
               color: context.colors.textTertiary,
             ),
             const SizedBox(height: AppTheme.spacingMd),
             Text(
-              message,
-              style: AppTheme.bodyMedium.copyWith(
+              title,
+              style: AppTheme.h3.copyWith(
                 color: context.colors.textSecondary,
               ),
+            ),
+            const SizedBox(height: AppTheme.spacingSm),
+            RichText(
               textAlign: TextAlign.center,
+              text: TextSpan(
+                style: AppTheme.bodyMedium.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+                children: [
+                  TextSpan(text: '$message '),
+                  if (showLearnMore)
+                    WidgetSpan(
+                      child: InkWell(
+                        onTap: () {
+                          // Placeholder for navigation or help dialog
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Navigate to Expenditure Help...')),
+                          );
+                        },
+                        child: Text(
+                          'learn more',
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: context.colors.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ],
         ),

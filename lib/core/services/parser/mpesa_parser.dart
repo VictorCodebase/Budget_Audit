@@ -1,12 +1,14 @@
 // lib/core/services/parser/mpesa_parser.dart
 
 import 'dart:io';
+import 'package:budget_audit/core/services/parser/parser_mixin.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/client_models.dart';
 import 'parser_interface.dart';
 
-class MPesaParser extends StatementParser {
+
+class MPesaParser with ParserMixin implements StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.mpesa;
 
@@ -53,6 +55,18 @@ class MPesaParser extends StatementParser {
   }) async {
     PdfDocument? document;
     try {
+      // Validate PDF openability/security
+      final unlockResult = await unlockPdf(pdfFile, password);
+      if (unlockResult != ValidationErrorType.none) {
+        return ValidationResult.failure(
+          error: unlockResult == ValidationErrorType.passwordRequired
+              ? 'Document is password protected'
+              : 'Incorrect password',
+          missing: ['PDF unlock failed'],
+          type: unlockResult,
+        );
+      }
+
       document = PdfDocument(
           inputBytes: pdfFile.readAsBytesSync(), password: password);
       String text = PdfTextExtractor(document).extractText();
@@ -114,49 +128,74 @@ class MPesaParser extends StatementParser {
       document = PdfDocument(
           inputBytes: pdfFile.readAsBytesSync(), password: password);
 
-      // Extract all text. The dotAll: true flag in the regex will handle multi-line parsing.
       String fullText = PdfTextExtractor(document).extractText();
       final uuid = const Uuid();
 
-      // 🛑 DEBUGGING: Use this to confirm the text is extracted.
-      // print('--- RAW PDF EXTRACTED TEXT START ---');
-      // print(fullText);
-      // print('--- RAW PDF EXTRACTED TEXT END ---');
-      // int times = 2;
+      // Modified regex: Capture TWO consecutive amounts (the Paid In and Withdrawn columns)
+      final transactionRowPattern = RegExp(
+        // Skip Receipt No
+        r'.*?'
+        // 1. Date: YYYY-MM-DD HH:MM:SS
+        r'(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})'
+        r'\s+'
+        // 2. Details: Non-greedy until Status
+        r'(.+?)'
+        r'\s+'
+        // 3. Status
+        r'(COMPLETED|FAILED)'
+        r'\s+'
+        // 4. First Amount (could be Paid In or Withdrawn)
+        r'([\d,]+\.\d{2})'
+        r'\s+'
+        // 5. Second Amount (the other one)
+        r'([\d,]+\.\d{2})'
+        r'\s+'
+        // 6. Balance (we keep this for validation but don't strictly need it)
+        r'([\d,]+\.\d{2})',
+        multiLine: true,
+        dotAll: true,
+      );
 
-      // 🏆 NEW LOGIC: Iterate over all matches found in the entire document text (fullText).
-      // The multi-line and dotAll flags allow a single transaction to span multiple lines.
-      for (final match in _transactionRowPattern.allMatches(fullText)) {
+      for (final match in transactionRowPattern.allMatches(fullText)) {
         final rawDate = match.group(1)!;
         final rawDetails = match.group(2)!;
         final status = match.group(3)!;
-        final rawPaidIn = match.group(4)!;
-        final rawWithdrawn = match.group(5)!;
-
-        final transactionDate = parseDate(rawDate);
+        final rawFirstAmount = match.group(4)!;
+        final rawSecondAmount = match.group(5)!;
 
         // Skip non-completed transactions
         if (status.toUpperCase() != 'COMPLETED') continue;
 
-        // Parse Amounts
-        double paidIn = parseAmount(rawPaidIn) ?? 0.0;
-        double withdrawn = parseAmount(rawWithdrawn) ?? 0.0;
-
-        // Determine final amount (Income vs Expense)
-        double finalAmount = 0.0;
-
-        if (paidIn > 0) {
-          finalAmount = paidIn;
-        } else if (withdrawn > 0) {
-          finalAmount = -withdrawn; // Negate expenses
-        } else {
-          // Skip zero-value transactions
+        final transactionDate = parseDate(rawDate);
+        if (transactionDate == null) {
+          print("Transaction parse error: date not found");
           continue;
         }
 
-        if (transactionDate == null) {
-          print("Transaction parse error: date not found");
+        // Parse both amounts
+        double firstAmount = parseAmount(rawFirstAmount) ?? 0.0;
+        double secondAmount = parseAmount(rawSecondAmount) ?? 0.0;
 
+        // Determine transaction type based on which amount is 0.00
+        double transactionAmount;
+        bool ignoreTransaction = false;
+
+        if (firstAmount == 0.0 && secondAmount > 0.0) {
+          // Pattern: 0.00 [amount] = Withdrawal (money out)
+          transactionAmount = -secondAmount; // Negative for expense
+          ignoreTransaction = false;
+        } else if (firstAmount > 0.0 && secondAmount == 0.0) {
+          // Pattern: [amount] 0.00 = Deposit (money in)
+          transactionAmount = firstAmount; // Positive for income
+          ignoreTransaction = true; // Application focuses on expenditures
+        } else if (firstAmount == 0.0 && secondAmount == 0.0) {
+          // Both zero - skip this transaction entirely
+          continue;
+        } else {
+          // Both have values (unusual) - log warning and skip
+          print(
+              "Warning: Both amounts present - First: $firstAmount, Second: $secondAmount");
+          print("Details: $rawDetails");
           continue;
         }
 
@@ -164,16 +203,11 @@ class MPesaParser extends StatementParser {
           id: uuid.v4(),
           date: transactionDate,
           vendorName: normalizeVendorName(rawDetails),
-          amount: finalAmount,
+          amount: transactionAmount,
           originalDescription: rawDetails,
-          useMemory: false,
+          ignoreTransaction: ignoreTransaction,
+          useMemory: true,
         ));
-        //? Uncomment to sample output
-        // if (times > 0) {
-        //   print(
-        //       "test transactions picked: \n Date: $transactionDate\n VendorName: ${normalizeVendorName(rawDetails)} \n Amount: $finalAmount \n OriginalDescription: $rawDetails");
-        //       times -= 1;
-        // }
       }
 
       return ParseResult(
@@ -182,7 +216,6 @@ class MPesaParser extends StatementParser {
         document: documentMetadata,
       );
     } catch (e) {
-      // If the PDF library throws an error, or parsing fails completely.
       return ParseResult(
         success: false,
         errorMessage: "Error parsing M-PESA PDF: $e",

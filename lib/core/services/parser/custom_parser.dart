@@ -1,6 +1,7 @@
 // lib/core/services/parser/custom_parser.dart
 
 import 'dart:io';
+import 'package:budget_audit/core/services/parser/parser_mixin.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/client_models.dart';
 import 'parser_interface.dart';
@@ -19,7 +20,7 @@ import 'parser_interface.dart';
 /// - Transaction tables (by finding repeating patterns)
 /// - Date formats (tries multiple common formats)
 /// - Amount formats (handles various currency symbols and separators)
-class CustomParser implements StatementParser {
+class CustomParser with ParserMixin implements StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.custom;
 
@@ -35,6 +36,17 @@ class CustomParser implements StatementParser {
     File pdfFile, {
     String? password,
   }) async {
+    // Validate PDF openability/security
+    final unlockResult = await unlockPdf(pdfFile, password);
+    if (unlockResult != ValidationErrorType.none) {
+      return ValidationResult.failure(
+        error: unlockResult == ValidationErrorType.passwordRequired
+            ? 'Document is password protected'
+            : 'Incorrect password',
+        missing: ['PDF unlock failed'],
+        type: unlockResult,
+      );
+    }
     // TODO: Implement custom validation
     //
     // Strategy:
@@ -67,11 +79,6 @@ class CustomParser implements StatementParser {
       transactions: _generateSampleTransactions(documentMetadata),
       document: documentMetadata,
     );
-  }
-
-  @override
-  Future<bool> unlockPdf(File pdfFile, String? password) async {
-    return true;
   }
 
   @override
@@ -225,7 +232,7 @@ class CustomParser implements StatementParser {
         date: DateTime.now().subtract(Duration(days: index * 2)),
         vendorName: 'Greggs PLC',
         amount: -2.90,
-        useMemory: false,
+        useMemory: true,
       ),
     );
   }

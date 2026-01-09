@@ -173,6 +173,8 @@ void main() {
 
       expect(creditTransaction.amount, isPositive);
       expect(creditTransaction.amount, closeTo(1250.00, 0.01));
+      expect(creditTransaction.ignoreTransaction, isTrue,
+          reason: 'Credit transactions in HSBC should be marked as ignored');
     });
 
     test('should separate payment charges as individual transactions',
@@ -243,7 +245,7 @@ void main() {
       }
 
       final metadata = UploadedDocument(
-       id: 'test-doc-1',
+        id: 'test-doc-1',
         filePath: file.path,
         fileName: 'hsbc-statement-aug-2024.pdf',
         ownerParticipantId: 1,

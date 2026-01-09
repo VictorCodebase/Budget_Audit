@@ -87,7 +87,6 @@ class CategorySpendingData {
   double get percentageOfBudget => budgeted > 0 ? (spent / budgeted) * 100 : 0;
 }
 
-
 /// Account spending data
 class AccountSpendingData {
   final Account account;
@@ -278,13 +277,11 @@ class AnalyticsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-/// Load all transactions associated with a template
+  /// Load all transactions associated with a template
   Future<List<Transaction>> _loadTransactionsForTemplate(int templateId) async {
     return await _budgetService.transactionService
         .getTransactionsForTemplate(templateId);
   }
-
-
 
   /// Get number of days for a period string
   // int _getPeriodDays(String period) {
@@ -433,8 +430,13 @@ class AnalyticsViewModel extends ChangeNotifier {
 
     for (final transaction in _allTransactions) {
       if (!transaction.isIgnored) {
+        // ✅ Convert negative amounts to positive for expenditure tracking
+        final expenditureAmount = transaction.amount < 0
+            ? transaction.amount.abs()
+            : transaction.amount;
+
         vendorSpending[transaction.vendorId] =
-            (vendorSpending[transaction.vendorId] ?? 0) + transaction.amount;
+            (vendorSpending[transaction.vendorId] ?? 0) + expenditureAmount;
       }
     }
 
@@ -657,10 +659,14 @@ class AnalyticsViewModel extends ChangeNotifier {
   }
 
   /// Calculate total spent from transactions
+  /// ✅ Handles negative amounts by converting to positive (expenditures)
+  /// Ignores positive amounts (income)
   double _calculateTotalSpent(List<Transaction> transactions) {
     return transactions
-        .where((t) => !t.isIgnored)
-        .fold(0.0, (sum, t) => sum + t.amount);
+        .where((t) =>
+            !t.isIgnored &&
+            t.amount < 0) // ✅ Only process negative amounts (expenditures)
+        .fold(0.0, (sum, t) => sum + t.amount.abs()); // ✅ Convert to positive
   }
 
   // UI Actions

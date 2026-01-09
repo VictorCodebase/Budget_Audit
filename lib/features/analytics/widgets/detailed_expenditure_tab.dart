@@ -12,7 +12,7 @@ class DetailedExpenditureTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

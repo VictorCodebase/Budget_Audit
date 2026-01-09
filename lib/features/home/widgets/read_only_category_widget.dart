@@ -16,6 +16,7 @@ class ReadOnlyCategoryWidget extends StatelessWidget {
     return ContentBox(
       minimizedHeight: 60,
       initiallyMinimized: true,
+      expandContent: true,
       controls: const [], // No controls for read-only
       previewWidgets: [
         // Category color and name
@@ -60,8 +61,8 @@ class ReadOnlyCategoryWidget extends StatelessWidget {
               padding: const EdgeInsets.all(AppTheme.spacingSm),
               child: Text(
                 'No accounts in this category',
-                style:
-                    AppTheme.bodySmall.copyWith(color: context.colors.textSecondary),
+                style: AppTheme.bodySmall
+                    .copyWith(color: context.colors.textSecondary),
               ),
             )
           else

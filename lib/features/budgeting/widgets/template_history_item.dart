@@ -28,14 +28,14 @@ class TemplateHistoryItem extends StatelessWidget {
       minimizedHeight: 60,
       initiallyMinimized: true,
       controls: [
-        ContentBoxControl(
+        const ContentBoxControl(
           action: ContentBoxAction.minimize,
-          onPressed: () {},
         ),
-        ContentBoxControl(
-          action: ContentBoxAction.delete,
-          onPressed: onDelete,
-        ),
+        if (!isCurrent)
+          ContentBoxControl(
+            action: ContentBoxAction.delete,
+            onPressed: onDelete,
+          ),
       ],
       previewWidgets: [
         Text(

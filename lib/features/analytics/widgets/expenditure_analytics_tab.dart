@@ -34,12 +34,9 @@ class ExpenditureAnalyticsTab extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingSm),
 
         // Sub-tab content
-        Expanded(
-          child:
-              viewModel.expenditureSubTab == ExpenditureSubTab.spendingDeepDive
-                  ? const SpendingDeepDiveTab()
-                  : const DetailedExpenditureTab(),
-        ),
+        viewModel.expenditureSubTab == ExpenditureSubTab.spendingDeepDive
+            ? const SpendingDeepDiveTab()
+            : const DetailedExpenditureTab(),
       ],
     );
   }
