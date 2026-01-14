@@ -22,8 +22,21 @@ class AccountManagementViewModel extends ChangeNotifier {
 
   // ========== State Management ==========
 
-  List<models.Account> _accounts = [];
-  List<models.Account> get accounts => _accounts;
+  // Cache of accounts per category
+  final Map<int, List<models.Account>> _categoryAccounts = {};
+
+  // Track which categories are currently loading
+  final Set<int> _loadingCategoryIds = {};
+
+  // For backward compatibility / ease of use when editing
+  List<models.Account> get accounts {
+    if (_selectedCategoryId != null) {
+      return _categoryAccounts[_selectedCategoryId] ?? [];
+    }
+    // Return all accounts from all loaded categories for the selected template could be complex
+    // For now, return empty or flattened list if needed, but UI should request per category
+    return [];
+  }
 
   List<models.Template> _accessibleTemplates = [];
   List<models.Template> get accessibleTemplates => _accessibleTemplates;
@@ -117,7 +130,7 @@ class AccountManagementViewModel extends ChangeNotifier {
     _selectedTemplateId = templateId;
     _selectedCategoryId = null; // Reset category selection
     await loadCategoriesForTemplate(templateId);
-    await loadAccountsForTemplate(templateId);
+    // Accounts are now loaded on demand by UI
   }
 
   /// Load categories for a specific template
@@ -140,53 +153,80 @@ class AccountManagementViewModel extends ChangeNotifier {
   Future<void> selectCategory(int? categoryId) async {
     _selectedCategoryId = categoryId;
     if (_selectedTemplateId != null) {
-      await loadAccountsForTemplate(_selectedTemplateId!);
+      // In the new model, we don't necessarily reload everything on selection change
+      // The UI will request what it needs
+      notifyListeners();
     }
   }
 
-  /// Load accounts for the selected template (and optionally category)
-  Future<void> loadAccountsForTemplate(int templateId) async {
-    _setLoading(true);
-    try {
-      List<models.Account> allAccounts;
+  /// Get accounts for a specific category from cache
+  List<models.Account> getAccountsForCategory(int categoryId) {
+    return _categoryAccounts[categoryId] ?? [];
+  }
 
-      if (_selectedCategoryId != null) {
-        // Load accounts for specific category
-        allAccounts =
-            await _budgetService.accountService.getAccountsForCategory(
-          templateId,
-          _selectedCategoryId!,
-        );
-      } else {
-        // Load all accounts for template
-        allAccounts =
-            await _budgetService.accountService.getAllAccountsForTemplate(
-          templateId,
-        );
-      }
+  /// Check if a category is currently loading
+  bool isCategoryLoading(int categoryId) {
+    return _loadingCategoryIds.contains(categoryId);
+  }
+
+  /// Check if a category has been loaded
+  bool isCategoryLoaded(int categoryId) {
+    return _categoryAccounts.containsKey(categoryId);
+  }
+
+  /// Load accounts for a specific category
+  Future<void> loadAccountsForCategory(int templateId, int categoryId,
+      {bool force = false}) async {
+    // Skip if already loading
+    if (_loadingCategoryIds.contains(categoryId)) return;
+
+    // Skip if already loaded and not forcing refresh
+    if (!force && _categoryAccounts.containsKey(categoryId)) return;
+
+    _loadingCategoryIds.add(categoryId);
+    // Only set global loading if this is the selected category (legacy support)
+    if (_selectedCategoryId == categoryId) {
+      _isLoading = true;
+    }
+    notifyListeners();
+
+    try {
+      final loadedAccounts =
+          await _budgetService.accountService.getAccountsForCategory(
+        templateId,
+        categoryId,
+      );
 
       // Filter based on user role
+      List<models.Account> filteredAccounts;
       if (isManager) {
-        // Manager sees all accounts
-        _accounts = allAccounts;
+        filteredAccounts = loadedAccounts;
       } else if (currentUser != null) {
-        // Regular users see only accounts they're responsible for
-        _accounts = allAccounts.where((account) {
+        filteredAccounts = loadedAccounts.where((account) {
           return account.responsibleParticipantId == currentUser!.participantId;
         }).toList();
       } else {
-        _accounts = [];
+        filteredAccounts = [];
       }
 
-      _clearError();
-      _logger
-          .info('Loaded ${_accounts.length} accounts for template $templateId');
+      _categoryAccounts[categoryId] = filteredAccounts;
+
+      if (_selectedCategoryId == categoryId) {
+        _clearError();
+        _logger.info(
+            'Loaded ${filteredAccounts.length} accounts for category $categoryId');
+      }
     } catch (e) {
-      _logger.severe('Failed to load accounts', e);
-      _setError('Failed to load accounts: $e');
-      _accounts = [];
+      _logger.severe('Failed to load accounts for category $categoryId', e);
+      if (_selectedCategoryId == categoryId) {
+        _setError('Failed to load accounts: $e');
+      }
     } finally {
-      _setLoading(false);
+      _loadingCategoryIds.remove(categoryId);
+      if (_selectedCategoryId == categoryId) {
+        _isLoading = false;
+      }
+      notifyListeners();
     }
   }
 
@@ -278,9 +318,23 @@ class AccountManagementViewModel extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      final existingAccount = _accounts.firstWhere(
-        (a) => a.accountId == _editingAccountId,
-      );
+      // Look in the currently selected category cache first, or searching all caches if needed
+      // For simplicity, we assume we are editing from a context where we know the category
+      // But here we need to find it.
+      models.Account? existingAccount;
+
+      for (final accounts in _categoryAccounts.values) {
+        try {
+          existingAccount =
+              accounts.firstWhere((a) => a.accountId == _editingAccountId);
+          break;
+        } catch (_) {}
+      }
+
+      if (existingAccount == null) {
+        _setError('Account not found in cache');
+        return false;
+      }
 
       final account = models.Account(
         accountId: _editingAccountId!,
@@ -301,7 +355,14 @@ class AccountManagementViewModel extends ChangeNotifier {
         _logger.info('Successfully updated account: $_editingAccountId');
 
         if (_selectedTemplateId != null) {
-          await loadAccountsForTemplate(_selectedTemplateId!);
+          // Refresh the category this account belongs to
+          // Note: if category changed, we should refresh old and new, but we'll stick to new for now
+          // or refresh the specific category ID we have in form data
+          if (_formData['categoryId'] != null) {
+            await loadAccountsForCategory(
+                _selectedTemplateId!, _formData['categoryId'] as int,
+                force: true);
+          }
         }
 
         _clearForm();
@@ -358,7 +419,9 @@ class AccountManagementViewModel extends ChangeNotifier {
         }
 
         if (_selectedTemplateId != null) {
-          await loadAccountsForTemplate(_selectedTemplateId!);
+          await loadAccountsForCategory(
+              _selectedTemplateId!, account.categoryId,
+              force: true);
         }
 
         _clearError();

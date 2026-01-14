@@ -21,8 +21,19 @@ class CategoryManagementViewModel extends ChangeNotifier {
 
   // ========== State Management ==========
 
-  List<models.Category> _categories = [];
-  List<models.Category> get categories => _categories;
+  // Cache of categories per template
+  final Map<int, List<models.Category>> _templateCategories = {};
+
+  // Track which templates are currently loading
+  final Set<int> _loadingTemplateIds = {};
+
+  // For backward compatibility / ease of use when editing
+  List<models.Category> get categories {
+    if (_selectedTemplateId != null) {
+      return _templateCategories[_selectedTemplateId] ?? [];
+    }
+    return [];
+  }
 
   List<models.Template> _accessibleTemplates = [];
   List<models.Template> get accessibleTemplates => _accessibleTemplates;
@@ -108,23 +119,62 @@ class CategoryManagementViewModel extends ChangeNotifier {
     await loadCategoriesForTemplate(templateId);
   }
 
+  /// Get categories for a specific template from cache
+  List<models.Category> getCategoriesForTemplate(int templateId) {
+    return _templateCategories[templateId] ?? [];
+  }
+
+  /// Check if a template is currently loading
+  bool isTemplateLoading(int templateId) {
+    return _loadingTemplateIds.contains(templateId);
+  }
+
+  /// Check if a template has been loaded
+  bool isTemplateLoaded(int templateId) {
+    return _templateCategories.containsKey(templateId);
+  }
+
   /// Load categories for a specific template
-  Future<void> loadCategoriesForTemplate(int templateId) async {
-    _setLoading(true);
+  Future<void> loadCategoriesForTemplate(int templateId,
+      {bool force = false}) async {
+    // Skip if already loading
+    if (_loadingTemplateIds.contains(templateId)) return;
+
+    // Skip if already loaded and not forcing refresh
+    if (!force && _templateCategories.containsKey(templateId)) return;
+
+    _loadingTemplateIds.add(templateId);
+    // Only set global loading if this is the selected template
+    if (_selectedTemplateId == templateId) {
+      _isLoading = true;
+    }
+    notifyListeners();
+
     try {
-      _categories =
+      final loadedCategories =
           await _budgetService.categoryService.getCategoriesForTemplate(
         templateId,
       );
-      _clearError();
-      _logger.info(
-          'Loaded ${_categories.length} categories for template $templateId');
+
+      _templateCategories[templateId] = loadedCategories;
+
+      // If error was for this template, clear it
+      if (_selectedTemplateId == templateId) {
+        _clearError();
+        _logger.info(
+            'Loaded ${loadedCategories.length} categories for template $templateId');
+      }
     } catch (e) {
-      _logger.severe('Failed to load categories', e);
-      _setError('Failed to load categories: $e');
-      _categories = [];
+      _logger.severe('Failed to load categories for template $templateId', e);
+      if (_selectedTemplateId == templateId) {
+        _setError('Failed to load categories: $e');
+      }
     } finally {
-      _setLoading(false);
+      _loadingTemplateIds.remove(templateId);
+      if (_selectedTemplateId == templateId) {
+        _isLoading = false;
+      }
+      notifyListeners();
     }
   }
 
@@ -191,7 +241,8 @@ class CategoryManagementViewModel extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      final existingCategory = _categories.firstWhere(
+      final existingCategories = _templateCategories[_selectedTemplateId] ?? [];
+      final existingCategory = existingCategories.firstWhere(
         (c) => c.categoryId == _editingCategoryId,
       );
 
@@ -209,7 +260,14 @@ class CategoryManagementViewModel extends ChangeNotifier {
         _logger.info('Successfully updated category: $_editingCategoryId');
 
         if (_selectedTemplateId != null) {
-          await loadCategoriesForTemplate(_selectedTemplateId!);
+          // Refresh the template the updated category belongs to
+          await loadCategoriesForTemplate(category.templateId, force: true);
+          // Also refresh current if different (edge case)
+          if (_selectedTemplateId != category.templateId) {
+            await loadCategoriesForTemplate(_selectedTemplateId!, force: true);
+          }
+        } else {
+          await loadCategoriesForTemplate(category.templateId, force: true);
         }
 
         _clearForm();
@@ -255,8 +313,12 @@ class CategoryManagementViewModel extends ChangeNotifier {
           _clearForm();
         }
 
-        if (_selectedTemplateId != null) {
-          await loadCategoriesForTemplate(_selectedTemplateId!);
+        // Refresh the template the deleted category belonged to
+        await loadCategoriesForTemplate(category.templateId, force: true);
+
+        if (_selectedTemplateId != null &&
+            _selectedTemplateId != category.templateId) {
+          await loadCategoriesForTemplate(_selectedTemplateId!, force: true);
         }
 
         _clearError();

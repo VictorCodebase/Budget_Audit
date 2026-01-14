@@ -5,6 +5,13 @@ import 'package:budget_audit/features/analytics/analytics_viewmodel.dart';
 import 'package:budget_audit/features/budgeting/budgeting_view.dart';
 import 'package:budget_audit/features/home/home_view.dart';
 import 'package:budget_audit/features/home/home_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/account_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/category_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/participant_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/template_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/vendor_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/settings_view.dart';
+import 'package:budget_audit/features/settings/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../features/budgeting/budgeting_viewmodel.dart';
@@ -93,10 +100,69 @@ class AppRouter {
           },
         );
 
+
+case '/settings':
+        return MaterialPageRoute(
+          builder: (context) {
+            final appContext = Provider.of<AppContext>(context, listen: false);
+
+            if (!appContext.hasValidSession) {
+              return const OnboardingView();
+            }
+
+            return MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create: (_) => SettingsViewModel(
+                    appContext,
+                    sl<ParticipantService>(),
+                    sl<BudgetService>(),
+                  ),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => ParticipantManagementViewModel(
+                    sl<ParticipantService>(),
+                    appContext,
+                  ),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => TemplateManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  ),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => CategoryManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  ),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => AccountManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  ),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => VendorManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  ),
+                ),
+              ],
+              child: const SettingsView(),
+            );
+          },
+        );
+
       case '/dev':
         return MaterialPageRoute(builder: (context) {
           final appContext = Provider.of<AppContext>(context, listen: false);
-          if (appContext.isProduction) { //! route only available in dev env
+          if (appContext.isProduction) {
             debugPrint("In production, redirecting to onboarding");
             return const OnboardingView();
           }
