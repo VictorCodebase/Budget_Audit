@@ -24,22 +24,22 @@ class _BudgetingViewState extends State<BudgetingView> {
   // Cache for template data futures to prevent recreation on rebuild
   final Map<int, Future<_TemplateData>> _templateDataCache = {};
   late TextEditingController _customPeriodController;
+  late BudgetingViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
     _customPeriodController = TextEditingController(text: '1');
+    _viewModel = context.read<BudgetingViewModel>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final viewModel = context.read<BudgetingViewModel>();
-      viewModel.initialize();
-      viewModel.addListener(_onViewModelChange);
+      _viewModel.initialize();
+      _viewModel.addListener(_onViewModelChange);
     });
   }
 
   void _onViewModelChange() {
-    final viewModel = context.read<BudgetingViewModel>();
-    if (viewModel.selectedPeriod == 'Custom') {
-      final text = viewModel.customPeriodMonths.toString();
+    if (_viewModel.selectedPeriod == 'Custom') {
+      final text = _viewModel.customPeriodMonths.toString();
       if (_customPeriodController.text != text) {
         _customPeriodController.text = text;
       }
@@ -48,7 +48,7 @@ class _BudgetingViewState extends State<BudgetingView> {
 
   @override
   void dispose() {
-    context.read<BudgetingViewModel>().removeListener(_onViewModelChange);
+    _viewModel.removeListener(_onViewModelChange);
     _templateDataCache.clear();
     _customPeriodController.dispose();
     super.dispose();
