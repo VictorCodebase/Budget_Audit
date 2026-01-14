@@ -356,7 +356,8 @@ class OnboardingViewModel extends ChangeNotifier {
   // ========== Navigation Helpers ==========
 
   bool canProceedDev() {
-    //! this is a dev option that is being phased out
+    //! this is a dev option that phased out
+    _logger.severe('canProceedDev() is a dev option that phased out');
     return false;
   }
 

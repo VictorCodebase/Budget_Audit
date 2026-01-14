@@ -161,7 +161,7 @@ class _DesktopModalBox extends StatelessWidget {
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.close),
                             iconSize: 20,
-                            color: Colors.black54,
+                            color: context.colors.textPrimary,
                             splashRadius: 20,
                             tooltip: 'Close',
                           ),
