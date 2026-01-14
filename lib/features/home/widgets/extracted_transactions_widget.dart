@@ -464,7 +464,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: confidentTxns,
             status: MatchStatus.confident,
-            title: 'Verified transactions',
+            title: 'Recognized transactions',
             description:
                 'Transaction Vendors have been accurately matched. Consider reviewing for accuracy.',
             color: context.colors.success,
