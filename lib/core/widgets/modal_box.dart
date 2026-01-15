@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:budget_audit/core/theme/app_theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'dart:io' show Platform;
@@ -122,10 +123,10 @@ class _DesktopModalBox extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.85),
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
+                    color: context.colors.surfaceVariant,
                     width: 1.5,
                   ),
                   boxShadow: [
@@ -160,7 +161,7 @@ class _DesktopModalBox extends StatelessWidget {
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.close),
                             iconSize: 20,
-                            color: Colors.black54,
+                            color: context.colors.textPrimary,
                             splashRadius: 20,
                             tooltip: 'Close',
                           ),

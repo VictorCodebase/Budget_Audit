@@ -201,6 +201,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
           SizedBox(
             height: 300,
             child: PieChart(
+              key: ValueKey(viewModel.categorySpendingData.length),
               PieChartData(
                 sections: _buildPieChartSections(context, viewModel),
                 sectionsSpace: 2,

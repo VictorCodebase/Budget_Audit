@@ -38,6 +38,7 @@ dependencies:
 
   # File Operations
   file_picker: ^6.1.1
+  yaml: ^3.1.2
 
   # Utilities
   intl: ^0.19.0
@@ -86,6 +87,14 @@ flutter:
     - assets/banks/equity.png
     - assets/banks/mpesa.png
     - assets/banks/custom.png
+    - assets/icons/logo.ico
+    - assets/icons/logo-update.ico
+    - assets/images/logo.png
+    - assets/images/logo-update.png
+    - assets/images/splash-screen.png
+
+    - assets/budget_presets/family_budget.yaml
+    - assets/budget_presets/student_budget.yaml
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see

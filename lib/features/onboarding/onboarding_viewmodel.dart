@@ -5,11 +5,6 @@ import '../../core/models/client_models.dart' as client_models;
 import 'package:logging/logging.dart';
 import '../../core/context.dart';
 
-enum OnboardingMode {
-  addParticipants,
-  signInAsParticipant,
-}
-
 class OnboardingViewModel extends ChangeNotifier {
   final ParticipantService _participantService;
   final AppContext _appContext;
@@ -17,9 +12,7 @@ class OnboardingViewModel extends ChangeNotifier {
 
   OnboardingViewModel(this._participantService, this._appContext);
 
-  // State management
-  OnboardingMode _mode = OnboardingMode.addParticipants;
-  OnboardingMode get mode => _mode;
+  // ========== State Management ==========
 
   bool _passwordObscured = true;
   bool get passwordObscured => _passwordObscured;
@@ -30,13 +23,8 @@ class OnboardingViewModel extends ChangeNotifier {
   String? _error;
   String? get error => _error;
 
-  // List of participants (for display on the right side)
   List<models.Participant> _participants = [];
   List<models.Participant> get participants => _participants;
-
-  // Current participant being added/edited
-  int? _editingParticipantId;
-  int? get editingParticipantId => _editingParticipantId;
 
   // Form state
   final Map<String, String> _formData = {
@@ -49,7 +37,7 @@ class OnboardingViewModel extends ChangeNotifier {
 
   String getFormValue(String field) => _formData[field] ?? '';
 
-  // Track if this is the first participant (owner/manager)
+  /// Check if this is the first participant (determines if we show signup or login)
   bool get isFirstParticipant => _participants.isEmpty;
 
   // ========== Initialization ==========
@@ -63,6 +51,7 @@ class OnboardingViewModel extends ChangeNotifier {
     try {
       _participants = await _participantService.getAllParticipants();
       _clearError();
+      _logger.info('Loaded ${_participants.length} participants');
     } catch (e) {
       _logger.severe('Failed to load participants', e);
       _setError('Failed to load participants: $e');
@@ -71,24 +60,15 @@ class OnboardingViewModel extends ChangeNotifier {
     }
   }
 
-  void onToggleObscure() {
-    _passwordObscured = !_passwordObscured;
-    notifyListeners();
-  }
-
-  // ========== Mode Switching ==========
-
-  void switchMode(OnboardingMode newMode) {
-    _mode = newMode;
-    _clearForm();
-    _clearError();
-    notifyListeners();
-  }
-
   // ========== Form Management ==========
 
   void updateFormField(String field, String value) {
     _formData[field] = value;
+    notifyListeners();
+  }
+
+  void onToggleObscure() {
+    _passwordObscured = !_passwordObscured;
     notifyListeners();
   }
 
@@ -101,12 +81,11 @@ class OnboardingViewModel extends ChangeNotifier {
       'email': '',
       'password': '',
     });
-    _editingParticipantId = null;
   }
 
   // ========== Validation ==========
 
-  String? validateForm() {
+  String? _validateForm() {
     final firstName = _formData['firstName']?.trim() ?? '';
     final email = _formData['email']?.trim() ?? '';
     final password = _formData['password']?.trim() ?? '';
@@ -125,22 +104,29 @@ class OnboardingViewModel extends ChangeNotifier {
       return 'Please enter a valid email address';
     }
 
-    // Password validation
-    if (password.isEmpty && _editingParticipantId == null) {
+    if (password.isEmpty) {
       return 'Password is required';
     }
 
-    if (password.length < 6 && _editingParticipantId == null) {
+    if (password.length < 6) {
       return 'Password must be at least 6 characters';
     }
 
     return null;
   }
 
-  // ========== Add Participant ==========
+  // ========== Create First Admin Account ==========
 
+  /// Create the first participant (admin/manager account)
+  /// Only available when no participants exist
   Future<bool> createNewParticipant() async {
-    final validationError = validateForm();
+    // Validate that this is truly the first participant
+    if (!isFirstParticipant) {
+      _setError('Account creation is only available for the first user');
+      return false;
+    }
+
+    final validationError = _validateForm();
     if (validationError != null) {
       _setError(validationError);
       return false;
@@ -148,11 +134,7 @@ class OnboardingViewModel extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      // Determine role based on whether this is the first participant
-      final role = isFirstParticipant
-          ? client_models.Role.manager
-          : client_models.Role.participant;
-
+      // First participant is always a manager
       final participant = client_models.Participant(
         firstName: _formData['firstName']!.trim(),
         lastName: _formData['lastName']?.trim().isEmpty == true
@@ -161,151 +143,28 @@ class OnboardingViewModel extends ChangeNotifier {
         nickname: _formData['nickname']?.trim().isEmpty == true
             ? null
             : _formData['nickname']?.trim(),
-        role: role,
+        role: client_models.Role.manager,
         email: _formData['email']!.trim(),
       );
 
-      // Password hashing is now handled by the service
       final participantId = await _participantService.addParticipant(
         participant,
         _formData['password']!,
       );
 
       if (participantId > 0) {
-        _logger.info('Successfully created participant with ID: $participantId');
+        _logger
+            .info('Successfully created admin account with ID: $participantId');
         await loadParticipants();
-        _clearForm();
         _clearError();
         return true;
       } else {
-        _setError('Failed to create participant');
+        _setError('Failed to create account');
         return false;
       }
     } catch (e) {
-      _logger.severe('Error creating participant', e);
-      _setError('Error creating participant: $e');
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  // ========== Edit Participant ==========
-
-  void startEditingParticipant(models.Participant participant) {
-    _editingParticipantId = participant.participantId;
-    _formData['firstName'] = participant.firstName;
-    _formData['lastName'] = participant.lastName ?? '';
-    _formData['nickname'] = participant.nickname ?? '';
-    _formData['email'] = participant.email;
-    _formData['password'] = ''; // Don't populate password for security
-    notifyListeners();
-  }
-
-  /// Update an existing participant
-  Future<bool> updateExistingParticipant() async {
-    if (_editingParticipantId == null) return false;
-
-    final validationError = validateForm();
-    if (validationError != null) {
-      _setError(validationError);
-      return false;
-    }
-
-    _setLoading(true);
-    try {
-      final participant = models.Participant(
-        participantId: _editingParticipantId!,
-        firstName: _formData['firstName']!.trim(),
-        lastName: _formData['lastName']?.trim().isEmpty == true
-            ? null
-            : _formData['lastName']?.trim(),
-        nickname: _formData['nickname']?.trim().isEmpty == true
-            ? null
-            : _formData['nickname']?.trim(),
-        role: _participants
-            .firstWhere((p) => p.participantId == _editingParticipantId)
-            .role,
-        email: _formData['email']!.trim(),
-      );
-
-      // Only pass password if it was actually entered
-      final newPassword = _formData['password']?.trim();
-      final passwordToUpdate = (newPassword != null && newPassword.isNotEmpty)
-          ? newPassword
-          : null;
-
-      // Password hashing is handled by the service
-      final success = await _participantService.updateParticipant(
-        participant,
-        newPassword: passwordToUpdate,
-      );
-
-      if (success) {
-        _logger.info('Successfully updated participant: $_editingParticipantId');
-        await loadParticipants();
-        _clearForm();
-        _clearError();
-        notifyListeners();
-        return true;
-      } else {
-        _setError('Failed to update participant');
-        return false;
-      }
-    } catch (e) {
-      _logger.severe('Error updating participant', e);
-      _setError('Error updating participant: $e');
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  /// Cancel editing and return to add mode
-  void cancelEditing() {
-    _editingParticipantId = null;
-    _clearForm();
-    _clearError();
-    notifyListeners();
-  }
-
-  /// Check if currently in edit mode
-  bool get isEditMode => _editingParticipantId != null;
-
-  // ========== Delete Participant ==========
-
-  Future<bool> removeParticipant(int participantId) async {
-    // Prevent deleting the manager/owner
-    final participant = _participants.firstWhere(
-          (p) => p.participantId == participantId,
-    );
-
-    if (participant.role == models.Role.manager) {
-      _setError('Cannot delete the owner account');
-      return false;
-    }
-
-    _setLoading(true);
-    try {
-      final success = await _participantService.deleteParticipant(participant);
-
-      if (success) {
-        _logger.info('Successfully deleted participant: $participantId');
-        // If we were editing this participant, clear the edit state
-        if (_editingParticipantId == participantId) {
-          _clearForm();
-        }
-        await loadParticipants();
-        _clearError();
-        notifyListeners();
-        return true;
-      } else {
-        _setError('Failed to delete participant');
-        return false;
-      }
-    } catch (e) {
-      _logger.severe('Error deleting participant', e);
-      _setError('Error deleting participant: $e');
+      _logger.severe('Error creating admin account', e);
+      _setError('Error creating account: $e');
       return false;
     } finally {
       _setLoading(false);
@@ -315,7 +174,6 @@ class OnboardingViewModel extends ChangeNotifier {
   // ========== Sign In ==========
 
   /// Sign in as a participant using email and password
-  /// Uses the service to verify credentials and updates app context on success
   Future<bool> signInAsParticipant(String email, String password) async {
     if (email.trim().isEmpty || password.isEmpty) {
       _setError('Email and password are required');
@@ -324,24 +182,26 @@ class OnboardingViewModel extends ChangeNotifier {
 
     _setLoading(true);
     try {
-      // Use the service to verify the participant credentials
-      final isValid = await _participantService.verifyParticipant(email, password);
+      // Verify credentials
+      final isValid =
+          await _participantService.verifyParticipant(email, password);
 
       if (!isValid) {
         _setError('Invalid email or password');
         return false;
       }
 
-      // Fetch the participant by email to get full details
+      // Fetch the participant details
       final participant = _participants.firstWhere(
-            (p) => p.email.toLowerCase() == email.trim().toLowerCase(),
+        (p) => p.email.toLowerCase() == email.trim().toLowerCase(),
         orElse: () => throw Exception('Participant not found'),
       );
 
-      // Update the app context with the signed-in participant
+      // Update app context with signed-in participant
       await _appContext.setParticipant(participant);
 
-      _logger.info('Successfully signed in participant: ${participant.email}');
+      _logger.info('Successfully signed in: ${participant.email}');
+      _clearForm();
       _clearError();
       return true;
     } catch (e) {
@@ -351,20 +211,6 @@ class OnboardingViewModel extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
-  }
-
-  // ========== Navigation Helpers ==========
-
-  bool canProceedDev() {
-    //! this is a dev option that is being phased out
-    return false;
-  }
-
-  String getNextRoute() {
-    // Check if any templates/budgets exist
-    // For now, always route to budgeting page after onboarding
-    // You can enhance this later to check for existing budgets
-    return '/budgeting';
   }
 
   // ========== Helper Methods ==========
@@ -382,20 +228,5 @@ class OnboardingViewModel extends ChangeNotifier {
   void _clearError() {
     _error = null;
     notifyListeners();
-  }
-
-  String getDisplayName(models.Participant participant) {
-    if (participant.nickname != null && participant.nickname!.isNotEmpty) {
-      return participant.nickname!;
-    }
-    return participant.firstName;
-  }
-
-  String getFullName(models.Participant participant) {
-    final parts = [
-      participant.firstName,
-      if (participant.lastName != null) participant.lastName!,
-    ];
-    return parts.join(' ');
   }
 }

@@ -1,6 +1,6 @@
 # Database Schema
 
-This document details the current revision of the database schema, incorporating normalization recommendations to improve data integrity, reduce redundancy, and simplify querying.
+This document details the current revision of the database schema.
 
 ---
 
@@ -81,6 +81,7 @@ Records all financial events (inflow and outflow).
 ---
 
 ### 1.5. VendorMatchHistories Table
+
 
 Tracks vendor-account-participant associations and their usage frequency.
 

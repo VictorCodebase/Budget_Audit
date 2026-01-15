@@ -1,10 +1,18 @@
 import 'package:budget_audit/core/services/budget_service.dart';
 import 'package:budget_audit/core/services/document_service.dart';
+import 'package:budget_audit/core/services/preset_service.dart';
 import 'package:budget_audit/features/analytics/analytics_view.dart';
 import 'package:budget_audit/features/analytics/analytics_viewmodel.dart';
 import 'package:budget_audit/features/budgeting/budgeting_view.dart';
 import 'package:budget_audit/features/home/home_view.dart';
 import 'package:budget_audit/features/home/home_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/account_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/category_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/participant_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/template_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/management_viewmodels/vendor_management_viewmodel.dart';
+import 'package:budget_audit/features/settings/settings_view.dart';
+import 'package:budget_audit/features/settings/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../features/budgeting/budgeting_viewmodel.dart';
@@ -44,6 +52,7 @@ class AppRouter {
               create: (_) => BudgetingViewModel(
                 sl<BudgetService>(),
                 sl<ParticipantService>(),
+                sl<PresetService>(),
                 Provider.of<AppContext>(context, listen: false),
               ),
               child: const BudgetingView(),
@@ -85,6 +94,7 @@ class AppRouter {
             return ChangeNotifierProvider(
               create: (_) => AnalyticsViewModel(
                 budgetService: sl<BudgetService>(),
+                participantService: sl<ParticipantService>(),
                 appContext: appContext,
               ),
               child: const AnalyticsView(),
@@ -92,10 +102,68 @@ class AppRouter {
           },
         );
 
+      case '/settings':
+        return MaterialPageRoute(
+          builder: (context) {
+            final appContext = Provider.of<AppContext>(context, listen: false);
+
+            if (!appContext.hasValidSession) {
+              return const OnboardingView();
+            }
+
+            return MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create: (_) => SettingsViewModel(
+                    appContext,
+                    sl<ParticipantService>(),
+                    sl<BudgetService>(),
+                  )..initialize(),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => ParticipantManagementViewModel(
+                    sl<ParticipantService>(),
+                    appContext,
+                  )..initialize(),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => TemplateManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  )..initialize(),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => CategoryManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  )..initialize(),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => AccountManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  )..initialize(),
+                ),
+                ChangeNotifierProvider(
+                  create: (_) => VendorManagementViewModel(
+                    sl<BudgetService>(),
+                    sl<ParticipantService>(),
+                    appContext,
+                  )..initialize(),
+                ),
+              ],
+              child: const SettingsView(),
+            );
+          },
+        );
+
       case '/dev':
         return MaterialPageRoute(builder: (context) {
           final appContext = Provider.of<AppContext>(context, listen: false);
-          if (appContext.isProduction) { //! route only available in dev env
+          if (appContext.isProduction) {
             debugPrint("In production, redirecting to onboarding");
             return const OnboardingView();
           }

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:logging/logging.dart';
 import '../models/models.dart' as models;
-import '../models/client_models.dart' as clientModels;
+import '../models/client_models.dart' as client_models;
 import '../data/database.dart';
 import 'package:drift/drift.dart' as drift;
 // import 'transaction_service.dart';
@@ -77,7 +77,7 @@ class TemplateService {
     }
   }
 
-  Future<int?> createTemplate(clientModels.Template newTemplate) async {
+  Future<int?> createTemplate(client_models.Template newTemplate) async {
     const int? timesUsed = 0;
     try {
       final entry = TemplatesCompanion.insert(
@@ -321,7 +321,7 @@ class AccountService {
     }
   }
 
-  Future<int?> createAccount(clientModels.Account newAccount) async {
+  Future<int?> createAccount(client_models.Account newAccount) async {
     try {
       final entry = AccountsCompanion.insert(
         categoryId: newAccount.categoryId,
@@ -425,7 +425,7 @@ class CategoryService {
     }
   }
 
-  Future<int?> createCategory(clientModels.Category newCategory) async {
+  Future<int?> createCategory(client_models.Category newCategory) async {
     print(
         "Attempting to create category. Details:\n Name: ${newCategory.categoryName} \n Template ID: ${newCategory.templateId} \n Color: ${newCategory.colorHex}");
     try {

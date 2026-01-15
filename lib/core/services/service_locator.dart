@@ -1,6 +1,7 @@
 // lib/core/services/service_locator.dart
 
 import 'package:budget_audit/core/context.dart';
+import 'package:budget_audit/core/services/preset_service.dart';
 import 'package:budget_audit/features/home/home_viewmodel.dart';
 import 'package:get_it/get_it.dart';
 import '../data/database.dart';
@@ -19,6 +20,7 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => ParticipantService(sl<AppDatabase>()));
   sl.registerLazySingleton(() => BudgetService(sl<AppDatabase>()));
   sl.registerLazySingleton(() => DocumentService());
+  sl.registerLazySingleton(() => PresetService());
   sl.registerLazySingleton<HomeViewModel>( // We ensure widget state in home is not lost
     () => HomeViewModel(
       documentService: sl<DocumentService>(),

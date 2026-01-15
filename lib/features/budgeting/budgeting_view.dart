@@ -12,6 +12,7 @@ import 'widgets/import_option_card.dart';
 import 'widgets/search_filter_bar.dart';
 import 'widgets/category_widget.dart';
 import 'widgets/template_history_item.dart';
+import 'widgets/preset_card.dart';
 
 class BudgetingView extends StatefulWidget {
   const BudgetingView({Key? key}) : super(key: key);
@@ -21,25 +22,24 @@ class BudgetingView extends StatefulWidget {
 }
 
 class _BudgetingViewState extends State<BudgetingView> {
-  // Cache for template data futures to prevent recreation on rebuild
   final Map<int, Future<_TemplateData>> _templateDataCache = {};
   late TextEditingController _customPeriodController;
+  late BudgetingViewModel _viewModel;
 
   @override
   void initState() {
     super.initState();
     _customPeriodController = TextEditingController(text: '1');
+    _viewModel = context.read<BudgetingViewModel>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final viewModel = context.read<BudgetingViewModel>();
-      viewModel.initialize();
-      viewModel.addListener(_onViewModelChange);
+      _viewModel.initialize();
+      _viewModel.addListener(_onViewModelChange);
     });
   }
 
   void _onViewModelChange() {
-    final viewModel = context.read<BudgetingViewModel>();
-    if (viewModel.selectedPeriod == 'Custom') {
-      final text = viewModel.customPeriodMonths.toString();
+    if (_viewModel.selectedPeriod == 'Custom') {
+      final text = _viewModel.customPeriodMonths.toString();
       if (_customPeriodController.text != text) {
         _customPeriodController.text = text;
       }
@@ -48,7 +48,7 @@ class _BudgetingViewState extends State<BudgetingView> {
 
   @override
   void dispose() {
-    context.read<BudgetingViewModel>().removeListener(_onViewModelChange);
+    _viewModel.removeListener(_onViewModelChange);
     _templateDataCache.clear();
     _customPeriodController.dispose();
     super.dispose();
@@ -59,8 +59,7 @@ class _BudgetingViewState extends State<BudgetingView> {
     final appContext = Provider.of<AppContext>(context);
 
     return Scaffold(
-      backgroundColor:
-          Colors.transparent, // Transparent to show global gradient
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Stack(
           children: [
@@ -90,7 +89,6 @@ class _BudgetingViewState extends State<BudgetingView> {
                 );
               },
             ),
-            // Menu always accessible on top left
           ],
         ),
       ),
@@ -115,7 +113,6 @@ class _BudgetingViewState extends State<BudgetingView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title with underline
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -135,18 +132,15 @@ class _BudgetingViewState extends State<BudgetingView> {
             ],
           ),
           const SizedBox(height: AppTheme.spacingXl),
-
-          // Import options
           LayoutBuilder(
             builder: (context, constraints) {
               if (constraints.maxWidth < 800) {
-                // Stack vertically on mobile
                 return Column(
                   children: [
-                    const ImportOptionCard(
+                    ImportOptionCard(
                       title: 'Import a default budget template',
-                      description: 'A template designed for two individuals',
-                      isEnabled: false,
+                      description: 'Choose from pre-made templates',
+                      onTap: () => _showPresetsModal(context, viewModel),
                     ),
                     const SizedBox(height: AppTheme.spacingMd),
                     const ImportOptionCard(
@@ -164,14 +158,13 @@ class _BudgetingViewState extends State<BudgetingView> {
                 );
               }
 
-              // Display in row on larger screens
               return Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: ImportOptionCard(
                       title: 'Import a default budget template',
-                      description: 'A template designed for two individuals',
-                      isEnabled: false,
+                      description: 'Choose from pre-made templates',
+                      onTap: () => _showPresetsModal(context, viewModel),
                     ),
                   ),
                   const SizedBox(width: AppTheme.spacingMd),
@@ -194,10 +187,7 @@ class _BudgetingViewState extends State<BudgetingView> {
               );
             },
           ),
-
           const SizedBox(height: AppTheme.spacing2xl),
-
-          // Learn about budgeting link
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -217,22 +207,13 @@ class _BudgetingViewState extends State<BudgetingView> {
               ),
             ],
           ),
-
           const SizedBox(height: AppTheme.spacingMd),
-
           _buildInformationBox(appContext),
           const SizedBox(height: AppTheme.spacingXl),
-
-          // Period Selector
           _buildPeriodSelector(context, viewModel),
           const SizedBox(height: AppTheme.spacingXl),
-
-          // Search and filter
           const SearchFilterBar(),
-
           const SizedBox(height: AppTheme.spacingXl),
-
-          // Categories
           if (viewModel.categories.isEmpty)
             _buildEmptyState()
           else
@@ -245,10 +226,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                 ),
               );
             }),
-
           const SizedBox(height: AppTheme.spacingMd),
-
-          // Add category button
           InkWell(
             onTap: () => viewModel.addCategory(),
             borderRadius: BorderRadius.circular(8),
@@ -269,10 +247,7 @@ class _BudgetingViewState extends State<BudgetingView> {
               ],
             ),
           ),
-
           const SizedBox(height: AppTheme.spacing2xl),
-
-          // Save/Update buttons
           _buildActionButtons(context, viewModel, appContext),
         ],
       ),
@@ -458,8 +433,233 @@ class _BudgetingViewState extends State<BudgetingView> {
     );
   }
 
+  void _showPresetsModal(BuildContext context, BudgetingViewModel viewModel) {
+    showModalBox(
+      context: context,
+      width: 800,
+      height: 600,
+      child: Builder(
+        builder: (context) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Budget Presets',
+                style: AppTheme.h2,
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              Text(
+                'Choose a pre-made budget template to get started quickly',
+                style: AppTheme.bodyMedium
+                    .copyWith(color: context.colors.textSecondary),
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+              Expanded(
+                child: viewModel.availablePresets.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 64,
+                              color: context.colors.textTertiary,
+                            ),
+                            const SizedBox(height: AppTheme.spacingMd),
+                            Text(
+                              'No presets available',
+                              style: AppTheme.h3.copyWith(
+                                color: context.colors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: AppTheme.spacingXs),
+                            Text(
+                              'Check back later for pre-made templates',
+                              style: AppTheme.bodyMedium.copyWith(
+                                color: context.colors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppTheme.spacingMd,
+                          vertical: AppTheme.spacingMd,
+                        ),
+                        itemCount: viewModel.availablePresets.length,
+                        itemBuilder: (context, index) {
+                          // ListView builder shadows context again, which is fine/standard
+                          final preset = viewModel.availablePresets[index];
+                          return PresetCard(
+                            preset: preset,
+                            onAdopt: (preset, period, months) =>
+                                _handleAdoptPreset(
+                              context, // Pass the inner context (from ListView, or we could use Builder's context if we didn't shadow)
+                              // Actually, passing 'context' here refers to ListView's context which is even deeper and safer.
+                              // Wait, _handleAdoptPreset takes 'modalContext' (Builder's context).
+                              // ListView context is a child of Builder context.
+                              // So passing ListView context is valid for showing dialogs etc.
+                              viewModel,
+                              preset,
+                              period: period,
+                              customMonths: months,
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _handleAdoptPreset(
+    BuildContext modalContext,
+    BudgetingViewModel viewModel,
+    preset, {
+    String? period,
+    int? customMonths,
+  }) {
+    if (viewModel.hasUnsavedChanges) {
+      showDialog(
+        context: modalContext,
+        builder: (dialogContext) {
+          final colors = dialogContext.colors;
+
+          return AlertDialog(
+            title: const Text('Unsaved Changes'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                    'You have unsaved changes in your current budget. Adopting a preset will replace your current work.'),
+                const SizedBox(height: AppTheme.spacingSm),
+                if (viewModel.saveValidationMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(AppTheme.spacingXs),
+                    decoration: BoxDecoration(
+                      color: colors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+                      border: Border.all(color: colors.warning),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber,
+                          size: 16,
+                          color: colors.warning,
+                        ),
+                        const SizedBox(width: AppTheme.spacingXs),
+                        Expanded(
+                          child: Text(
+                            'Note: ${viewModel.saveValidationMessage}',
+                            style: AppTheme.bodySmall.copyWith(
+                              color: colors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingSm),
+                ],
+                const Text('What would you like to do?'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              if (viewModel.canSave)
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _handleSave(this.context, viewModel, then: () {
+                      final messenger = ScaffoldMessenger.of(this.context);
+                      final successColor = this.context.colors.success;
+                      final nav = Navigator.of(modalContext);
+
+                      viewModel.adoptPreset(preset,
+                          period: period, customMonths: customMonths);
+
+                      if (nav.canPop()) nav.pop();
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: const Text('Preset adopted successfully!'),
+                          backgroundColor: successColor,
+                        ),
+                      );
+                    });
+                  },
+                  child: const Text('Save & Adopt'),
+                ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+
+                  final messenger = ScaffoldMessenger.of(this.context);
+                  final successColor = this.context.colors.success;
+                  final nav = Navigator.of(modalContext);
+
+                  viewModel.adoptPreset(preset,
+                      period: period, customMonths: customMonths);
+
+                  if (nav.canPop()) nav.pop();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('Preset adopted successfully!'),
+                      backgroundColor: successColor,
+                    ),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.error,
+                ),
+                child: const Text('Discard & Adopt'),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      _adoptPresetDirectly(
+        modalContext,
+        viewModel,
+        preset,
+        period: period,
+        customMonths: customMonths,
+      );
+    }
+  }
+
+  void _adoptPresetDirectly(
+    BuildContext modalContext,
+    BudgetingViewModel viewModel,
+    preset, {
+    String? period,
+    int? customMonths,
+  }) {
+    final messenger = ScaffoldMessenger.of(this.context);
+    final successColor = this.context.colors.success;
+    final nav = Navigator.of(modalContext);
+
+    viewModel.adoptPreset(preset, period: period, customMonths: customMonths);
+
+    if (nav.canPop()) nav.pop();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Preset adopted successfully!'),
+        backgroundColor: successColor,
+      ),
+    );
+  }
+
   void _showTemplateHistory(BuildContext context) {
-    // Capture the viewModel from the current context before opening modal
     final viewModel = context.read<BudgetingViewModel>();
 
     showModalBox(
@@ -468,9 +668,8 @@ class _BudgetingViewState extends State<BudgetingView> {
       height: 600,
       child: Builder(
         builder: (modalContext) {
-          // Use the outer context's viewModel, but modal's context for AppContext
           return Consumer<AppContext>(
-            builder: (_, appContext, __) {
+            builder: (context, appContext, __) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -566,7 +765,6 @@ class _BudgetingViewState extends State<BudgetingView> {
     );
   }
 
-  /// Gets cached template data future to prevent recreation on rebuild
   Future<_TemplateData> _getCachedTemplateData(
     BudgetingViewModel viewModel,
     int templateId,
@@ -581,12 +779,9 @@ class _BudgetingViewState extends State<BudgetingView> {
     BudgetingViewModel viewModel,
     int templateId,
   ) async {
-    // Load total budget using the service
     final totalBudget =
         await viewModel.accountService.getTemplateTotalBudget(templateId);
 
-    // Get unique participants from accounts
-    // We still need to fetch accounts for participants, but let's optimize if possible or keep logic
     final accounts =
         await viewModel.accountService.getAllAccountsForTemplate(templateId);
     final participantIds =
@@ -618,7 +813,6 @@ class _BudgetingViewState extends State<BudgetingView> {
       showDialog(
         context: modalContext,
         builder: (dialogContext) {
-          // Capture colors from the dialog context (which is definitely mounted here)
           final colors = dialogContext.colors;
 
           return AlertDialog(
@@ -671,12 +865,9 @@ class _BudgetingViewState extends State<BudgetingView> {
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
                     _handleSave(this.context, viewModel, then: () async {
-                      // Capture messenger and colors before async
                       final messenger = ScaffoldMessenger.of(this.context);
                       final successColor = this.context.colors.success;
-                      // final nav = Navigator.of(modalContext);
 
-                      // After saving, adopt the template
                       final appContext =
                           Provider.of<AppContext>(this.context, listen: false);
                       final currentParticipant = appContext.currentParticipant;
@@ -685,8 +876,6 @@ class _BudgetingViewState extends State<BudgetingView> {
                             template, currentParticipant.participantId);
                         appContext.setCurrentTemplate(template);
 
-                        // Use captured references
-                        // if (nav.canPop()) nav.pop();
                         messenger.showSnackBar(
                           SnackBar(
                             content:
@@ -703,12 +892,9 @@ class _BudgetingViewState extends State<BudgetingView> {
                 onPressed: () async {
                   Navigator.of(dialogContext).pop();
 
-                  // Capture references
                   final messenger = ScaffoldMessenger.of(this.context);
                   final successColor = this.context.colors.success;
-                  // final nav = Navigator.of(modalContext);
 
-                  // Get current participant
                   final appContext =
                       Provider.of<AppContext>(this.context, listen: false);
                   final currentParticipant = appContext.currentParticipant;
@@ -717,12 +903,6 @@ class _BudgetingViewState extends State<BudgetingView> {
                     await viewModel.adoptTemplate(
                         template, currentParticipant.participantId);
                     appContext.setCurrentTemplate(template);
-
-                    // if (nav.canPop())
-                    //   nav.pop(); // Pop the "Unsaved Changes" dialog only
-
-                    // Keep modal open as per user request
-                    // if (nav.canPop()) nav.pop();
 
                     messenger.showSnackBar(
                       SnackBar(
@@ -742,7 +922,6 @@ class _BudgetingViewState extends State<BudgetingView> {
         },
       );
     } else {
-      // No unsaved changes, adopt directly
       _adoptTemplateDirectly(modalContext, viewModel, template);
     }
   }
@@ -755,11 +934,9 @@ class _BudgetingViewState extends State<BudgetingView> {
     final appContext = Provider.of<AppContext>(this.context, listen: false);
     final currentParticipant = appContext.currentParticipant;
 
-    // Capture references before async work
     final messenger = ScaffoldMessenger.of(this.context);
     final errorColor = this.context.colors.error;
     final successColor = this.context.colors.success;
-    // final nav = Navigator.of(modalContext);
 
     if (currentParticipant == null) {
       messenger.showSnackBar(
@@ -773,9 +950,6 @@ class _BudgetingViewState extends State<BudgetingView> {
 
     await viewModel.adoptTemplate(template, currentParticipant.participantId);
     appContext.setCurrentTemplate(template);
-
-    // Use captured references
-    // if (nav.canPop()) nav.pop();
 
     messenger.showSnackBar(
       SnackBar(
@@ -793,7 +967,6 @@ class _BudgetingViewState extends State<BudgetingView> {
     showDialog(
       context: modalContext,
       builder: (dialogContext) {
-        // Capture colors
         final colors = dialogContext.colors;
 
         return AlertDialog(
@@ -808,7 +981,6 @@ class _BudgetingViewState extends State<BudgetingView> {
             ),
             TextButton(
               onPressed: () async {
-                // Capture references
                 final messenger = ScaffoldMessenger.of(this.context);
                 final nav = Navigator.of(modalContext);
 
@@ -848,7 +1020,6 @@ class _BudgetingViewState extends State<BudgetingView> {
       return;
     }
 
-    // Show dialog to get template name
     final controller = TextEditingController();
 
     showDialog(
@@ -891,7 +1062,6 @@ class _BudgetingViewState extends State<BudgetingView> {
 
                 Navigator.of(context).pop();
 
-                // Get current participant from context
                 final appContext =
                     Provider.of<AppContext>(context, listen: false);
                 final currentParticipant = appContext.currentParticipant;
@@ -908,7 +1078,6 @@ class _BudgetingViewState extends State<BudgetingView> {
                   return;
                 }
 
-                // Save the template
                 final success = await viewModel.saveTemplate(
                   templateName: controller.text.trim(),
                   creatorParticipantId: currentParticipant.participantId,
@@ -954,7 +1123,6 @@ class _BudgetingViewState extends State<BudgetingView> {
       return;
     }
 
-    // Check if we have a current template to update
     final appContext = Provider.of<AppContext>(context, listen: false);
     final currentTemplate = appContext.currentTemplate;
 
@@ -969,7 +1137,6 @@ class _BudgetingViewState extends State<BudgetingView> {
       return;
     }
 
-    // Show confirmation dialog
     showDialog(
       context: context,
       builder: (context) {
@@ -987,7 +1154,6 @@ class _BudgetingViewState extends State<BudgetingView> {
               onPressed: () async {
                 Navigator.of(context).pop();
 
-                // Update the template
                 final success = await viewModel.updateTemplate(
                   templateId: currentTemplate.templateId,
                   templateName: currentTemplate.templateName,
@@ -1024,7 +1190,6 @@ class _BudgetingViewState extends State<BudgetingView> {
   }
 
   void _launchBudgetingGuide() async {
-    // TODO: Add actual URL
     final uri = Uri.parse('https://example.com/budgeting-guide');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
@@ -1109,7 +1274,6 @@ class _BudgetingViewState extends State<BudgetingView> {
   }
 }
 
-/// Helper class for template data
 class _TemplateData {
   final double totalBudget;
   final List<models.Participant> participants;

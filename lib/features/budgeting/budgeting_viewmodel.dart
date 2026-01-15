@@ -1,6 +1,6 @@
 import 'package:budget_audit/core/services/parser/parser_factory.dart';
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart'; // Import uuid
+import 'package:uuid/uuid.dart';
 import '../../core/context.dart';
 import '../../core/models/models.dart' as models;
 import '../../core/models/client_models.dart' as clientModels;
@@ -8,6 +8,8 @@ import '../../core/services/budget_service.dart';
 import '../../core/services/participant_service.dart';
 import '../../core/utils/hex_to_color.dart';
 import '../../core/utils/color_palette.dart';
+import '../../core/models/preset_models.dart';
+import '../../core/services/preset_service.dart';
 
 enum FilterType { name, totalBudget, participant, color }
 
@@ -17,20 +19,22 @@ class BudgetingViewModel extends ChangeNotifier {
   final BudgetService _budgetService;
   final ParticipantService _participantService;
   final AppContext _appContext;
+  final PresetService _presetService;
 
   BudgetingViewModel(
     this._budgetService,
     this._participantService,
+    this._presetService,
     this._appContext,
   );
 
   List<clientModels.CategoryData> _categories = [];
   List<models.Participant> _allParticipants = [];
   List<models.Template> _templates = [];
+  List<BudgetPreset> _availablePresets = [];
 
   String _searchQuery = '';
-  FilterType?
-      _currentFilter; // Nullable to allow "no filter" (user selected order)
+  FilterType? _currentFilter;
   SortOrder _sortOrder = SortOrder.asc;
   models.Participant? _filterParticipant;
   Color? _filterColor;
@@ -40,28 +44,20 @@ class BudgetingViewModel extends ChangeNotifier {
 
   // Expose services for the view
   AccountService get accountService => _budgetService.accountService;
-
   ParticipantService get participantService => _participantService;
 
   List<clientModels.CategoryData> get categories =>
       _filteredAndSortedCategories();
-
   List<models.Participant> get allParticipants => _allParticipants;
-
   List<models.Template> get templates => _templates;
+  List<BudgetPreset> get availablePresets => _availablePresets;
 
   String get searchQuery => _searchQuery;
-
   FilterType? get currentFilter => _currentFilter;
-
   SortOrder get sortOrder => _sortOrder;
-
   models.Participant? get filterParticipant => _filterParticipant;
-
   Color? get filterColor => _filterColor;
-
   bool get isLoading => _isLoading;
-
   String? get errorMessage => _errorMessage;
 
   String? _newlyAddedCategoryId;
@@ -102,7 +98,6 @@ class BudgetingViewModel extends ChangeNotifier {
   void clearNewlyAddedIds() {
     _newlyAddedCategoryId = null;
     _newlyAddedAccountId = null;
-    // No notifyListeners needed here as this is usually called after build or during focus change
   }
 
   bool get hasUnsavedChanges => _categories.isNotEmpty;
@@ -110,18 +105,15 @@ class BudgetingViewModel extends ChangeNotifier {
   bool get canSave {
     if (_categories.isEmpty) return false;
 
-    // Check for at least one category with at least one account
     bool hasValidCategory = _categories.any((cat) => cat.accounts.isNotEmpty);
     if (!hasValidCategory) return false;
 
-    // Check all categories have unique, non-empty names
     final names = _categories.map((c) => c.name.trim().toUpperCase()).toList();
     if (names.any((name) => name.isEmpty || name == 'CATEGORY NAME')) {
       return false;
     }
     if (names.length != names.toSet().length) return false;
 
-    // Check all accounts have names and positive budgets
     for (var category in _categories) {
       for (var account in category.accounts) {
         if (account.name.trim().isEmpty) return false;
@@ -142,7 +134,6 @@ class BudgetingViewModel extends ChangeNotifier {
       return 'Each category must have at least one account';
     }
 
-    // Check for duplicate or invalid category names
     final names = _categories.map((c) => c.name.trim().toUpperCase()).toList();
     if (names.any((name) => name.isEmpty || name == 'CATEGORY NAME')) {
       return 'All categories must have valid names';
@@ -151,7 +142,6 @@ class BudgetingViewModel extends ChangeNotifier {
       return 'Category names must be unique';
     }
 
-    // Check account validation
     for (var category in _categories) {
       for (var account in category.accounts) {
         if (account.name.trim().isEmpty) {
@@ -174,14 +164,13 @@ class BudgetingViewModel extends ChangeNotifier {
     try {
       _allParticipants = await _participantService.getAllParticipants();
       _templates = await _budgetService.templateService.getAllTemplates();
+      _availablePresets = await _presetService.loadAllPresets();
 
       final activeTemplate = _appContext.currentTemplate;
       if (activeTemplate != null) {
-        // If there's an active template, load its data for editing.
         debugPrint("Active template found: ${activeTemplate.templateName}");
         await _loadTemplateForEditing(activeTemplate);
       } else {
-        // Clear categories if no active template
         _categories = [];
       }
     } catch (e) {
@@ -190,7 +179,6 @@ class BudgetingViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      // Listen for global context changes (e.g. template switching)
       _appContext.addListener(_onAppContextChange);
     }
   }
@@ -204,30 +192,8 @@ class BudgetingViewModel extends ChangeNotifier {
   void _onAppContextChange() {
     final activeTemplate = _appContext.currentTemplate;
 
-    // If we have no categories yet (first load) or if the template ID changed
-    // we should reload. A simple check is if we have an active template but e.g.
-    // our internal state doesn't match, or just purely reload if the template object changed.
-
-    // Simplest approach: compare IDs if possible.
-    // Since _loadTemplateForEditing handles setting internal state, we can just call it
-    // if we detect a switch.
-
-    // However, we want to avoid reloading if we are currently editing the SAME template
-    // and just updated a small property via this view model (which might trigger app context update).
-    // But AppContext is usually updated via adopt or manual switch.
-
     if (activeTemplate != null) {
-      // Check if we are already editing this template
-      // We don't have a simple _currentTemplateId field, but we can verify against known data
-
-      // NOTE: For now, we will reload if the current loaded data seems 'stale'
-      // or simply rely on the user to initiate the switch via the UI which calls initialize.
-      // The user requested: "ensure that if there is an active budget in context, the budget period reflects the budget's period"
-
-      // Let's check specifically for period mismatch or if we should just re-run the parse logic
-
       final periodStr = activeTemplate.period;
-      // Re-parse period logic to ensure UI stays in sync
       if (periodStr.startsWith('Custom:')) {
         final parts = periodStr.split(' ');
         if (parts.length >= 2) {
@@ -249,28 +215,24 @@ class BudgetingViewModel extends ChangeNotifier {
 
   Future<void> _loadTemplateForEditing(models.Template template) async {
     try {
-      // 1. Load all categories for this template
       debugPrint("Loading categories for template: ${template.templateName}");
       final categoriesFromDb = await _budgetService.categoryService
           .getCategoriesForTemplate(template.templateId);
       debugPrint("Categories from db (0th): ${categoriesFromDb[0]}");
 
-      // 2. Load accounts for each category and convert to local CategoryData
       final List<clientModels.CategoryData> loadedCategories = [];
 
       for (var category in categoriesFromDb) {
         final accountsFromDb = await _budgetService.accountService
             .getAccountsForCategory(template.templateId, category.categoryId);
-        // Convert database accounts to local AccountData
         final List<clientModels.AccountData> accountDataList = [];
         for (var account in accountsFromDb) {
           final participant = account.responsibleParticipantId != null
               ? await _participantService
                   .getParticipant(account.responsibleParticipantId!)
-              : null; // Check for null
+              : null;
 
           accountDataList.add(clientModels.AccountData(
-            // Use the real database ID for editing
             id: account.accountId.toString(),
             name: account.accountName,
             budgetAmount: account.budgetAmount,
@@ -280,7 +242,6 @@ class BudgetingViewModel extends ChangeNotifier {
         }
 
         loadedCategories.add(clientModels.CategoryData(
-          // Use the real database ID for editing
           id: category.categoryId.toString(),
           name: category.categoryName,
           color: hexToColor(category.colorHex),
@@ -288,15 +249,13 @@ class BudgetingViewModel extends ChangeNotifier {
         ));
       }
       debugPrint("Loaded categories (1st): ${loadedCategories[0]}");
-      // 3. Set the loaded categories as the current working state
       _categories = loadedCategories;
 
-      // 4. Parse period
-      final periodStr = template.period; // "Monthly" or "Custom: 5 Months"
+      final periodStr = template.period;
       if (periodStr.startsWith('Custom:')) {
         _selectedPeriod = 'Custom';
         try {
-          final parts = periodStr.split(' '); // "Custom:", "5", "Months"
+          final parts = periodStr.split(' ');
           if (parts.length >= 2) {
             _customPeriodMonths = int.tryParse(parts[1]) ?? 1;
           }
@@ -307,18 +266,90 @@ class BudgetingViewModel extends ChangeNotifier {
         if (periodOptions.contains(periodStr)) {
           _selectedPeriod = periodStr;
         } else {
-          _selectedPeriod = 'Monthly'; // Fallback
+          _selectedPeriod = 'Monthly';
         }
       }
-
-      // Note: We don't call notifyListeners() here because the calling method will do it.
     } catch (e) {
       _errorMessage = 'Failed to load template data: $e';
     }
   }
 
+  /// Adopt a preset and convert it to categories
+  void adoptPreset(
+    BudgetPreset preset, {
+    String? period,
+    int? customMonths,
+  }) {
+    clearFilters();
+
+    // If period is provided, update the view model's selected period
+    if (period != null) {
+      if (period == 'Custom' && customMonths != null) {
+        _selectedPeriod = 'Custom';
+        _customPeriodMonths = customMonths;
+      } else if (periodOptions.contains(period)) {
+        _selectedPeriod = period;
+        if (period != 'Custom') {
+          _customPeriodMonths = 1; // Reset custom months if not custom
+        }
+      }
+    } else {
+      // Default to preset's period if not explicitly chosen (though UI should always send it now)
+      // If preset period is weird, default to Monthly
+      if (periodOptions.contains(preset.period)) {
+        _selectedPeriod = preset.period;
+      } else if (preset.period.startsWith('Custom')) {
+        _selectedPeriod = 'Monthly'; // Fallback
+      } else {
+        _selectedPeriod = 'Monthly';
+      }
+    }
+
+    // Calculate the multiplier based on selected period vs preset period
+    // Note: We use the newly set _selectedPeriod and _customPeriodMonths
+    final multiplier = _presetService.calculatePeriodMultiplier(
+      preset.period,
+      _selectedPeriod,
+      _customPeriodMonths,
+    );
+
+    // Scale the preset if needed
+    final scaledPreset =
+        multiplier != 1.0 ? preset.scaleByMultiplier(multiplier) : preset;
+
+    // Convert preset categories to CategoryData
+    final newCategories = <clientModels.CategoryData>[];
+
+    for (var presetCategory in scaledPreset.categories) {
+      final categoryColor =
+          _presetService.getColorFromName(presetCategory.colorName) ??
+              _generateRandomColor();
+
+      final accounts = <clientModels.AccountData>[];
+      for (var presetAccount in presetCategory.accounts) {
+        accounts.add(clientModels.AccountData(
+          id: const Uuid().v4(),
+          name: presetAccount.name,
+          budgetAmount: presetAccount.budget,
+          participants: [],
+          color: _generateLighterShade(categoryColor),
+        ));
+      }
+
+      newCategories.add(clientModels.CategoryData(
+        id: const Uuid().v4(),
+        name: presetCategory.name,
+        color: categoryColor,
+        accounts: accounts,
+      ));
+    }
+
+    _categories = newCategories;
+    notifyListeners();
+  }
+
   void addCategory() {
-    clearFilters(); // Clear filters so user sees the new category
+    clearFilters();
     final newCategory = clientModels.CategoryData(
       id: const Uuid().v4(),
       name: 'CATEGORY NAME',
@@ -345,7 +376,6 @@ class BudgetingViewModel extends ChangeNotifier {
       final category = _categories[index];
       _categories[index] = category.copyWith(color: newColor);
 
-      // Update all account colors to lighter variations
       final updatedAccounts = category.accounts.map((account) {
         return account.copyWith(color: _generateLighterShade(newColor));
       }).toList();
@@ -446,7 +476,6 @@ class BudgetingViewModel extends ChangeNotifier {
   void setSearchQuery(String query) {
     _searchQuery = query;
     if (query.isNotEmpty) {
-      // Reset to name filter when searching
       _currentFilter = FilterType.name;
     }
     notifyListeners();
@@ -454,12 +483,11 @@ class BudgetingViewModel extends ChangeNotifier {
 
   void setFilter(FilterType filter, {SortOrder? order}) {
     if (_currentFilter == filter) {
-      // Tri-state toggle: Asc -> Desc -> Off
       if (_sortOrder == SortOrder.asc) {
         _sortOrder = SortOrder.desc;
       } else {
         _currentFilter = null;
-        _sortOrder = SortOrder.asc; // Reset to default
+        _sortOrder = SortOrder.asc;
       }
     } else {
       _currentFilter = filter;
@@ -502,7 +530,6 @@ class BudgetingViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Create the template
       final periodString = _selectedPeriod == 'Custom'
           ? 'Custom: $_customPeriodMonths Months'
           : _selectedPeriod;
@@ -520,9 +547,7 @@ class BudgetingViewModel extends ChangeNotifier {
         throw Exception('Failed to create template');
       }
 
-      // 2. Create categories and accounts
       for (var category in _categories) {
-        // Create category with templateId
         final newCategory = clientModels.Category(
           categoryName: category.name,
           colorHex: _colorToHex(category.color),
@@ -535,7 +560,6 @@ class BudgetingViewModel extends ChangeNotifier {
           throw Exception('Failed to create category: ${category.name}');
         }
 
-        // Create accounts for this category
         for (var account in category.accounts) {
           final newAccount = clientModels.Account(
             categoryId: categoryId,
@@ -546,7 +570,7 @@ class BudgetingViewModel extends ChangeNotifier {
             expenditureTotal: 0.0,
             responsibleParticipantId: account.participants.isNotEmpty
                 ? account.participants.first.participantId
-                : null, // Don't default to creator
+                : null,
             dateCreated: DateTime.now(),
           );
 
@@ -554,13 +578,11 @@ class BudgetingViewModel extends ChangeNotifier {
         }
       }
 
-      // 3. Load the created template and set as current
       final createdTemplate =
           await _budgetService.templateService.getTemplate(templateId);
       if (createdTemplate != null) {
         await setNewTemplateAsCurrent(createdTemplate);
       } else {
-        // If for some reason it fails to fetch, clear the state
         _categories.clear();
       }
 
@@ -582,10 +604,8 @@ class BudgetingViewModel extends ChangeNotifier {
     _templates.removeWhere((t) => t.templateId == template.templateId);
     _templates.add(template);
 
-    //_categories.clear();
     await _loadTemplateForEditing(template);
 
-    // Notify listeners to rebuild the UI with the cleared state
     notifyListeners();
   }
 
@@ -612,19 +632,16 @@ class BudgetingViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 0. Update the template record (name and period)
-      // Construct period string
       final periodString = _selectedPeriod == 'Custom'
           ? 'Custom: $_customPeriodMonths Months'
           : _selectedPeriod;
 
-      // We create a temporary object to pass data. ensure required fields are present even if unused by the specific update query.
       final templateUpdateData = models.Template(
         templateId: templateId,
         templateName: templateName,
         period: periodString,
-        creatorParticipantId: 0, // Unused by updateTemplate
-        dateCreated: DateTime.now(), // Unused by updateTemplate
+        creatorParticipantId: 0,
+        dateCreated: DateTime.now(),
       );
 
       final success = await _budgetService.templateService
@@ -634,7 +651,6 @@ class BudgetingViewModel extends ChangeNotifier {
         throw Exception('Failed to update template details');
       }
 
-      // 1. Identify categories to delete
       final existingCategories = await _budgetService.categoryService
           .getCategoriesForTemplate(templateId);
       final currentCategoryIds = _categories
@@ -651,14 +667,11 @@ class BudgetingViewModel extends ChangeNotifier {
             .deleteCategory(category.categoryId);
       }
 
-      // 2. Update or Create categories
       for (var categoryData in _categories) {
         final categoryIdInt = int.tryParse(categoryData.id);
 
-        // Determine if we are updating an existing category or creating a new one
         if (categoryIdInt != null &&
             existingCategories.any((c) => c.categoryId == categoryIdInt)) {
-          // --- UPDATE Existing Category ---
           final updatedCategory = models.Category(
             categoryId: categoryIdInt,
             templateId: templateId,
@@ -668,7 +681,6 @@ class BudgetingViewModel extends ChangeNotifier {
 
           await _budgetService.categoryService.updateCategory(updatedCategory);
 
-          // Handle Accounts for this Category
           final existingAccounts = await _budgetService.accountService
               .getAccountsForCategory(templateId, categoryIdInt);
 
@@ -677,7 +689,6 @@ class BudgetingViewModel extends ChangeNotifier {
               .where((id) => id != null)
               .toSet();
 
-          // Delete removed accounts
           final accountsToDelete = existingAccounts
               .where((a) => !currentAccountIds.contains(a.accountId))
               .toList();
@@ -687,12 +698,10 @@ class BudgetingViewModel extends ChangeNotifier {
                 .deleteAccount(account.accountId);
           }
 
-          // Update or Create accounts
           for (var accountData in categoryData.accounts) {
             final accountIdInt = int.tryParse(accountData.id);
             if (accountIdInt != null &&
                 existingAccounts.any((a) => a.accountId == accountIdInt)) {
-              // Update existing account
               final existingAccount = existingAccounts
                   .firstWhere((a) => a.accountId == accountIdInt);
 
@@ -703,16 +712,15 @@ class BudgetingViewModel extends ChangeNotifier {
                 accountName: accountData.name,
                 colorHex: _colorToHex(accountData.color),
                 budgetAmount: accountData.budgetAmount,
-                expenditureTotal: existingAccount.expenditureTotal, // Preserve
+                expenditureTotal: existingAccount.expenditureTotal,
                 responsibleParticipantId: accountData.participants.isNotEmpty
                     ? accountData.participants.first.participantId
                     : null,
-                dateCreated: existingAccount.dateCreated, // Preserve
+                dateCreated: existingAccount.dateCreated,
               );
               await _budgetService.accountService
                   .modifyAccount(modifiedAccount);
             } else {
-              // Create new account in existing category
               final newAccount = clientModels.Account(
                 categoryId: categoryIdInt,
                 templateId: templateId,
@@ -729,7 +737,6 @@ class BudgetingViewModel extends ChangeNotifier {
             }
           }
         } else {
-          // --- CREATE New Category ---
           final newCategory = clientModels.Category(
             categoryName: categoryData.name,
             colorHex: _colorToHex(categoryData.color),
@@ -743,7 +750,6 @@ class BudgetingViewModel extends ChangeNotifier {
             throw Exception('Failed to create category: ${categoryData.name}');
           }
 
-          // Create accounts for new category
           for (var accountData in categoryData.accounts) {
             final newAccount = clientModels.Account(
               categoryId: newCategoryId,
@@ -770,7 +776,6 @@ class BudgetingViewModel extends ChangeNotifier {
       if (updatedTemplate != null) {
         await _loadTemplateForEditing(updatedTemplate);
 
-        // Update global context if this is the active template
         if (_appContext.currentTemplate?.templateId == templateId) {
           await _appContext.setCurrentTemplate(updatedTemplate);
         }
@@ -794,7 +799,6 @@ class BudgetingViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      //_categories.clear();
       await _loadTemplateForEditing(template);
       await _appContext.setCurrentTemplate(template);
 
@@ -821,11 +825,8 @@ class BudgetingViewModel extends ChangeNotifier {
     }
   }
 
-  // Private helper methods
-
   List<clientModels.CategoryData> _filteredAndSortedCategories() {
     var filtered = _categories.where((category) {
-      // Search filter
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final nameMatch = category.name.toLowerCase().contains(query);
@@ -835,7 +836,6 @@ class BudgetingViewModel extends ChangeNotifier {
         if (!nameMatch && !accountMatch) return false;
       }
 
-      // Participant filter
       if (_filterParticipant != null) {
         final hasParticipant = category.accounts.any(
           (a) => a.participants
@@ -844,7 +844,6 @@ class BudgetingViewModel extends ChangeNotifier {
         if (!hasParticipant) return false;
       }
 
-      // Color filter
       if (_filterColor != null) {
         if (category.color.value != _filterColor!.value) return false;
       }
@@ -852,10 +851,7 @@ class BudgetingViewModel extends ChangeNotifier {
       return true;
     }).toList();
 
-    // Sort
     filtered.sort((a, b) {
-      // Always put the newly added category at the end if we are sorting by name
-      // and the name is still the default "CATEGORY NAME"
       if (_currentFilter == FilterType.name) {
         final isANew = a.id == _newlyAddedCategoryId;
         final isBNew = b.id == _newlyAddedCategoryId;
@@ -863,13 +859,6 @@ class BudgetingViewModel extends ChangeNotifier {
         if (isANew && !isBNew) return 1;
         if (!isANew && isBNew) return -1;
       } else if (_currentFilter == null) {
-        // No sort: preserve order (or explicit order if implemented)
-        // Since _categories is the source list and we return a new list,
-        // using 0 here effectively implies "original list order" if sort is stable.
-        // But Dart's sort is stable, so 0 works to keep relative order if used carefully.
-        // Actually, if filter is null, we can return the list directly, but we might have filtered items.
-        // Since we did `where` query, we have a new list.
-        // Returning 0 keeps them in relative order.
         return 0;
       }
 
@@ -902,8 +891,6 @@ class BudgetingViewModel extends ChangeNotifier {
   String? get expandedCategoryId => _expandedCategoryId;
 
   void setExpandedCategory(String? categoryId) {
-    // If clicking the already expanded one, collapse it (pass null or handle in UI)
-    // But usually we want to toggle. Here we just set it.
     if (_expandedCategoryId == categoryId) {
       _expandedCategoryId = null;
     } else {

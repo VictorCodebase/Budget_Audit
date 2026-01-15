@@ -1,0 +1,57 @@
+# Student Budget Preset (Kenya – Hustler Mode)
+# Monthly budget ~18,000 KES
+
+name: "Student Budget"
+description: "Budget for Kenyan college students"
+targetAudience: "Kenyan college students"
+period: "Monthly"
+totalBudget: 18000
+
+categories:
+  - name: "Accommodation & Utilities"
+    color: "Coral Red"
+    accounts:
+      - name: "Rent"
+        budget: 10000
+      - name: "Water"
+        budget: 1000
+      - name: "Wi-Fi"
+        budget: 1000
+
+  - name: "Food"
+    color: "Orange"
+    accounts:
+      - name: "Groceries"
+        budget: 3000
+      - name: "Kwa Mathe"
+        budget: 1500
+
+  - name: "Transport"
+    color: "Sky Blue"
+    accounts:
+      - name: "Daily Commute"
+        budget: 800
+
+  - name: "Communication"
+    color: "Cyan"
+    accounts:
+      - name: "Airtime & Mobile Data"
+        budget: 500
+
+  - name: "Education"
+    color: "Purple"
+    accounts:
+      - name: "Printing & Stationery"
+        budget: 400
+
+  - name: "Personal Care"
+    color: "Pink"
+    accounts:
+      - name: "Grooming & Essentials"
+        budget: 300
+
+  - name: "Emergency"
+    color: "Mint Green"
+    accounts:
+      - name: "Emergency Buffer"
+        budget: 500

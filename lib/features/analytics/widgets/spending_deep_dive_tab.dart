@@ -7,6 +7,18 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../analytics_viewmodel.dart';
 
+class _ChartDisplayData {
+  final String label;
+  final double value;
+  final bool isOther;
+
+  _ChartDisplayData({
+    required this.label,
+    required this.value,
+    this.isOther = false,
+  });
+}
+
 class SpendingDeepDiveTab extends StatelessWidget {
   const SpendingDeepDiveTab({Key? key}) : super(key: key);
 
@@ -17,23 +29,25 @@ class SpendingDeepDiveTab extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Resource Allocation by Category',
-            style: AppTheme.h3.copyWith(
-              color: context.colors.textPrimary,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Resource Allocation by Category',
+              style: AppTheme.h3.copyWith(
+                color: context.colors.textPrimary,
+              ),
             ),
-          ),
-          const SizedBox(height: AppTheme.spacingMd),
-          if (isWideScreen)
-            _buildWideScreenLayout(context)
-          else
-            _buildNarrowScreenLayout(context),
-          const SizedBox(height: AppTheme.spacingXl),
-          _buildExpenditureRelativeToBudgetChart(context),
-        ],
+            const SizedBox(height: AppTheme.spacingMd),
+            if (isWideScreen)
+              _buildWideScreenLayout(context)
+            else
+              _buildNarrowScreenLayout(context),
+            const SizedBox(height: AppTheme.spacingXl),
+            _buildExpenditureRelativeToBudgetChart(context),
+          ],
+        ),
       ),
     );
   }
@@ -64,6 +78,8 @@ class SpendingDeepDiveTab extends StatelessWidget {
       ],
     );
   }
+
+  // --- PIE CHART SECTION ---
 
   Widget _buildCategorySpendingPieChart(BuildContext context) {
     final viewModel = context.watch<AnalyticsViewModel>();
@@ -158,7 +174,7 @@ class SpendingDeepDiveTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                     ),
                   ],
@@ -194,7 +210,7 @@ class SpendingDeepDiveTab extends StatelessWidget {
               vertical: AppTheme.spacing2xs,
             ),
             decoration: BoxDecoration(
-              color: data.category.color.withOpacity(0.1),
+              color: data.category.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               border: Border.all(
                 color: viewModel
@@ -231,6 +247,8 @@ class SpendingDeepDiveTab extends StatelessWidget {
     );
   }
 
+  // --- ACCOUNT SPENDING BAR CHART ---
+
   Widget _buildCategorySpendingBarChart(BuildContext context) {
     final viewModel = context.watch<AnalyticsViewModel>();
     final selectedCategory = viewModel.selectedCategoryForBarChart;
@@ -243,15 +261,12 @@ class SpendingDeepDiveTab extends StatelessWidget {
       );
     }
 
-    // Calculate max percentage to set maxY dynamically
     double maxPercentage = 100;
     if (selectedCategory.accounts.isNotEmpty) {
       final maxVal = selectedCategory.accounts
           .map((a) => a.budgeted > 0 ? (a.spent / a.budgeted) * 100 : 0.0)
           .reduce((a, b) => a > b ? a : b);
-      if (maxVal > 100) {
-        maxPercentage = maxVal;
-      }
+      if (maxVal > 100) maxPercentage = maxVal;
     }
 
     return Container(
@@ -266,29 +281,23 @@ class SpendingDeepDiveTab extends StatelessWidget {
         children: [
           Text(
             '${selectedCategory.category.categoryName} - Account Spending',
-            style: AppTheme.h4.copyWith(
-              color: context.colors.textPrimary,
-            ),
+            style: AppTheme.h4.copyWith(color: context.colors.textPrimary),
+          ),
+          const SizedBox(height: AppTheme.spacing2xs),
+          Text(
+            'Percentage of each account\'s budget spent.',
+            style: AppTheme.bodySmall
+                .copyWith(color: context.colors.textSecondary),
           ),
           const SizedBox(height: AppTheme.spacingLg),
           SizedBox(
             height: 300,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Calculate dynamic width
-                final totalAvailableWidth = constraints.maxWidth;
                 final count = selectedCategory.accounts.length;
-
-                // If we have accounts, calculate width, otherwise default
-                double barWidth = 20;
-                if (count > 0) {
-                  // Calculate width per slot (roughly)
-                  final widthPerSlot = totalAvailableWidth / count;
-                  // Take 80% of that slot
-                  barWidth = widthPerSlot * 0.8;
-                  // Clamp to reasonable min/max
-                  barWidth = barWidth.clamp(16.0, 80.0);
-                }
+                // Dynamically calculate bar width
+                double barWidth =
+                    (constraints.maxWidth / (count * 1.5)).clamp(12.0, 60.0);
 
                 return BarChart(
                   BarChartData(
@@ -300,9 +309,7 @@ class SpendingDeepDiveTab extends StatelessWidget {
                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
                           final account = selectedCategory.accounts[group.x];
                           final formatter = NumberFormat.currency(
-                            symbol: '\$',
-                            decimalDigits: 2,
-                          );
+                              symbol: '\$', decimalDigits: 2);
                           return BarTooltipItem(
                             '${account.account.accountName}\n',
                             AppTheme.bodySmall.copyWith(
@@ -314,15 +321,13 @@ class SpendingDeepDiveTab extends StatelessWidget {
                                 text:
                                     'Spent: ${formatter.format(account.spent)}\n',
                                 style: AppTheme.bodySmall.copyWith(
-                                  color: context.colors.textSecondary,
-                                ),
+                                    color: context.colors.textSecondary),
                               ),
                               TextSpan(
                                 text:
                                     'Budget: ${formatter.format(account.budgeted)}',
                                 style: AppTheme.bodySmall.copyWith(
-                                  color: context.colors.textTertiary,
-                                ),
+                                    color: context.colors.textTertiary),
                               ),
                             ],
                           );
@@ -334,22 +339,20 @@ class SpendingDeepDiveTab extends StatelessWidget {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
+                          reservedSize: 50,
                           getTitlesWidget: (value, meta) {
                             if (value.toInt() >=
                                 selectedCategory.accounts.length) {
                               return const SizedBox.shrink();
                             }
-                            final account =
-                                selectedCategory.accounts[value.toInt()];
                             return Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
+                              padding: const EdgeInsets.only(top: 8),
                               child: SizedBox(
-                                width: barWidth * 1.5,
+                                width: barWidth * 2,
                                 child: Text(
-                                  account.account.accountName,
-                                  style: AppTheme.caption.copyWith(
-                                    color: context.colors.textSecondary,
-                                  ),
+                                  selectedCategory.accounts[value.toInt()]
+                                      .account.accountName,
+                                  style: AppTheme.caption.copyWith(fontSize: 9),
                                   textAlign: TextAlign.center,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
@@ -357,40 +360,31 @@ class SpendingDeepDiveTab extends StatelessWidget {
                               ),
                             );
                           },
-                          reservedSize: 50,
                         ),
                       ),
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 50,
-                          getTitlesWidget: (value, meta) {
-                            return Text(
-                              value.toInt().toString(),
-                              style: AppTheme.caption.copyWith(
-                                color: context.colors.textSecondary,
-                              ),
-                            );
-                          },
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) => Text(
+                            '${value.toInt()}%',
+                            style: AppTheme.caption,
+                          ),
                         ),
                       ),
                       topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
+                          sideTitles: SideTitles(showTitles: false)),
                       rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
+                          sideTitles: SideTitles(showTitles: false)),
                     ),
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
                       horizontalInterval: 20,
-                      getDrawingHorizontalLine: (value) {
-                        return FlLine(
-                          color: context.colors.border,
-                          strokeWidth: 1,
-                        );
-                      },
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: context.colors.border,
+                        strokeWidth: 1,
+                      ),
                     ),
                     borderData: FlBorderData(show: false),
                     barGroups:
@@ -407,52 +401,34 @@ class SpendingDeepDiveTab extends StatelessWidget {
 
   List<BarChartGroupData> _buildSpendingBarGroups(
       CategorySpendingData category, double barWidth) {
-    return List.generate(
-      category.accounts.length,
-      (index) {
-        final account = category.accounts[index];
-        final percentage = account.budgeted > 0
-            ? (account.spent / account.budgeted) * 100
-            : 0.0;
+    return List.generate(category.accounts.length, (index) {
+      final account = category.accounts[index];
+      final percentage =
+          account.budgeted > 0 ? (account.spent / account.budgeted) * 100 : 0.0;
 
-        // Color based on budget adherence
-        Color barColor = account.account.color;
-        if (percentage > 100) {
-          // Optional: Indicate overspending, though user didn't explicitly ask for color change,
-          // but implied "percentage changes" from previous. Previous didn't change color.
-          // I will stick to account color as per previous implementation unless specifically asked.
-        }
-
-        return BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(
-              toY: percentage,
-              color: barColor,
-              width: barWidth,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(6),
-                topRight: Radius.circular(6),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+      return BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            toY: percentage,
+            color: account.account.color,
+            width: barWidth,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+          ),
+        ],
+      );
+    });
   }
+
+  // --- EXPENDITURE VS BUDGET CHART (WITH DATA COLLAPSING) ---
 
   Widget _buildExpenditureRelativeToBudgetChart(BuildContext context) {
     final viewModel = context.watch<AnalyticsViewModel>();
 
     if (viewModel.expenditureRelativeToBudgetData.isEmpty) {
-      return _buildEmptyState(
-        context,
-        'No Expenditure Data',
-        'Enter financial documents for analysis or',
-      );
+      return _buildEmptyState(context, 'No Expenditure Data',
+          'Enter financial documents for analysis or');
     }
-
-    final isStacked = viewModel.participantFilter == ParticipantFilter.all;
 
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingLg),
@@ -466,116 +442,145 @@ class SpendingDeepDiveTab extends StatelessWidget {
         children: [
           Text(
             'Expenditure Relative to Budget',
-            style: AppTheme.h3.copyWith(
-              color: context.colors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacing2xs),
-          Text(
-            isStacked
-                ? 'Stacked view showing all participants'
-                : 'Individual participant view',
-            style: AppTheme.bodySmall.copyWith(
-              color: context.colors.textSecondary,
-            ),
+            style: AppTheme.h3.copyWith(color: context.colors.textPrimary),
           ),
           const SizedBox(height: AppTheme.spacingLg),
           SizedBox(
             height: 300,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: _calculateMaxYForRelativeBudget(viewModel),
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipColor: (_) => context.colors.surfaceVariant,
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final dataPoint =
-                          viewModel.expenditureRelativeToBudgetData[group.x];
-                      return BarTooltipItem(
-                        '${dataPoint.label}\n',
-                        AppTheme.bodySmall.copyWith(
-                          color: context.colors.textPrimary,
-                          fontWeight: FontWeight.bold,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // COLLAPSING LOGIC:
+                // We want each bar to have at least 50px of space for the bar + label.
+                const double minBarSpace = 55.0;
+                final int maxBarsPossible =
+                    (constraints.maxWidth / minBarSpace).floor();
+
+                List<_ChartDisplayData> displayData = viewModel
+                    .expenditureRelativeToBudgetData
+                    .map((e) =>
+                        _ChartDisplayData(label: e.label, value: e.value))
+                    .toList();
+
+                if (displayData.length > maxBarsPossible &&
+                    maxBarsPossible > 2) {
+                  final visibleCount = maxBarsPossible - 1;
+                  final mainItems = displayData.take(visibleCount).toList();
+                  final otherItems = displayData.skip(visibleCount).toList();
+
+                  // Create a dummy "Others" data point
+                  final avgValue =
+                      otherItems.map((e) => e.value).reduce((a, b) => a + b) /
+                          otherItems.length;
+
+                  final othersEntry = _ChartDisplayData(
+                    label: 'Others (${otherItems.length})',
+                    value: avgValue,
+                    isOther: true,
+                  );
+
+                  displayData = [...mainItems, othersEntry];
+                }
+
+                double barWidth =
+                    (constraints.maxWidth / (displayData.length * 2))
+                        .clamp(16.0, 40.0);
+
+                return BarChart(
+                  BarChartData(
+                    alignment: BarChartAlignment.spaceAround,
+                    maxY: _calculateMaxYForRelativeBudget(viewModel),
+                    barTouchData: BarTouchData(
+                      touchTooltipData: BarTouchTooltipData(
+                        getTooltipColor: (_) => context.colors.surfaceVariant,
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          final item = displayData[group.x];
+                          return BarTooltipItem(
+                            '${item.label}\n',
+                            AppTheme.bodySmall
+                                .copyWith(fontWeight: FontWeight.bold),
+                            children: [
+                              TextSpan(text: '${rod.toY.toStringAsFixed(1)}%'),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval:
+                              1, // Always 1 because we manually collapsed the data
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index < 0 || index >= displayData.length) {
+                              return const SizedBox.shrink();
+                            }
+                            final label = displayData[index].label;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                label,
+                                style: AppTheme.caption.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: label.startsWith('Others')
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                        children: [
-                          TextSpan(
-                            text: '${rod.toY.toStringAsFixed(1)}%',
-                            style: AppTheme.bodySmall.copyWith(
-                              color: context.colors.textSecondary,
-                            ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 45,
+                          getTitlesWidget: (value, meta) => Text(
+                              '${value.toInt()}%',
+                              style: AppTheme.caption),
+                        ),
+                      ),
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: 20,
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: value == 100
+                            ? context.colors.warning
+                            : context.colors.border,
+                        strokeWidth: value == 100 ? 2 : 1,
+                        dashArray: value == 100 ? [5, 5] : null,
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    barGroups: displayData.asMap().entries.map((entry) {
+                      return BarChartGroupData(
+                        x: entry.key,
+                        barRods: [
+                          BarChartRodData(
+                            toY: entry.value.value,
+                            color: entry.value.isOther
+                                ? context.colors.textTertiary
+                                : context.colors.secondary,
+                            width: barWidth,
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(6)),
                           ),
                         ],
                       );
-                    },
+                    }).toList(),
                   ),
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 ||
-                            index >=
-                                viewModel
-                                    .expenditureRelativeToBudgetData.length) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            viewModel
-                                .expenditureRelativeToBudgetData[index].label,
-                            style: AppTheme.caption.copyWith(
-                              color: context.colors.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        );
-                      },
-                      reservedSize: 40,
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 50,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}%',
-                          style: AppTheme.caption.copyWith(
-                            color: context.colors.textSecondary,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 20,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: value == 100
-                          ? context.colors.warning
-                          : context.colors.border,
-                      strokeWidth: value == 100 ? 2 : 1,
-                      dashArray: value == 100 ? [5, 5] : null,
-                    );
-                  },
-                ),
-                borderData: FlBorderData(show: false),
-                barGroups: _buildRelativeBudgetBarGroups(context, viewModel),
-              ),
+                );
+              },
             ),
           ),
         ],
@@ -583,82 +588,15 @@ class SpendingDeepDiveTab extends StatelessWidget {
     );
   }
 
-  List<BarChartGroupData> _buildRelativeBudgetBarGroups(
-    BuildContext context,
-    AnalyticsViewModel viewModel,
-  ) {
-    return viewModel.expenditureRelativeToBudgetData
-        .asMap()
-        .entries
-        .map((entry) {
-      final index = entry.key;
-      final dataPoint = entry.value;
-
-      if (viewModel.participantFilter == ParticipantFilter.all &&
-          dataPoint.participantValues != null) {
-        // Stacked bars
-        final rodStackItems = <BarChartRodStackItem>[];
-        double fromY = 0;
-
-        dataPoint.participantValues!.forEach((participantId, value) {
-          final toY = fromY + value;
-          rodStackItems.add(
-            BarChartRodStackItem(
-              fromY,
-              toY,
-              context.colors.primary,
-            ),
-          );
-          fromY = toY;
-        });
-
-        return BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(
-              toY: dataPoint.value,
-              color: context.colors.primary,
-              width: 20,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(6),
-                topRight: Radius.circular(6),
-              ),
-              rodStackItems: rodStackItems,
-            ),
-          ],
-        );
-      } else {
-        // Single bar
-        return BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(
-              toY: dataPoint.value,
-              color: context.colors.secondary,
-              width: 20,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(6),
-                topRight: Radius.circular(6),
-              ),
-            ),
-          ],
-        );
-      }
-    }).toList();
-  }
-
   double _calculateMaxYForRelativeBudget(AnalyticsViewModel viewModel) {
     if (viewModel.expenditureRelativeToBudgetData.isEmpty) return 120;
-
     final maxValue = viewModel.expenditureRelativeToBudgetData
         .map((d) => d.value)
         .reduce((a, b) => a > b ? a : b);
-
     return maxValue > 100 ? maxValue * 1.2 : 120;
   }
 
-  Widget _buildEmptyState(BuildContext context, String title, String message,
-      {bool showLearnMore = true}) {
+  Widget _buildEmptyState(BuildContext context, String title, String message) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingXl),
       decoration: BoxDecoration(
@@ -668,52 +606,18 @@ class SpendingDeepDiveTab extends StatelessWidget {
       ),
       child: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 64,
-              color: context.colors.textTertiary,
-            ),
+            Icon(Icons.receipt_long_outlined,
+                size: 64, color: context.colors.textTertiary),
             const SizedBox(height: AppTheme.spacingMd),
-            Text(
-              title,
-              style: AppTheme.h3.copyWith(
-                color: context.colors.textSecondary,
-              ),
-            ),
+            Text(title,
+                style:
+                    AppTheme.h3.copyWith(color: context.colors.textSecondary)),
             const SizedBox(height: AppTheme.spacingSm),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: AppTheme.bodyMedium.copyWith(
-                  color: context.colors.textSecondary,
-                ),
-                children: [
-                  TextSpan(text: '$message '),
-                  if (showLearnMore)
-                    WidgetSpan(
-                      child: InkWell(
-                        onTap: () {
-                          // Placeholder for navigation or help dialog
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('Navigate to Expenditure Help...')),
-                          );
-                        },
-                        child: Text(
-                          'learn more',
-                          style: AppTheme.bodyMedium.copyWith(
-                            color: context.colors.primary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: AppTheme.bodyMedium
+                    .copyWith(color: context.colors.textSecondary)),
           ],
         ),
       ),

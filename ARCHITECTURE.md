@@ -165,7 +165,6 @@ flutter pub run build_runner build --delete-conflicting-outputs
 2. Add to `ParserFactory.getParser()`
 3. Implement bank-specific parsing logic
 
-
 ## Platform Support
 
 Primary: **Windows** (Desktop-first design)  

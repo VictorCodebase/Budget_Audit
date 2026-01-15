@@ -191,10 +191,15 @@ class ExpenditureVsBudgetChart extends StatelessWidget {
   }
 
   LineChartBarData _buildBudgetLine(BuildContext context) {
+    final viewModel = context.watch<AnalyticsViewModel>();
+    final maxX = viewModel.expenditureVsBudgetData.isEmpty
+        ? 0.0
+        : (viewModel.expenditureVsBudgetData.length - 1).toDouble();
+
     return LineChartBarData(
       spots: [
         const FlSpot(0, 100),
-        const FlSpot(1000, 100),
+        FlSpot(maxX, 100),
       ],
       isCurved: false,
       color: context.colors.warning,

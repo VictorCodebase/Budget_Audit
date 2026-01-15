@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'onboarding_viewmodel.dart';
 import '../../core/widgets/app_header.dart';
-import 'widgets/participant_form.dart';
-
-import 'widgets/participant_grid.dart';
-import 'widgets/sign_in_form.dart';
 import '../../core/theme/app_theme.dart';
 
 class OnboardingView extends StatefulWidget {
@@ -27,217 +23,486 @@ class _OnboardingViewState extends State<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colors.background,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Consumer<OnboardingViewModel>(
-                  builder: (context, viewModel, _) {
-                    return AppHeader(
-                      subtitle: viewModel.isFirstParticipant
-                          ? 'Welcome! Let\'s set up your account'
-                          : 'Manage participants or sign in',
-                    );
-                  },
-                ),
-                Expanded(
-                  child: _buildContent(),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    return Consumer<OnboardingViewModel>(
-      builder: (context, viewModel, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            // Use column layout for screens smaller than 900px width
-            final useColumnLayout = constraints.maxWidth < 900;
-
-            if (useColumnLayout) {
-              return SingleChildScrollView(
-                child: Center(
-                  child: Container(
-                    constraints: BoxConstraints(maxWidth: 600),
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        _buildModeTabs(viewModel),
-                        const SizedBox(height: 24),
-                        // Participants Grid first
-                        if (viewModel.participants.isNotEmpty ||
-                            viewModel.mode == OnboardingMode.addParticipants)
-                          ParticipantGrid(viewModel: viewModel),
-                        const SizedBox(height: 24),
-                        // Form below
-                        viewModel.mode == OnboardingMode.addParticipants
-                            ? ParticipantForm(viewModel: viewModel)
-                            : SignInForm(viewModel: viewModel),
-                        const SizedBox(height: 24),
-                        // Continue Button
-                        if (viewModel.canProceedDev())
-                          _buildContinueButton(viewModel),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            } else {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Consumer<OnboardingViewModel>(
+          builder: (context, viewModel, _) {
+            return SingleChildScrollView(
+              child: Column(
                 children: [
-                  // Left side - Form
-                  Expanded(
-                    flex: 3,
-                    child: _buildLeftPanel(viewModel),
+                  AppHeader(
+                    subtitle: viewModel.isFirstParticipant
+                        ? 'Welcome! Let\'s create your admin account'
+                        : 'Sign in to continue',
                   ),
-                  // Right side - Participants Grid
-                  Expanded(
-                    flex: 2,
+                  Center(
                     child: Container(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: ParticipantGrid(viewModel: viewModel),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          if (viewModel.canProceedDev())
-                            _buildContinueButton(viewModel),
-                        ],
-                      ),
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      padding: const EdgeInsets.all(AppTheme.spacingLg),
+                      child: viewModel.isFirstParticipant
+                          ? _buildFirstUserSetup(context, viewModel)
+                          : _buildSignInForm(context, viewModel),
                     ),
                   ),
                 ],
-              );
-            }
+              ),
+            );
           },
-        );
-      },
-    );
-  }
-
-  Widget _buildLeftPanel(OnboardingViewModel viewModel) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          _buildModeTabs(viewModel),
-          const SizedBox(height: 32),
-          Expanded(
-            child: viewModel.mode == OnboardingMode.addParticipants
-                ? ParticipantForm(viewModel: viewModel)
-                : SignInForm(viewModel: viewModel),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildModeTabs(OnboardingViewModel viewModel) {
+  Widget _buildFirstUserSetup(
+    BuildContext context,
+    OnboardingViewModel viewModel,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Welcome Card
+        Container(
+          padding: const EdgeInsets.all(AppTheme.spacingLg),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                context.colors.primary.withOpacity(0.1),
+                context.colors.secondary.withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: context.colors.border),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.admin_panel_settings_rounded,
+                size: 64,
+                color: context.colors.primary,
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              Text(
+                'Create Admin Account',
+                style: AppTheme.h3.copyWith(
+                  color: context.colors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingXs),
+              Text(
+                'As the first user, you\'ll be the system administrator with full access to manage budgets and participants.',
+                style: AppTheme.bodySmall.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppTheme.spacingXl),
+
+        // Setup Form
+        Container(
+          padding: const EdgeInsets.all(AppTheme.spacingLg),
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: context.colors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Account Details',
+                style: AppTheme.h4.copyWith(
+                  color: context.colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingLg),
+
+              // First Name
+              _buildTextField(
+                context: context,
+                label: 'First Name',
+                hint: 'John',
+                icon: Icons.person_outline,
+                value: viewModel.getFormValue('firstName'),
+                onChanged: (value) =>
+                    viewModel.updateFormField('firstName', value),
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+
+              // Last Name
+              _buildTextField(
+                context: context,
+                label: 'Last Name (Optional)',
+                hint: 'Doe',
+                icon: Icons.person_outline,
+                value: viewModel.getFormValue('lastName'),
+                onChanged: (value) =>
+                    viewModel.updateFormField('lastName', value),
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+
+              // Nickname
+              _buildTextField(
+                context: context,
+                label: 'Nickname (Optional)',
+                hint: 'How you\'d like to be called',
+                icon: Icons.badge_outlined,
+                value: viewModel.getFormValue('nickname'),
+                onChanged: (value) =>
+                    viewModel.updateFormField('nickname', value),
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+
+              // Email
+              _buildTextField(
+                context: context,
+                label: 'Email',
+                hint: 'admin@example.com',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                value: viewModel.getFormValue('email'),
+                onChanged: (value) => viewModel.updateFormField('email', value),
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+
+              // Password
+              _buildTextField(
+                context: context,
+                label: 'Password',
+                hint: 'At least 6 characters',
+                icon: Icons.lock_outline,
+                obscureText: viewModel.passwordObscured,
+                value: viewModel.getFormValue('password'),
+                onChanged: (value) =>
+                    viewModel.updateFormField('password', value),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    viewModel.passwordObscured
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: context.colors.textSecondary,
+                  ),
+                  onPressed: viewModel.onToggleObscure,
+                ),
+              ),
+
+              if (viewModel.error != null) ...[
+                const SizedBox(height: AppTheme.spacingMd),
+                _buildErrorBox(context, viewModel.error!),
+              ],
+
+              const SizedBox(height: AppTheme.spacingXl),
+
+              // Create Account Button
+              ElevatedButton(
+                onPressed: viewModel.isLoading
+                    ? null
+                    : () async {
+                        final success = await viewModel.createNewParticipant();
+                        if (success && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Admin account created successfully!',
+                              ),
+                              backgroundColor: context.colors.success,
+                            ),
+                          );
+                          // Auto sign-in and navigate
+                          final signInSuccess =
+                              await viewModel.signInAsParticipant(
+                            viewModel.getFormValue('email'),
+                            viewModel.getFormValue('password'),
+                          );
+                          if (signInSuccess && mounted) {
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/budgeting',
+                            );
+                          }
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppTheme.spacingMd,
+                  ),
+                ),
+                child: viewModel.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text('Create Admin Account'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignInForm(
+    BuildContext context,
+    OnboardingViewModel viewModel,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Welcome Back Card
+        Container(
+          padding: const EdgeInsets.all(AppTheme.spacingLg),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                context.colors.primary.withOpacity(0.05),
+                context.colors.secondary.withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: context.colors.border),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.login_rounded,
+                size: 64,
+                color: context.colors.primary,
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+              Text(
+                'Welcome Back',
+                style: AppTheme.h3.copyWith(
+                  color: context.colors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingXs),
+              Text(
+                'Sign in to access your budgets and financial data',
+                style: AppTheme.bodySmall.copyWith(
+                  color: context.colors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppTheme.spacingXl),
+
+        // Sign In Form
+        Container(
+          padding: const EdgeInsets.all(AppTheme.spacingLg),
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: context.colors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Email
+              _buildTextField(
+                context: context,
+                label: 'Email',
+                hint: 'your@email.com',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                value: viewModel.getFormValue('email'),
+                onChanged: (value) => viewModel.updateFormField('email', value),
+              ),
+              const SizedBox(height: AppTheme.spacingMd),
+
+              // Password
+              _buildTextField(
+                context: context,
+                label: 'Password',
+                hint: '••••••••',
+                icon: Icons.lock_outline,
+                obscureText: viewModel.passwordObscured,
+                value: viewModel.getFormValue('password'),
+                onChanged: (value) =>
+                    viewModel.updateFormField('password', value),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    viewModel.passwordObscured
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: context.colors.textSecondary,
+                  ),
+                  onPressed: viewModel.onToggleObscure,
+                ),
+              ),
+
+              if (viewModel.error != null) ...[
+                const SizedBox(height: AppTheme.spacingMd),
+                _buildErrorBox(context, viewModel.error!),
+              ],
+
+              const SizedBox(height: AppTheme.spacingXl),
+
+              // Sign In Button
+              ElevatedButton(
+                onPressed: viewModel.isLoading
+                    ? null
+                    : () async {
+                        final success = await viewModel.signInAsParticipant(
+                          viewModel.getFormValue('email'),
+                          viewModel.getFormValue('password'),
+                        );
+                        if (success && mounted) {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/budgeting',
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: AppTheme.spacingMd,
+                  ),
+                ),
+                child: viewModel.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('Sign In'),
+                          const SizedBox(width: AppTheme.spacingXs),
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: AppTheme.spacingLg),
+
+        // Help Text
+        Container(
+          padding: const EdgeInsets.all(AppTheme.spacingMd),
+          decoration: BoxDecoration(
+            color: context.colors.info.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            border: Border.all(
+              color: context.colors.info.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: context.colors.info,
+                size: 20,
+              ),
+              const SizedBox(width: AppTheme.spacingSm),
+              Expanded(
+                child: Text(
+                  'Need to add more participants? Sign in and go to Settings.',
+                  style: AppTheme.bodySmall.copyWith(
+                    color: context.colors.info,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required BuildContext context,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required String value,
+    required ValueChanged<String> onChanged,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    Widget? suffixIcon,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: AppTheme.label.copyWith(
+            color: context.colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: AppTheme.spacingXs),
+        TextField(
+          controller: TextEditingController(text: value)
+            ..selection = TextSelection.collapsed(offset: value.length),
+          onChanged: onChanged,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, color: context.colors.textSecondary),
+            suffixIcon: suffixIcon,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorBox(BuildContext context, String error) {
     return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingSm),
       decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: context.colors.border, width: 1),
+        color: context.colors.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        border: Border.all(
+          color: context.colors.error.withOpacity(0.3),
+        ),
       ),
       child: Row(
         children: [
-          Expanded(
-            child: _buildModeTab(
-              label: 'Add Participants',
-              isSelected: viewModel.mode == OnboardingMode.addParticipants,
-              onTap: () => viewModel.switchMode(OnboardingMode.addParticipants),
-            ),
+          Icon(
+            Icons.error_outline,
+            color: context.colors.error,
+            size: 20,
           ),
+          const SizedBox(width: AppTheme.spacingXs),
           Expanded(
-            child: _buildModeTab(
-              label: 'Sign in as a participant',
-              isSelected: viewModel.mode == OnboardingMode.signInAsParticipant,
-              onTap: () =>
-                  viewModel.switchMode(OnboardingMode.signInAsParticipant),
+            child: Text(
+              error,
+              style: AppTheme.bodySmall.copyWith(
+                color: context.colors.error,
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildModeTab({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          border: isSelected
-              ? Border(
-                  bottom: BorderSide(
-                    color: context.colors.primary,
-                    width: 3,
-                  ),
-                )
-              : null,
-        ),
-        child: Text(
-          label,
-          style: AppTheme.label.copyWith(
-            color: isSelected
-                ? context.colors.textPrimary
-                : context.colors.textSecondary,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContinueButton(OnboardingViewModel viewModel) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.pushReplacementNamed(
-            context,
-            viewModel.getNextRoute(),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: context.colors.secondary,
-          foregroundColor: context.colors.textPrimary,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          ),
-          elevation: 0,
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Continue to Budgeting (Dev env only)',
-                style: AppTheme.button),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward, size: 20),
-          ],
-        ),
       ),
     );
   }

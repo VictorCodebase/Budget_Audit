@@ -425,7 +425,7 @@ drift.LazyDatabase _openConnection() {
       sqlite3.tempDirectory = cacheBase;
     }
 
-    print("Opening DB at: $dbPath");
+    //print("Opening DB at: $dbPath");
     return NativeDatabase.createInBackground(File(dbPath));
   });
 }

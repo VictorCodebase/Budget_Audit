@@ -227,11 +227,11 @@ class _ContentBoxState extends State<ContentBox>
     );
   }
 
-  Widget _buildMinimizedContent() {
+  Widget _buildMinimizedContent(double effectiveHeight) {
     final previewsToShow = widget.previewWidgets.take(4).toList();
 
     return SizedBox(
-      height: widget.minimizedHeight,
+      height: effectiveHeight,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: LayoutBuilder(
@@ -359,35 +359,45 @@ class _ContentBoxState extends State<ContentBox>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.width,
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: Container(
-          height: _isMinimized ? widget.minimizedHeight : null,
-          constraints: _isMinimized
-              ? BoxConstraints(
-                  minHeight: widget.minimizedHeight,
-                  maxHeight: widget.minimizedHeight,
-                )
-              : null,
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: context.colors.border,
-              width: 1,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallScreen = constraints.maxWidth < 600;
+        // Increase height on small screens to accommodate vertical stacking
+        final effectiveMinimizedHeight = isSmallScreen
+            ? widget.minimizedHeight + 30
+            : widget.minimizedHeight;
+
+        return SizedBox(
+          width: widget.width,
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: Container(
+              height: _isMinimized ? effectiveMinimizedHeight : null,
+              constraints: _isMinimized
+                  ? BoxConstraints(
+                      minHeight: effectiveMinimizedHeight,
+                      maxHeight: effectiveMinimizedHeight,
+                    )
+                  : null,
+              decoration: BoxDecoration(
+                color: context.colors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: context.colors.border,
+                  width: 1,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: _isMinimized
+                    ? _buildMinimizedContent(effectiveMinimizedHeight)
+                    : _buildMaximizedContent(context),
+              ),
             ),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: _isMinimized
-                ? _buildMinimizedContent()
-                : _buildMaximizedContent(context),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 import '../../core/models/models.dart';
 import '../../core/services/budget_service.dart';
 import '../../core/context.dart';
+import '../../core/services/participant_service.dart';
 
 /// Represents time unit options for analytics graphs
 enum TimeUnit {
@@ -117,6 +118,7 @@ class VendorSpendingData {
 
 class AnalyticsViewModel extends ChangeNotifier {
   final BudgetService _budgetService;
+  final ParticipantService _participantService;
   final AppContext _appContext;
   final Logger _logger = Logger('AnalyticsViewModel');
 
@@ -161,9 +163,11 @@ class AnalyticsViewModel extends ChangeNotifier {
 
   AnalyticsViewModel({
     required BudgetService budgetService,
+    required ParticipantService participantService,
     required AppContext appContext,
   })  : _budgetService = budgetService,
-        _appContext = appContext;
+        _appContext = appContext,
+        _participantService = participantService;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -215,6 +219,7 @@ class AnalyticsViewModel extends ChangeNotifier {
       _availableTemplates =
           await _budgetService.templateService.getAllTemplates();
 
+
       // Select template (use provided, current from context, or first available)
       _selectedTemplate = template ??
           _appContext.currentTemplate ??
@@ -224,6 +229,9 @@ class AnalyticsViewModel extends ChangeNotifier {
         _setError('No templates available. Please create a budget first.');
         return;
       }
+
+      _templateParticipants = await _participantService
+          .getParticipantsWithTransactionsInTemplate(_selectedTemplate!.templateId);
 
       await _loadTemplateData();
       await _computeAnalytics();
@@ -469,8 +477,11 @@ class AnalyticsViewModel extends ChangeNotifier {
 
     // Generate time intervals based on selected time unit
     final intervals = _generateTimeIntervals(periodStart, periodEnd, _timeUnit);
+    debugPrint('intervals: ${intervals.toString()}');
 
     for (final interval in intervals) {
+      debugPrint(
+          'participant filter condition: ${_participantFilter == ParticipantFilter.all} \n');
       if (_participantFilter == ParticipantFilter.all) {
         // Calculate average across all participants
         final participantValues = <int, double>{};
@@ -489,12 +500,16 @@ class AnalyticsViewModel extends ChangeNotifier {
               totalBudgeted > 0 ? (spent / totalBudgeted) * 100 : 0;
           participantValues[participant.participantId] = percentage;
         }
+        debugPrint('participantValues: ${participantValues.toString()}');
+        debugPrint(
+            'total tenplate participants: ${_templateParticipants.length.toString()}');
 
         // Average the percentages
         final avgPercentage = participantValues.values.isEmpty
             ? 0.0
             : participantValues.values.reduce((a, b) => a + b) /
                 participantValues.length;
+        debugPrint('calculated avgPercentage: ${avgPercentage.toString()}');
 
         dataPoints.add(TimeSeriesDataPoint(
           date: interval['start'],
@@ -514,6 +529,7 @@ class AnalyticsViewModel extends ChangeNotifier {
         final spent = _calculateTotalSpent(participantTransactions);
         final double percentage =
             totalBudgeted > 0 ? (spent / totalBudgeted) * 100 : 0;
+        debugPrint('calculated percentage: ${percentage.toString()}');
 
         dataPoints.add(TimeSeriesDataPoint(
           date: interval['start'],
