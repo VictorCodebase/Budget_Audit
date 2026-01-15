@@ -2,11 +2,7 @@ import 'package:budget_audit/core/theme/app_theme.dart';
 import 'package:budget_audit/core/widgets/app_header.dart';
 import 'package:budget_audit/core/widgets/content_box.dart';
 import 'package:budget_audit/features/settings/settings_viewmodel.dart';
-import 'package:budget_audit/features/settings/management_viewmodels/participant_management_viewmodel.dart';
-import 'package:budget_audit/features/settings/management_viewmodels/template_management_viewmodel.dart';
-import 'package:budget_audit/features/settings/management_viewmodels/category_management_viewmodel.dart';
-import 'package:budget_audit/features/settings/management_viewmodels/account_management_viewmodel.dart';
-import 'package:budget_audit/features/settings/management_viewmodels/vendor_management_viewmodel.dart';
+
 import 'package:budget_audit/features/settings/widgets/profile_section.dart';
 import 'package:budget_audit/features/settings/widgets/participant_section.dart';
 import 'package:budget_audit/features/settings/widgets/template_section.dart';
@@ -19,53 +15,7 @@ class SettingsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (context) {
-            final vm = context.read<SettingsViewModel>();
-            Future.microtask(() => vm.initialize());
-            return vm;
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (context) {
-            final vm = context.read<ParticipantManagementViewModel>();
-            Future.microtask(() => vm.initialize());
-            return vm;
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (context) {
-            final vm = context.read<TemplateManagementViewModel>();
-            Future.microtask(() => vm.initialize());
-            return vm;
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (context) {
-            final vm = context.read<CategoryManagementViewModel>();
-            Future.microtask(() => vm.initialize());
-            return vm;
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (context) {
-            final vm = context.read<AccountManagementViewModel>();
-            Future.microtask(() => vm.initialize());
-            return vm;
-          },
-        ),
-        ChangeNotifierProvider(
-          create: (context) {
-            final vm = context.read<VendorManagementViewModel>();
-            Future.microtask(() => vm.initialize());
-            return vm;
-          },
-        ),
-      ],
-      child: const _SettingsViewContent(),
-    );
+    return const _SettingsViewContent();
   }
 }
 

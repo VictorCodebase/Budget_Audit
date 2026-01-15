@@ -100,8 +100,7 @@ class AppRouter {
           },
         );
 
-
-case '/settings':
+      case '/settings':
         return MaterialPageRoute(
           builder: (context) {
             final appContext = Provider.of<AppContext>(context, listen: false);
@@ -117,41 +116,41 @@ case '/settings':
                     appContext,
                     sl<ParticipantService>(),
                     sl<BudgetService>(),
-                  ),
+                  )..initialize(),
                 ),
                 ChangeNotifierProvider(
                   create: (_) => ParticipantManagementViewModel(
                     sl<ParticipantService>(),
                     appContext,
-                  ),
+                  )..initialize(),
                 ),
                 ChangeNotifierProvider(
                   create: (_) => TemplateManagementViewModel(
                     sl<BudgetService>(),
                     sl<ParticipantService>(),
                     appContext,
-                  ),
+                  )..initialize(),
                 ),
                 ChangeNotifierProvider(
                   create: (_) => CategoryManagementViewModel(
                     sl<BudgetService>(),
                     sl<ParticipantService>(),
                     appContext,
-                  ),
+                  )..initialize(),
                 ),
                 ChangeNotifierProvider(
                   create: (_) => AccountManagementViewModel(
                     sl<BudgetService>(),
                     sl<ParticipantService>(),
                     appContext,
-                  ),
+                  )..initialize(),
                 ),
                 ChangeNotifierProvider(
                   create: (_) => VendorManagementViewModel(
                     sl<BudgetService>(),
                     sl<ParticipantService>(),
                     appContext,
-                  ),
+                  )..initialize(),
                 ),
               ],
               child: const SettingsView(),

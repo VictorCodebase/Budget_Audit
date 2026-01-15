@@ -20,6 +20,14 @@ class VendorManagementViewModel extends ChangeNotifier {
     this._appContext,
   );
 
+  bool _isDisposed = false;
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
+  }
+
   // ========== State Management ==========
 
   List<models.Vendor> _vendors = [];
@@ -210,18 +218,24 @@ class VendorManagementViewModel extends ChangeNotifier {
   // ========== Helper Methods ==========
 
   void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
+    if (!_isDisposed) {
+      _isLoading = loading;
+      notifyListeners();
+    }
   }
 
   void _setError(String error) {
-    _error = error;
-    notifyListeners();
+    if (!_isDisposed) {
+      _error = error;
+      notifyListeners();
+    }
   }
 
   void _clearError() {
-    _error = null;
-    notifyListeners();
+    if (!_isDisposed) {
+      _error = null;
+      notifyListeners();
+    }
   }
 
   /// Get account details by ID
