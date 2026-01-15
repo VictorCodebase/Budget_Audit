@@ -439,7 +439,7 @@ class _BudgetingViewState extends State<BudgetingView> {
       width: 800,
       height: 600,
       child: Builder(
-        builder: (modalContext) {
+        builder: (context) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -489,12 +489,17 @@ class _BudgetingViewState extends State<BudgetingView> {
                         ),
                         itemCount: viewModel.availablePresets.length,
                         itemBuilder: (context, index) {
+                          // ListView builder shadows context again, which is fine/standard
                           final preset = viewModel.availablePresets[index];
                           return PresetCard(
                             preset: preset,
                             onAdopt: (preset, period, months) =>
                                 _handleAdoptPreset(
-                              modalContext,
+                              context, // Pass the inner context (from ListView, or we could use Builder's context if we didn't shadow)
+                              // Actually, passing 'context' here refers to ListView's context which is even deeper and safer.
+                              // Wait, _handleAdoptPreset takes 'modalContext' (Builder's context).
+                              // ListView context is a child of Builder context.
+                              // So passing ListView context is valid for showing dialogs etc.
                               viewModel,
                               preset,
                               period: period,
@@ -664,7 +669,7 @@ class _BudgetingViewState extends State<BudgetingView> {
       child: Builder(
         builder: (modalContext) {
           return Consumer<AppContext>(
-            builder: (_, appContext, __) {
+            builder: (context, appContext, __) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
