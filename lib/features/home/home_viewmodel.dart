@@ -125,6 +125,11 @@ class HomeViewModel extends ChangeNotifier {
     return currentDocumentGroup?.transactions ?? [];
   }
 
+  String getParticipantName(int participantId) {
+    models.Participant person =   _participants.firstWhere((p) => p.participantId == participantId);
+    return person.nickname ?? person.firstName;
+  }
+
   /// Check if current document is complete
   bool get isCurrentDocumentComplete {
     return currentDocumentGroup?.hasAllAccountsAssigned ?? false;

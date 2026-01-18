@@ -111,18 +111,18 @@ class SidePanel extends StatelessWidget {
           );
         }).toList(),
         const SizedBox(height: AppTheme.spacingSm),
-        OutlinedButton.icon(
-          onPressed: () {
-            // TODO: Add participant functionality
-          },
-          icon: const Icon(Icons.add, size: 18),
-          label: const Text('Add participant'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: context.colors.secondary,
-            side: BorderSide(color: context.colors.secondary, width: 1),
-            minimumSize: const Size(double.infinity, 40),
-          ),
-        ),
+        // OutlinedButton.icon(
+        //   onPressed: () {
+        //     // TODO: Add participant functionality
+        //   },
+        //   icon: const Icon(Icons.add, size: 18),
+        //   label: const Text('Add participant'),
+        //   style: OutlinedButton.styleFrom(
+        //     foregroundColor: context.colors.secondary,
+        //     side: BorderSide(color: context.colors.secondary, width: 1),
+        //     minimumSize: const Size(double.infinity, 40),
+        //   ),
+        // ),
       ],
     );
   }

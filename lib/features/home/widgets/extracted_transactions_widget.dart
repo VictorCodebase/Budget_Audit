@@ -181,7 +181,7 @@ class _ExtractedTransactionsWidgetState
                     _buildMetadataItem(
                       icon: Icons.person,
                       label: 'Owner',
-                      value: 'Participant ${group.document.ownerParticipantId}',
+                      value: viewModel.getParticipantName(group.document.ownerParticipantId),
                     ),
                     _buildMetadataItem(
                       icon: Icons.account_balance,
