@@ -414,13 +414,15 @@ class HomeViewModel extends ChangeNotifier {
     try {
       _errorMessage = null;
 
-      if (!_documentService.isValidPdf(filePath)) {
-        const error = 'Invalid PDF file. Please select a valid PDF document.';
-        _errorMessage = error;
-        notifyListeners();
-        return const ValidationResult.failure(
-            error: error, type: ValidationErrorType.invalidFormat);
-      }
+      // if (!_documentService.isValidPdf(filePath) ||
+      //     !_documentService.isValidOfx(filePath) ||
+      //     !_documentService.isValidCsv(filePath)) {
+      //   const error = 'Invalid file format. Please select a valid PDF, OFX, or CSV document.';
+      //   _errorMessage = error;
+      //   notifyListeners();
+      //   return const ValidationResult.failure( 
+      //       error: error, type: ValidationErrorType.invalidFormat);
+      // }
 
       final document = _documentService.createUploadedDocument(
         fileName: fileName,

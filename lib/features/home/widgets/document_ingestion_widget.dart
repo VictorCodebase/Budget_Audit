@@ -25,6 +25,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
   int? _selectedOwnerId;
   FinancialInstitution? _selectedInstitution;
   bool _isPickingFile = false;
+  bool _isCustomFormat = false;
 
   @override
   void dispose() {
@@ -60,8 +61,13 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
             _buildActiveTemplateInfo(viewModel),
             const SizedBox(height: AppTheme.spacingMd),
 
+            // Financial Institution
+            _buildInstitutionSelector(),
+            const SizedBox(height: AppTheme.spacingLg),
+
             // Browse Document
             _buildBrowseDocument(),
+            const SizedBox(height: AppTheme.spacingMd),
             const SizedBox(height: AppTheme.spacingMd),
 
             // Password and Document Owner in a Row
@@ -74,10 +80,6 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
               ],
             ),
             const SizedBox(height: AppTheme.spacingMd),
-
-            // Financial Institution
-            _buildInstitutionSelector(),
-            const SizedBox(height: AppTheme.spacingLg),
 
             // Action Buttons
             _buildActionButtons(viewModel),
@@ -101,8 +103,8 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       children: [
         Row(
           children: [
-            const Text(
-              'Browse Document (Only PDF)',
+            Text(
+              'Browse Document ${_selectedInstitution != null ? "(${_getFileExtension(_selectedInstitution!).toUpperCase()})" : ""}',
               style: AppTheme.label,
             ),
             const SizedBox(width: 4),
@@ -282,7 +284,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       children: [
         Row(
           children: [
-            Text(
+            const Text(
               "Select the document's financial institution",
               style: AppTheme.label,
             ),
@@ -294,53 +296,129 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
           ],
         ),
         const SizedBox(height: AppTheme.spacingXs),
-        Text(
-          "Can't find your bank here? Early adopters can request their institution here",
+        const Text(
+          "Can't find your bank here? Choose Custom to upload standard formats",
           style: AppTheme.caption,
         ),
         const SizedBox(height: AppTheme.spacingMd),
+        // Main Banks + Custom Toggle
         Wrap(
           spacing: AppTheme.spacingMd,
           runSpacing: AppTheme.spacingMd,
-          children: FinancialInstitution.values.map((institution) {
-            final isSelected = _selectedInstitution == institution;
-            return InkWell(
+          children: [
+            ...[FinancialInstitution.equity, FinancialInstitution.mpesa]
+                .map((institution) {
+              final isSelected = _selectedInstitution == institution;
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedInstitution = institution;
+                    _isCustomFormat = false;
+                    _selectedFilePath = null;
+                    _selectedFileName = null;
+                  });
+                },
+                child: _buildSelectorCard(
+                  label: institution.displayName,
+                  isSelected: isSelected,
+                ),
+              );
+            }).toList(),
+            InkWell(
               onTap: () {
                 setState(() {
-                  _selectedInstitution = institution;
+                  _isCustomFormat = true;
+                  _selectedInstitution = null; // Reset selection initially
+                  _selectedFilePath = null;
+                  _selectedFileName = null;
                 });
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppTheme.spacingMd,
-                  vertical: AppTheme.spacingSm,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? context.colors.primary.withOpacity(0.1)
-                      : context.colors.surface,
-                  border: Border.all(
-                    color: isSelected
-                        ? context.colors.primary
-                        : context.colors.border,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                ),
-                child: Text(
-                  institution.displayName,
-                  style: AppTheme.bodyMedium.copyWith(
-                    color: isSelected
-                        ? context.colors.primary
-                        : context.colors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
+              child: _buildSelectorCard(
+                label: 'Custom',
+                isSelected: _isCustomFormat,
               ),
-            );
-          }).toList(),
+            ),
+          ],
         ),
+        // Custom Formats (Sub-options)
+        if (_isCustomFormat) ...[
+          const SizedBox(height: AppTheme.spacingMd),
+          Container(
+            padding: const EdgeInsets.all(AppTheme.spacingSm),
+            decoration: BoxDecoration(
+              color: context.colors.surface,
+              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              border: Border.all(color: context.colors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Select Format',
+                  style: AppTheme.label.copyWith(fontSize: 12),
+                ),
+                const SizedBox(height: AppTheme.spacingSm),
+                Wrap(
+                  spacing: AppTheme.spacingMd,
+                  runSpacing: AppTheme.spacingMd,
+                  children: [
+                    ...[FinancialInstitution.csv, FinancialInstitution.ofx]
+                        .map((institution) {
+                      final isSelected = _selectedInstitution == institution;
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            _selectedInstitution = institution;
+                            _selectedFilePath = null;
+                            _selectedFileName = null;
+                          });
+                        },
+                        child: _buildSelectorCard(
+                          label: institution.displayName,
+                          isSelected: isSelected,
+                          isSmall: true,
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildSelectorCard({
+    required String label,
+    required bool isSelected,
+    bool isSmall = false,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmall ? AppTheme.spacingSm : AppTheme.spacingMd,
+        vertical: isSmall ? AppTheme.spacingXs : AppTheme.spacingSm,
+      ),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? context.colors.primary.withOpacity(0.1)
+            : context.colors.surface,
+        border: Border.all(
+          color: isSelected ? context.colors.primary : context.colors.border,
+          width: isSelected ? 2 : 1,
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+      ),
+      child: Text(
+        label,
+        style: AppTheme.bodyMedium.copyWith(
+          color:
+              isSelected ? context.colors.primary : context.colors.textPrimary,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          fontSize: isSmall ? 13 : 14,
+        ),
+      ),
     );
   }
 
@@ -405,15 +483,37 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     );
   }
 
+  String _getFileExtension(FinancialInstitution institution) {
+    switch (institution) {
+      case FinancialInstitution.csv:
+        return 'csv';
+      case FinancialInstitution.ofx:
+        return 'ofx';
+      default:
+        return 'pdf';
+    }
+  }
+
   Future<void> _pickFile() async {
+    if (_selectedInstitution == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please select a financial institution first'),
+          backgroundColor: context.colors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isPickingFile = true;
     });
 
     try {
+      final allowedExtension = _getFileExtension(_selectedInstitution!);
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf'],
+        allowedExtensions: [allowedExtension],
       );
 
       if (result != null && result.files.single.path != null) {
@@ -436,20 +536,21 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       return;
     }
 
-    if (_selectedFilePath == null) {
+    if (_selectedInstitution == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please select a PDF document'),
+          content: const Text('Please select a financial institution'),
           backgroundColor: context.colors.error,
         ),
       );
       return;
     }
 
-    if (_selectedInstitution == null) {
+    if (_selectedFilePath == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please select a financial institution'),
+          content: Text(
+              'Please select a ${_getFileExtension(_selectedInstitution!).toUpperCase()} document'),
           backgroundColor: context.colors.error,
         ),
       );
@@ -497,7 +598,13 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
           message = 'The selected file could not be found. Please try again.';
           break;
         case ValidationErrorType.invalidFormat:
-          message = 'Invalid file format. Please select a valid PDF document.';
+          message = 'Invalid file format. Please select a valid format.';
+          break;
+        case ValidationErrorType.missingRequiredFields:
+          message = 'Some required fields were missing in your document';
+          break;
+        case ValidationErrorType.fileReadError:
+          message = 'The document provided could not be read';
           break;
         case ValidationErrorType.parsingFailed:
           message =

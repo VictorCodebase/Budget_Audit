@@ -20,9 +20,9 @@ import 'parser_interface.dart';
 /// - Transaction tables (by finding repeating patterns)
 /// - Date formats (tries multiple common formats)
 /// - Amount formats (handles various currency symbols and separators)
-class CustomParser with ParserMixin implements StatementParser {
+class CSVParser with ParserMixin implements StatementParser {
   @override
-  FinancialInstitution get institution => FinancialInstitution.custom;
+  FinancialInstitution get institution => FinancialInstitution.csv;
 
   /// Checkpoints to verify in PDF:
   /// 1. At least one table-like structure
@@ -37,6 +37,11 @@ class CustomParser with ParserMixin implements StatementParser {
     String? password,
   }) async {
     // Validate PDF openability/security
+    return const ValidationResult.failure(
+      error: 'Custom Parser is not available yet',
+      missing: ['Functionality not yet available'],
+      type: ValidationErrorType.none,
+    );
     final unlockResult = await unlockPdf(pdfFile, password);
     if (unlockResult != ValidationErrorType.none) {
       return ValidationResult.failure(

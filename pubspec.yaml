@@ -68,6 +68,7 @@ dev_dependencies:
   logging: ^1.2.0
   build_runner: ^2.9.0
   drift_dev: ^2.29.0
+  flutter_native_splash: ^2.4.7
 
 
 

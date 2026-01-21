@@ -173,6 +173,48 @@ class DocumentService {
     }
   }
 
+  bool isValidOfx(String filePath) {
+    try {
+      final file = File(filePath);
+      if (!file.existsSync()) return false;
+
+      // Check file extension
+      if (!filePath.toLowerCase().endsWith('.ofx')) return false;
+
+      // Read first few bytes to check OFX header
+      final bytes = file.readAsBytesSync();
+      if (bytes.length < 5) return false;
+
+      // OFX files start with OFX
+      final header = String.fromCharCodes(bytes.take(3));
+      return header == 'OFX';
+    } catch (e) {
+      _logger.warning('Error checking OFX validity: $e');
+      return false;
+    }
+  }
+
+  bool isValidCsv(String filePath) {
+    try {
+      final file = File(filePath);
+      if (!file.existsSync()) return false;
+
+      // Check file extension
+      if (!filePath.toLowerCase().endsWith('.csv')) return false;
+
+      // Read first few bytes to check CSV header
+      final bytes = file.readAsBytesSync();
+      if (bytes.length < 5) return false;
+
+      // CSV files start with CSV
+      final header = String.fromCharCodes(bytes.take(3));
+      return header == 'CSV';
+    } catch (e) {
+      _logger.warning('Error checking CSV validity: $e');
+      return false;
+    }
+  }
+
   /// Gets a human-readable file size
   String getFileSize(String filePath) {
     try {
