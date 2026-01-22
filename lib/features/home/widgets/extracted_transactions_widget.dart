@@ -428,7 +428,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: criticalTxns,
             status: MatchStatus.critical,
-            title: 'Your Input is Required',
+            title: 'UNRECOGNIZED: Your Input is Required',
             description:
                 'The vendors are not recognized by the system. Your review is required to continue.',
             color: context.colors.error,
@@ -440,7 +440,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: potentialTxns,
             status: MatchStatus.potential,
-            title: 'Please review vendor names',
+            title: 'SEMBLANCE: Please review vendor names',
             description:
                 'Vendor names resemble vendors you have interacted with. Consider reviewing to ensure accuracy',
             color: Colors.orange,
@@ -452,7 +452,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: ambiguousTxns,
             status: MatchStatus.ambiguous,
-            title: 'Review historical associations',
+            title: 'AMBIGUOUS: Review historical associations',
             description:
                 'Transaction Vendors have been matched, but there exist differing historical associations. Consider reviewing for accuracy.',
             color: const Color(0xFF86EFAC),
@@ -464,7 +464,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: confidentTxns,
             status: MatchStatus.confident,
-            title: 'Recognized transactions',
+            title: 'SURE: Recognized transactions',
             description:
                 'Transaction Vendors have been accurately matched. Consider reviewing for accuracy.',
             color: context.colors.success,
