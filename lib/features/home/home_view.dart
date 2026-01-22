@@ -90,8 +90,8 @@ class _HomeViewState extends State<HomeView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Data handling notice
-          _buildDataHandlingNotice(context),
+          //! Data handling notice [RE-ENDABLE!!!!]
+         // _buildDataHandlingNotice(context),
           const SizedBox(height: AppTheme.spacingLg),
 
           // Document ingestion

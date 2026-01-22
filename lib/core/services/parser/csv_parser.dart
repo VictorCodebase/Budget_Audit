@@ -1,244 +1,397 @@
-// lib/core/services/parser/custom_parser.dart
+// lib/core/services/parser/csv_parser.dart
 
 import 'dart:io';
-import 'package:budget_audit/core/services/parser/parser_mixin.dart';
-import 'package:uuid/uuid.dart';
-import '../../models/client_models.dart';
+import 'package:csv/csv.dart';
 import 'parser_interface.dart';
+import '../../models/client_models.dart';
+import 'package:uuid/uuid.dart';
 
-/// Parser for custom/generic bank statements
+/// Parser for CSV (Comma-Separated Values) format files
 ///
-/// This parser attempts to handle statements from unknown banks
-/// by looking for common patterns across different statement formats.
-///
-/// Expected Minimum Structure:
-/// - Some form of date column (various formats accepted)
-/// - Description/vendor column
-/// - Amount column (may be combined or separate debit/credit)
-///
-/// This parser is more lenient and uses heuristics to identify:
-/// - Transaction tables (by finding repeating patterns)
-/// - Date formats (tries multiple common formats)
-/// - Amount formats (handles various currency symbols and separators)
-class CSVParser with ParserMixin implements StatementParser {
+/// Supports various CSV formats with flexible column mapping
+class CSVParser extends StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.csv;
 
-  /// Checkpoints to verify in PDF:
-  /// 1. At least one table-like structure
-  /// 2. Repeating date patterns
-  /// 3. Repeating number patterns (amounts)
-  /// 4. Minimum 3 columns detected
-  ///
-  /// This is more lenient than institution-specific parsers
+  // Common column name variations
+  static const dateColumns = [
+    'date',
+    'transaction date',
+    'posted date',
+    'value date',
+    'trans date'
+  ];
+  static const descriptionColumns = [
+    'description',
+    'memo',
+    'details',
+    'narrative',
+    'transaction details'
+  ];
+  static const vendorColumns = [
+    'vendor',
+    'payee',
+    'merchant',
+    'name',
+    'counterparty'
+  ];
+  static const amountColumns = ['amount', 'value', 'transaction amount'];
+  static const debitColumns = [
+    'debit',
+    'withdrawal',
+    'money out',
+    'withdrawn',
+    'dr'
+  ];
+  static const creditColumns = [
+    'credit',
+    'deposit',
+    'money in',
+    'paid in',
+    'cr'
+  ];
+
   @override
   Future<ValidationResult> validateDocument(
-    File pdfFile, {
+    File file, {
     String? password,
   }) async {
-    // Validate PDF openability/security
-    return const ValidationResult.failure(
-      error: 'Custom Parser is not available yet',
-      missing: ['Functionality not yet available'],
-      type: ValidationErrorType.none,
-    );
-    final unlockResult = await unlockPdf(pdfFile, password);
-    if (unlockResult != ValidationErrorType.none) {
+    try {
+      final content = await file.readAsString();
+
+      // Try to parse as CSV
+      final csvData = const CsvToListConverter().convert(
+        content,
+        eol: '\n',
+        shouldParseNumbers: false,
+      );
+
+      if (csvData.isEmpty) {
+        return const ValidationResult.failure(
+          error: 'CSV file is empty',
+          type: ValidationErrorType.invalidFormat,
+        );
+      }
+
+      if (csvData.length < 2) {
+        return const ValidationResult.failure(
+          error: 'CSV file must have at least a header row and one data row',
+          type: ValidationErrorType.invalidFormat,
+        );
+      }
+
+      // Validate headers
+      final headers =
+          csvData.first.map((e) => e.toString().toLowerCase().trim()).toList();
+      final missingCheckpoints = <String>[];
+      print("Captured headers: ${headers}");
+
+      // Check for date column
+      if (!_hasAnyColumn(headers, dateColumns)) {
+        missingCheckpoints
+            .add('Date column (e.g., "Date", "Transaction Date")');
+      }
+
+      // Check for amount columns (either combined or debit/credit)
+      final hasAmount = _hasAnyColumn(headers, amountColumns);
+      final hasDebitCredit = _hasAnyColumn(headers, debitColumns) &&
+          _hasAnyColumn(headers, creditColumns);
+
+      if (!hasAmount && !hasDebitCredit) {
+        missingCheckpoints
+            .add('Amount column (e.g., "Amount", "Debit/Credit")');
+      }
+
+      // Check for description or vendor column (at least one)
+      if (!_hasAnyColumn(headers, descriptionColumns) &&
+          !_hasAnyColumn(headers, vendorColumns)) {
+        missingCheckpoints.add('Description or Vendor column');
+      }
+
+      if (missingCheckpoints.isNotEmpty) {
+        return ValidationResult.failure(
+          error:
+              'Missing required CSV columns: ${missingCheckpoints.join(", ")}',
+          missing: missingCheckpoints,
+          type: ValidationErrorType.missingRequiredFields,
+        );
+      }
+
+      return const ValidationResult.success();
+    } catch (e) {
       return ValidationResult.failure(
-        error: unlockResult == ValidationErrorType.passwordRequired
-            ? 'Document is password protected'
-            : 'Incorrect password',
-        missing: ['PDF unlock failed'],
-        type: unlockResult,
+        error: 'Error reading CSV file: $e',
+        type: ValidationErrorType.fileReadError,
       );
     }
-    // TODO: Implement custom validation
-    //
-    // Strategy:
-    // 1. Extract all text
-    // 2. Look for tabular data (aligned columns, repeating patterns)
-    // 3. Try to identify date column (test multiple formats)
-    // 4. Try to identify amount column (look for currency patterns)
-    // 5. If both found, consider it parseable
-
-    return const ValidationResult.success();
   }
 
   @override
   Future<ParseResult> parseDocument(
-    File pdfFile,
+    File file,
     UploadedDocument documentMetadata, {
     String? password,
   }) async {
-    // TODO: Implement custom parsing
-    //
-    // Strategy:
-    // 1. Extract table data using heuristics
-    // 2. Identify which columns contain dates, vendors, amounts
-    // 3. Parse each row using flexible patterns
-    // 4. Apply confidence scoring (warn user about uncertain parses)
-    // 5. Return best-effort results
+    try {
+      final content = await file.readAsString();
 
-    return ParseResult(
-      success: true,
-      transactions: _generateSampleTransactions(documentMetadata),
-      document: documentMetadata,
+      // Parse CSV
+      final csvData = const CsvToListConverter().convert(
+        content,
+        eol: '\n',
+        shouldParseNumbers: false,
+      );
+
+      if (csvData.length < 2) {
+        return ParseResult(
+          success: false,
+          errorMessage:
+              'CSV file must have at least a header row and one data row',
+          transactions: const [],
+          document: documentMetadata,
+        );
+      }
+
+      // Get headers and create column mapping
+      final headers =
+          csvData.first.map((e) => e.toString().toLowerCase().trim()).toList();
+      final columnMap = _createColumnMapping(headers);
+
+      // Parse transactions
+      final transactions = <ParsedTransaction>[];
+      const uuid = Uuid();
+
+      for (int i = 1; i < csvData.length; i++) {
+        final row = csvData[i];
+
+        if (row.isEmpty ||
+            row.every((cell) => cell.toString().trim().isEmpty)) {
+          continue; // Skip empty rows
+        }
+
+        try {
+          final transaction = _parseRow(row, columnMap, uuid);
+          if (transaction != null) {
+            transactions.add(transaction);
+          }
+        } catch (e) {
+          // Skip rows that fail to parse
+          continue;
+        }
+      }
+
+      if (transactions.isEmpty) {
+        return ParseResult(
+          success: false,
+          errorMessage: 'No valid transactions found in CSV file',
+          transactions: const [],
+          document: documentMetadata,
+        );
+      }
+
+      return ParseResult(
+        success: true,
+        transactions: transactions,
+        document: documentMetadata,
+      );
+    } catch (e) {
+      return ParseResult(
+        success: false,
+        errorMessage: 'Error parsing CSV file: $e',
+        transactions: const [],
+        document: documentMetadata,
+      );
+    }
+  }
+
+  /// Checks if any column name from the list exists in headers
+  bool _hasAnyColumn(List<String> headers, List<String> columnNames) {
+    return columnNames.any((name) => headers.contains(name));
+  }
+
+  /// Creates a mapping of column types to their indices
+  Map<String, int> _createColumnMapping(List<String> headers) {
+    final map = <String, int>{};
+
+    for (int i = 0; i < headers.length; i++) {
+      final header = headers[i];
+
+      // Date column
+      if (dateColumns.contains(header)) {
+        map['date'] = i;
+      }
+      // Description column
+      else if (descriptionColumns.contains(header)) {
+        map['description'] = i;
+      }
+      // Vendor column
+      else if (vendorColumns.contains(header)) {
+        map['vendor'] = i;
+      }
+      // Amount column
+      else if (amountColumns.contains(header)) {
+        map['amount'] = i;
+      }
+      // Debit column
+      else if (debitColumns.contains(header)) {
+        map['debit'] = i;
+      }
+      // Credit column
+      else if (creditColumns.contains(header)) {
+        map['credit'] = i;
+      }
+    }
+
+    return map;
+  }
+
+  /// Parses a single CSV row into a ParsedTransaction
+  ParsedTransaction? _parseRow(
+    List<dynamic> row,
+    Map<String, int> columnMap,
+    Uuid uuid,
+  ) {
+    // Extract date
+    final dateIdx = columnMap['date'];
+    if (dateIdx == null || dateIdx >= row.length) return null;
+
+    final dateStr = row[dateIdx].toString().trim();
+    if (dateStr.isEmpty) return null;
+
+    final date = _parseDate(dateStr);
+
+    // Extract amount
+    double amount;
+    if (columnMap.containsKey('amount')) {
+      final amountIdx = columnMap['amount']!;
+      if (amountIdx >= row.length) return null;
+
+      final amountStr = row[amountIdx].toString().trim();
+      if (amountStr.isEmpty) return null;
+
+      amount = _parseAmount(amountStr);
+    } else if (columnMap.containsKey('debit') &&
+        columnMap.containsKey('credit')) {
+      // Handle debit/credit columns
+      final debitIdx = columnMap['debit']!;
+      final creditIdx = columnMap['credit']!;
+
+      final debitStr = row[debitIdx].toString().trim();
+      final creditStr = row[creditIdx].toString().trim();
+
+      if (debitStr.isEmpty && creditStr.isEmpty) return null;
+
+      final debit = debitStr.isNotEmpty ? _parseAmount(debitStr) : 0.0;
+      final credit = creditStr.isNotEmpty ? _parseAmount(creditStr) : 0.0;
+
+      // Debit is negative (expense), credit is positive (income)
+      amount = credit - debit;
+    } else {
+      return null; // No amount information
+    }
+
+    // Extract vendor name
+    String vendorName = 'Unknown';
+    if (columnMap.containsKey('vendor')) {
+      final vendorIdx = columnMap['vendor']!;
+      if (vendorIdx < row.length) {
+        final vendor = row[vendorIdx].toString().trim();
+        if (vendor.isNotEmpty) {
+          vendorName = vendor;
+        }
+      }
+    }
+
+    // Extract description
+    String? description;
+    if (columnMap.containsKey('description')) {
+      final descIdx = columnMap['description']!;
+      if (descIdx < row.length) {
+        final desc = row[descIdx].toString().trim();
+        if (desc.isNotEmpty) {
+          description = desc;
+        }
+      }
+    }
+
+    // If no vendor was found, try to use description as vendor
+    if (vendorName == 'Unknown' && description != null) {
+      vendorName =
+          description.split(' ').take(3).join(' '); // Use first few words
+    }
+
+    // Determine if transaction should be ignored (income or transfers)
+    final shouldIgnore = amount > 0;
+
+    return ParsedTransaction(
+      id: uuid.v4(),
+      date: date,
+      originalDescription: description,
+      vendorName: vendorName,
+      amount: amount, // Keep negative for expenses, positive for income
+      ignoreTransaction: shouldIgnore,
+      useMemory: true,
     );
   }
 
-  @override
-  bool containsInstitutionMarkers(String pdfText) {
-    // Custom parser doesn't look for specific markers
-    // Just check if it looks like a financial document
-    final financialKeywords = [
-      'statement',
-      'account',
-      'balance',
-      'transaction',
-      'debit',
-      'credit',
-      'date',
-    ];
-
-    final lowerText = pdfText.toLowerCase();
-    return financialKeywords.any((keyword) => lowerText.contains(keyword));
-  }
-
-  @override
-  List<List<String>> extractTableData(String pdfText) {
-    // TODO: Implement intelligent table detection
-    // Look for patterns of aligned text that repeats
-    return [];
-  }
-
-  @override
-  String normalizeVendorName(String rawVendor) {
-    // Generic cleaning
-    return rawVendor
-        .trim()
-        .replaceAll(RegExp(r'\s+'), ' '); // Normalize whitespace
-  }
-
-  @override
-  DateTime? parseDate(String dateString) {
-    // Try multiple common date formats
+  /// Parses date from various common formats
+  DateTime _parseDate(String dateStr) {
+    // Try common date formats
     final formats = [
-      _tryParseDDMMYYYY,
-      _tryParseDDMMMYYYY,
-      _tryParseYYYYMMDD,
-      _tryParseMMDDYYYY,
+      // ISO format: 2024-08-02
+      RegExp(r'^(\d{4})-(\d{2})-(\d{2})'),
+      // US format: 08/02/2024 or 8/2/2024
+      RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})'),
+      // UK format: 02/08/2024 or 2/8/2024
+      RegExp(r'^(\d{1,2})/(\d{1,2})/(\d{4})'),
+      // Format: 02-Aug-2024
+      RegExp(r'^(\d{1,2})-([A-Za-z]{3})-(\d{4})'),
     ];
 
     for (final format in formats) {
-      final result = format(dateString);
-      if (result != null) return result;
+      final match = format.firstMatch(dateStr);
+      if (match != null) {
+        try {
+          if (dateStr.contains('-') && dateStr.split('-')[0].length == 4) {
+            // ISO format
+            return DateTime.parse(dateStr.split(' ')[0]);
+          } else if (dateStr.contains('/')) {
+            // Try MM/DD/YYYY first (US format)
+            final parts = dateStr.split('/');
+            if (parts.length == 3) {
+              final month = int.tryParse(parts[0]);
+              final day = int.tryParse(parts[1]);
+              final year = int.tryParse(parts[2]);
+
+              if (month != null && day != null && year != null) {
+                // If month > 12, it's probably DD/MM/YYYY
+                if (month > 12) {
+                  return DateTime(year, day, month);
+                }
+                return DateTime(year, month, day);
+              }
+            }
+          }
+        } catch (e) {
+          // Continue to next format
+        }
+      }
     }
 
-    return null;
+    // Fallback: return current date
+    return DateTime.now();
   }
 
-  DateTime? _tryParseDDMMYYYY(String dateString) {
-    try {
-      final parts = dateString.split(RegExp(r'[/\-.]'));
-      if (parts.length != 3) return null;
+  /// Parses amount from string, handling currency symbols and formatting
+  double _parseAmount(String amountStr) {
+    // Remove currency symbols, commas, and spaces
+    String cleaned = amountStr.replaceAll(RegExp(r'[£$€¥,\s]'), '').trim();
 
-      return DateTime(
-        int.parse(parts[2]),
-        int.parse(parts[1]),
-        int.parse(parts[0]),
-      );
-    } catch (e) {
-      return null;
+    // Handle parentheses for negative amounts
+    if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+      cleaned = '-${cleaned.substring(1, cleaned.length - 1)}';
     }
-  }
 
-  DateTime? _tryParseDDMMMYYYY(String dateString) {
-    final months = {
-      'jan': 1,
-      'feb': 2,
-      'mar': 3,
-      'apr': 4,
-      'may': 5,
-      'jun': 6,
-      'jul': 7,
-      'aug': 8,
-      'sep': 9,
-      'oct': 10,
-      'nov': 11,
-      'dec': 12,
-    };
-
-    try {
-      final parts = dateString.toLowerCase().split(' ');
-      if (parts.length != 3) return null;
-
-      final day = int.parse(parts[0]);
-      final month = months[parts[1].substring(0, 3)];
-      final year = int.parse(parts[2]);
-
-      if (month == null) return null;
-
-      return DateTime(year, month, day);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  DateTime? _tryParseYYYYMMDD(String dateString) {
-    try {
-      final parts = dateString.split(RegExp(r'[/\-.]'));
-      if (parts.length != 3) return null;
-
-      return DateTime(
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-        int.parse(parts[2]),
-      );
-    } catch (e) {
-      return null;
-    }
-  }
-
-  DateTime? _tryParseMMDDYYYY(String dateString) {
-    try {
-      final parts = dateString.split(RegExp(r'[/\-.]'));
-      if (parts.length != 3) return null;
-
-      return DateTime(
-        int.parse(parts[2]),
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-      );
-    } catch (e) {
-      return null;
-    }
-  }
-
-  @override
-  double? parseAmount(String amountString) {
-    // Remove all currency symbols and separators
-    final cleaned = amountString.replaceAll(RegExp(r'[^\d.\-+]'), '').trim();
-
-    try {
-      return double.parse(cleaned);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  List<ParsedTransaction> _generateSampleTransactions(
-    UploadedDocument document,
-  ) {
-    final uuid = const Uuid();
-    return List.generate(
-      8,
-      (index) => ParsedTransaction(
-        id: uuid.v4(),
-        date: DateTime.now().subtract(Duration(days: index * 2)),
-        vendorName: 'Greggs PLC',
-        amount: -2.90,
-        useMemory: true,
-      ),
-    );
+    return double.tryParse(cleaned) ?? 0.0;
   }
 }

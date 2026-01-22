@@ -9,7 +9,7 @@ import 'package:uuid/uuid.dart';
 /// Parser for OFX (Open Financial Exchange) format files
 ///
 /// Handles both OFX v1 (SGML-like) and OFX v2 (XML) formats
-class OfxParser extends StatementParser {
+class OFXParser extends StatementParser {
   @override
   FinancialInstitution get institution => FinancialInstitution.ofx;
 
