@@ -90,7 +90,6 @@ class _HomeViewState extends State<HomeView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          //! Data handling notice [RE-ENDABLE!!!!]
           _buildDataHandlingNotice(context),
           const SizedBox(height: AppTheme.spacingLg),
 
@@ -170,7 +169,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _launchDataHandling() async {
-    final uri = Uri.parse('${Env.docsBaseUrl}#privacy');
+    final uri = Uri.parse('${Env.docsBaseUrl}#data-handling');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }

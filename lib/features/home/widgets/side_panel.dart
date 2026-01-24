@@ -261,9 +261,9 @@ class SidePanel extends StatelessWidget {
                 action: ContentBoxAction.preview,
                 onPressed: () => _showPreview(context, viewModel, template),
               ),
-              const ContentBoxControl(
-                action: ContentBoxAction.minimize,
-              ),
+              // const ContentBoxControl(
+              //   action: ContentBoxAction.minimize,
+              // ),
               if (!isCurrent)
                 ContentBoxControl(
                   action: ContentBoxAction.delete,
