@@ -1,3 +1,4 @@
+import 'package:budget_audit/core/config/env.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../context.dart' as context;
 import 'package:syncfusion_flutter_core/core.dart';
@@ -22,7 +23,7 @@ Future<void> initializeApp() async {
   };
 
 // syncfusion
-  final key = dotenv.env['SYNCFUSION_LICENSE'];
+  final key = Env.syncfusionKey;
   if (key != null && key.isNotEmpty) {
     SyncfusionLicense.registerLicense(key);
   } else {
@@ -30,8 +31,8 @@ Future<void> initializeApp() async {
   }
 
   /// application development state
-  final env = dotenv.env['ENV'] ?? 'PRODUCTION';
-  final isProduction = env.toUpperCase() == 'PRODUCTION';
+  // final env = dotenv.env['ENV'] ?? 'PRODUCTION';
+  final isProduction = Env.isProduction;
   context.AppContext().setProduction(isProduction);
 
   await _setupLogging();

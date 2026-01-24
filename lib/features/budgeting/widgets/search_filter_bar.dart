@@ -43,28 +43,28 @@ class SearchFilterBar extends StatelessWidget {
               const SizedBox(height: AppTheme.spacingMd),
 
               // Search type buttons (non-functional as per design)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip(
-                      context,
-                      label: 'Search Categories',
-                      icon: Icons.search,
-                      isActive: false,
-                      onTap: () {},
-                    ),
-                    const SizedBox(width: AppTheme.spacingXs),
-                    _buildFilterChip(
-                      context,
-                      label: 'Search Accounts',
-                      icon: Icons.account_balance_wallet,
-                      isActive: false,
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-              ),
+              // SingleChildScrollView(
+              //   scrollDirection: Axis.horizontal,
+              //   child: Row(
+              //     children: [
+              //       _buildFilterChip(
+              //         context,
+              //         label: 'Search Categories',
+              //         icon: Icons.search,
+              //         isActive: false,
+              //         onTap: () {},
+              //       ),
+              //       const SizedBox(width: AppTheme.spacingXs),
+              //       _buildFilterChip(
+              //         context,
+              //         label: 'Search Accounts',
+              //         icon: Icons.account_balance_wallet,
+              //         isActive: false,
+              //         onTap: () {},
+              //       ),
+              //     ],
+              //   ),
+              // ),
               const SizedBox(height: AppTheme.spacingSm),
 
               // Filter and sort options
@@ -220,7 +220,7 @@ class SearchFilterBar extends StatelessWidget {
       BuildContext context, BudgetingViewModel viewModel) {
     final hasFilter = viewModel.filterParticipant != null;
 
-    return PopupMenuButton<models.Participant?>(
+    return PopupMenuButton<Object?>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -272,12 +272,12 @@ class SearchFilterBar extends StatelessWidget {
       ),
       itemBuilder: (context) => [
         if (hasFilter)
-          const PopupMenuItem<models.Participant?>(
-            value: null,
+          const PopupMenuItem<Object?>(
+            value: 'clear',
             child: Text('Clear filter'),
           ),
         ...viewModel.allParticipants.map((participant) {
-          return PopupMenuItem<models.Participant?>(
+          return PopupMenuItem<Object?>(
             value: participant,
             child: Text(
               participant.nickname ??
@@ -286,8 +286,12 @@ class SearchFilterBar extends StatelessWidget {
           );
         }),
       ],
-      onSelected: (participant) {
-        viewModel.setFilterParticipant(participant);
+      onSelected: (value) {
+        if (value == 'clear') {
+          viewModel.setFilterParticipant(null);
+        } else if (value is models.Participant) {
+          viewModel.setFilterParticipant(value);
+        }
       },
     );
   }
@@ -308,7 +312,7 @@ class SearchFilterBar extends StatelessWidget {
       );
     }
 
-    return PopupMenuButton<Color?>(
+    return PopupMenuButton<Object?>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -369,12 +373,12 @@ class SearchFilterBar extends StatelessWidget {
       ),
       itemBuilder: (context) => [
         if (hasFilter)
-          const PopupMenuItem<Color?>(
-            value: null,
+          const PopupMenuItem<Object?>(
+            value: 'clear',
             child: Text('Clear filter'),
           ),
         ...categoryColors.map((color) {
-          return PopupMenuItem<Color?>(
+          return PopupMenuItem<Object?>(
             value: color,
             child: Row(
               children: [
@@ -394,8 +398,12 @@ class SearchFilterBar extends StatelessWidget {
           );
         }),
       ],
-      onSelected: (color) {
-        viewModel.setFilterColor(color);
+      onSelected: (value) {
+        if (value == 'clear') {
+          viewModel.setFilterColor(null);
+        } else if (value is Color) {
+          viewModel.setFilterColor(value);
+        }
       },
     );
   }

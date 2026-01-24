@@ -654,7 +654,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'No Active Budget Template',
+                    'No Active Budget',
                     style: AppTheme.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.amber[900],
@@ -674,6 +674,8 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         ),
       );
     }
+
+      
 
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),

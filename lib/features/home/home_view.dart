@@ -1,5 +1,6 @@
 // lib/features/home/home_view.dart
 
+import 'package:budget_audit/core/config/env.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import 'home_viewmodel.dart';
 import 'widgets/document_ingestion_widget.dart';
 import 'widgets/extracted_transactions_widget.dart';
 import 'widgets/side_panel.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -40,9 +42,7 @@ class _HomeViewState extends State<HomeView> {
         SingleChildScrollView(
           child: Column(
             children: [
-              const AppHeader(
-                subtitle: 'Document Analysis & Transaction Extraction',
-              ),
+              const AppHeader(),
               isWideScreen
                   ? _buildWideScreenLayout(context, viewModel)
                   : _buildNarrowScreenLayout(context, viewModel),
@@ -91,7 +91,7 @@ class _HomeViewState extends State<HomeView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           //! Data handling notice [RE-ENDABLE!!!!]
-         // _buildDataHandlingNotice(context),
+          _buildDataHandlingNotice(context),
           const SizedBox(height: AppTheme.spacingLg),
 
           // Document ingestion
@@ -130,25 +130,16 @@ class _HomeViewState extends State<HomeView> {
           size: 20,
         ),
         const SizedBox(width: AppTheme.spacingXs),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: AppTheme.bodySmall.copyWith(
-                color: context.colors.textSecondary,
-              ),
-              children: [
-                const TextSpan(
-                  text: 'Your financial documents never leave your device. ',
-                ),
-                TextSpan(
-                  text: 'Learn more about Budget Audit data handling here',
-                  style: TextStyle(
-                    color: context.colors.primary,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ],
+        const Text('Your financial documents never leave your device.'),
+        TextButton.icon(
+          onPressed: () => _launchDataHandling(),
+          label: Text(
+            'Learn how budgeting works in the Budget Audit',
+            style: AppTheme.bodySmall.copyWith(
+              color: context.colors.primary,
+              decoration: TextDecoration.underline,
             ),
+            overflow: TextOverflow.visible,
           ),
         ),
       ],
@@ -176,6 +167,13 @@ class _HomeViewState extends State<HomeView> {
         ],
       ),
     );
+  }
+
+  void _launchDataHandling() async {
+    final uri = Uri.parse('${Env.docsBaseUrl}#privacy');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 
   Widget _buildSuccessView(BuildContext context, HomeViewModel viewModel) {

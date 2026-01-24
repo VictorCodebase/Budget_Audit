@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:budget_audit/core/models/preset_models.dart';
 import 'package:budget_audit/features/budgeting/budgeting_viewmodel.dart';
 import 'package:budget_audit/core/models/models.dart' as models;
 import 'package:budget_audit/core/models/client_models.dart' as clientModels;
 import 'package:budget_audit/core/services/budget_service.dart';
 import 'package:budget_audit/core/services/participant_service.dart';
+import 'package:budget_audit/core/services/preset_service.dart';
 import 'package:budget_audit/core/context.dart';
 import 'package:budget_audit/core/data/database.dart'; // Needed for AppDatabase type
 
@@ -124,18 +126,30 @@ class FakeBudgetService implements BudgetService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class FakePresetService implements PresetService {
+  @override
+  Future<List<BudgetPreset>> loadAllPresets() async {
+    return [];
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   late BudgetingViewModel viewModel;
   late FakeBudgetService budgetService;
   late FakeParticipantService participantService;
   late FakeAppContext appContext;
+  late FakePresetService presetService;
 
   setUp(() {
     budgetService = FakeBudgetService();
     participantService = FakeParticipantService();
     appContext = FakeAppContext();
-    viewModel =
-        BudgetingViewModel(budgetService, participantService, appContext);
+    presetService = FakePresetService();
+    viewModel = BudgetingViewModel(
+        budgetService, participantService, presetService, appContext);
   });
 
   group('BudgetingViewModel Filter & Sort Tests', () {
@@ -152,6 +166,7 @@ void main() {
       templateName: 'Test Template',
       creatorParticipantId: 1,
       dateCreated: DateTime.now(),
+      period: 'Monthly',
     );
 
     final c1 = models.Category(

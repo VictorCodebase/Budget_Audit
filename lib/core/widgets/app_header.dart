@@ -23,7 +23,7 @@ class AppHeader extends StatelessWidget {
     // Calculate max height (1/8th of screen)
     final maxHeaderHeight = screenHeight / 4;
     // Use provided logoHeight or calculate based on constraints, ensuring it's not too large
-    final effectiveLogoHeight = logoHeight ?? (maxHeaderHeight * 0.6);
+    final effectiveLogoHeight = logoHeight ?? (maxHeaderHeight * 0.8);
 
     return Stack(
       children: [

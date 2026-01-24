@@ -20,7 +20,7 @@ class TemplateSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          templateViewModel.isManager ? 'All Templates' : 'My Templates',
+          templateViewModel.isManager ? 'All Budgets' : 'My Budgets',
           style: AppTheme.h3.copyWith(
             color: context.colors.textPrimary,
           ),
@@ -28,8 +28,8 @@ class TemplateSection extends StatelessWidget {
         const SizedBox(height: AppTheme.spacingSm),
         Text(
           templateViewModel.isManager
-              ? 'View and manage all budget templates'
-              : 'Templates you are part of',
+              ? 'View and manage all budgets'
+              : 'Budgets you are part of',
           style: AppTheme.bodyMedium.copyWith(
             color: context.colors.textSecondary,
           ),
@@ -47,7 +47,7 @@ class TemplateSection extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spacingXl),
               child: Text(
-                'No templates found',
+                'No budgets found',
                 style: AppTheme.bodyMedium.copyWith(
                   color: context.colors.textSecondary,
                 ),
@@ -292,7 +292,7 @@ class TemplateSection extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spacingMd),
           child: Text(
-            'No categories in this template',
+            'No categories in this budget',
             style: AppTheme.bodySmall.copyWith(
               color: context.colors.textSecondary,
             ),
@@ -322,10 +322,10 @@ class TemplateSection extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Template'),
+        title: const Text('Delete Budget'),
         content: Text(
           'Are you sure you want to delete "${template.templateName}"?\n\n'
-          'This will delete all categories and accounts within this template.',
+          'This will delete all categories and accounts within this budget.',
         ),
         actions: [
           TextButton(
@@ -339,7 +339,7 @@ class TemplateSection extends StatelessWidget {
               if (success && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Template deleted successfully'),
+                    content: const Text('Budget deleted successfully'),
                     backgroundColor: context.colors.success,
                   ),
                 );

@@ -33,9 +33,7 @@ class _SettingsViewContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const AppHeader(
-                subtitle: 'Manage your account, budgets, and preferences',
-              ),
+              const AppHeader(),
               Padding(
                 padding: const EdgeInsets.all(AppTheme.spacingLg),
                 child: Column(
@@ -59,7 +57,7 @@ class _SettingsViewContent extends StatelessWidget {
                     const SizedBox(height: AppTheme.spacingMd),
                     Text(
                       settingsViewModel.isManager
-                          ? 'Manage all templates, categories, and accounts'
+                          ? 'Manage all budgets, categories, and accounts'
                           : 'View and manage your budgets',
                       style: AppTheme.bodyMedium.copyWith(
                         color: context.colors.textSecondary,

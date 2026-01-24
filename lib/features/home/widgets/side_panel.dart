@@ -45,9 +45,9 @@ class SidePanel extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacingMd),
         ...viewModel.participants.map((participant) {
-          final initials = (participant.nickname ?? participant.firstName)
-              .substring(0, 2)
-              .toUpperCase();
+          final initialsName = (participant.nickname ?? participant.firstName);
+          final initials =
+              initialsName.substring(0, initialsName.length).toUpperCase();
           final isCurrentUser =
               participant.participantId == viewModel.currentParticipantId;
 
@@ -133,8 +133,8 @@ class SidePanel extends StatelessWidget {
       children: [
         _buildActionButton(
           context: context,
-          label: 'Download your current template',
-          buttonLabel: 'Download Template',
+          label: 'Download your current budget',
+          buttonLabel: 'Download budget',
           onPressed: () {
             // TODO: Implement download template
           },
@@ -210,7 +210,7 @@ class SidePanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Template History',
+          'Budget History',
           style: AppTheme.h4,
         ),
         const SizedBox(height: AppTheme.spacingMd),
@@ -219,7 +219,7 @@ class SidePanel extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spacingLg),
               child: Text(
-                'No templates yet',
+                'No Budgets yet',
                 style: AppTheme.bodySmall.copyWith(
                   color: context.colors.textSecondary,
                 ),
@@ -344,7 +344,7 @@ class SidePanel extends StatelessWidget {
                       backgroundColor: context.colors.secondary,
                       foregroundColor: context.colors.textPrimary,
                     ),
-                    child: const Text('Adopt Template'),
+                    child: const Text('Adopt Budget'),
                   ),
               ],
             ),
@@ -409,7 +409,7 @@ class SidePanel extends StatelessWidget {
 
                     if (categories.isEmpty) {
                       return const Center(
-                          child: Text('No categories in this template'));
+                          child: Text('No categories in this Budget'));
                     }
 
                     return ListView.separated(
@@ -437,7 +437,7 @@ class SidePanel extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Template'),
+        title: const Text('Delete Budget'),
         content:
             Text('Are you sure you want to delete "${template.templateName}"?'),
         actions: [
