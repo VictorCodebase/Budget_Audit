@@ -136,6 +136,7 @@ class ParsedTransaction extends Equatable {
     AccountData? suggestedAccount,
     MatchStatus? originalStatus,
     bool? autoUpdated,
+    bool? ignoreTransaction,
   }) {
     return ParsedTransaction(
       id: id ?? this.id,
@@ -154,6 +155,7 @@ class ParsedTransaction extends Equatable {
       suggestedAccount: suggestedAccount ?? this.suggestedAccount,
       originalStatus: originalStatus ?? this.originalStatus,
       autoUpdated: autoUpdated ?? this.autoUpdated,
+      ignoreTransaction: ignoreTransaction ?? this.ignoreTransaction,
     );
   }
 

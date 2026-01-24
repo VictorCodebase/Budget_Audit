@@ -47,7 +47,7 @@ class SidePanel extends StatelessWidget {
         ...viewModel.participants.map((participant) {
           final initialsName = (participant.nickname ?? participant.firstName);
           final initials =
-              initialsName.substring(0, initialsName.length).toUpperCase();
+              initialsName.substring(0, (initialsName.length > 2 ? 2 : initialsName.length)).toUpperCase();
           final isCurrentUser =
               participant.participantId == viewModel.currentParticipantId;
 

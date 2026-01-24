@@ -25,20 +25,23 @@ class DocumentTransactionGroup {
     this.isComplete = false,
   });
 
-  /// Check if all transactions have been assigned accounts
+  /// Check if all transactions have been assigned accounts (or are ignored)
   bool get hasAllAccountsAssigned {
     return transactions.isNotEmpty &&
         transactions.every((txn) =>
-            txn.suggestedAccount != null &&
-            (txn.userModified || txn.autoUpdated));
+            txn
+                .ignoreTransaction || // Ignored transactions are considered handled
+            (txn.suggestedAccount != null &&
+                (txn.userModified || txn.autoUpdated)));
   }
 
-  /// Count of unassigned transactions
+  /// Count of unassigned transactions (excluding ignored ones)
   int get unassignedCount {
     return transactions
         .where((txn) =>
-            txn.suggestedAccount == null ||
-            (!txn.userModified && !txn.autoUpdated))
+            !txn.ignoreTransaction && // Skip ignored
+            (txn.suggestedAccount == null ||
+                (!txn.userModified && !txn.autoUpdated)))
         .length;
   }
 }
@@ -126,7 +129,8 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   String getParticipantName(int participantId) {
-    models.Participant person =   _participants.firstWhere((p) => p.participantId == participantId);
+    models.Participant person =
+        _participants.firstWhere((p) => p.participantId == participantId);
     return person.nickname ?? person.firstName;
   }
 
@@ -242,6 +246,9 @@ class HomeViewModel extends ChangeNotifier {
       // Process each document group
       for (final group in documentGroups) {
         for (final transaction in group.transactions) {
+          // Skip if ignored
+          if (transaction.ignoreTransaction) continue;
+
           // Skip transactions without accounts
           if (transaction.suggestedAccount == null) continue;
 
@@ -420,7 +427,7 @@ class HomeViewModel extends ChangeNotifier {
       //   const error = 'Invalid file format. Please select a valid PDF, OFX, or CSV document.';
       //   _errorMessage = error;
       //   notifyListeners();
-      //   return const ValidationResult.failure( 
+      //   return const ValidationResult.failure(
       //       error: error, type: ValidationErrorType.invalidFormat);
       // }
 

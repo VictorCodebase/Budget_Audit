@@ -1,6 +1,5 @@
 import 'package:budget_audit/core/theme/app_theme.dart';
 import 'package:budget_audit/core/widgets/app_header.dart';
-import 'package:budget_audit/core/widgets/content_box.dart';
 import 'package:budget_audit/features/settings/settings_viewmodel.dart';
 
 import 'package:budget_audit/features/settings/widgets/profile_section.dart';
