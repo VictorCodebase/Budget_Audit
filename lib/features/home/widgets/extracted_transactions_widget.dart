@@ -610,7 +610,7 @@ class _ExtractedTransactionsWidgetState
                 'You are about to save all transactions to the database.'),
             const SizedBox(height: 16),
             Text(
-              'Total: ${viewModel.documentGroups.fold(0, (sum, group) => sum + group.transactions.length)} transactions',
+              'Total: ${viewModel.documentGroups.fold(0, (sum, group) => sum + group.transactions.where((t) => !t.ignoreTransaction).length)} transactions',
               style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),

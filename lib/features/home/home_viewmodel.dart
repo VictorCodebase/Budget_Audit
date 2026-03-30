@@ -809,7 +809,7 @@ class HomeViewModel extends ChangeNotifier {
     } else {
       _logger.info('Not propagating vendor-account association: '
           'vendor=${updatedTransaction.vendorId}, \n'
-          'account=${updatedTransaction.suggestedAccount!.name} \n'
+          'account=${updatedTransaction.suggestedAccount?.name} \n'
           'PARAMS: \n'
           'autoUpdateVendorAssociations: $_autoUpdateVendorAssociations\n'
           'userModified: ${updatedTransaction.userModified}\n'
