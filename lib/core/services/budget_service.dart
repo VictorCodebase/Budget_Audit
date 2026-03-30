@@ -653,6 +653,22 @@ class TransactionService {
     bool isIgnored = false,
   }) async {
     try {
+      // Check for duplicate before creating single transaction
+      final existing = await (_appDatabase.select(_appDatabase.transactions)
+            ..where((t) =>
+                t.date.equals(date) &
+                t.vendorId.equals(vendorId) &
+                t.amount.equals(amount) &
+                t.accountId.equals(accountId) &
+                t.participantId.equals(participantId)))
+          .getSingleOrNull();
+
+      if (existing != null) {
+        _logger.info(
+            'Skipping duplicate transaction creation: Date=$date, Amount=$amount');
+        return existing.transactionId;
+      }
+
       final transactionId =
           await _appDatabase.into(_appDatabase.transactions).insert(
                 TransactionsCompanion.insert(
@@ -674,6 +690,50 @@ class TransactionService {
     } catch (e, st) {
       _logger.severe('Error creating transaction', e, st);
       return null;
+    }
+  }
+
+  /// Batch create transactions, skipping duplicates
+  /// Returns the number of new transactions inserted
+  Future<int> createTransactions(
+      List<TransactionsCompanion> transactions) async {
+    int insertedCount = 0;
+    try {
+      await _appDatabase.transaction(() async {
+        for (final txn in transactions) {
+          // Safety check for required fields presence (though .insert ensures them usually)
+          if (!txn.date.present ||
+              !txn.vendorId.present ||
+              !txn.amount.present ||
+              !txn.accountId.present ||
+              !txn.participantId.present) {
+            _logger
+                .warning("Skipping malformed transaction companion in batch");
+            continue;
+          }
+
+          final existing = await (_appDatabase.select(_appDatabase.transactions)
+                ..where((t) =>
+                    t.date.equals(txn.date.value) &
+                    t.vendorId.equals(txn.vendorId.value) &
+                    t.amount.equals(txn.amount.value) &
+                    t.accountId.equals(txn.accountId.value) &
+                    t.participantId.equals(txn.participantId.value)))
+              .getSingleOrNull();
+
+          if (existing == null) {
+            await _appDatabase.into(_appDatabase.transactions).insert(txn);
+            insertedCount++;
+          }
+        }
+      });
+      _logger.info('Batch created $insertedCount transactions');
+      return insertedCount;
+    } catch (e, st) {
+      _logger.severe('Error batch creating transactions', e, st);
+      // Depending on requirement, we might want to rethrow or return 0
+      // Rethrowing is safer to alert caller of DB failure
+      rethrow;
     }
   }
 

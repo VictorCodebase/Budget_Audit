@@ -39,6 +39,7 @@ dependencies:
   # File Operations
   file_picker: ^6.1.1
   yaml: ^3.1.2
+  csv: ^6.0.0
 
   # Utilities
   intl: ^0.19.0
@@ -59,6 +60,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
 
+  # production
+  msix: ^3.5.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -68,8 +72,15 @@ dev_dependencies:
   logging: ^1.2.0
   build_runner: ^2.9.0
   drift_dev: ^2.29.0
+  flutter_native_splash: ^2.4.7
 
-
+msix_config:
+  display_name: Budget Audit
+  publisher_display_name: victorcodebase
+  publisher: CN=D2F67954-AAD8-4E2C-8BD8-058CB527C3E2
+  identity_name: victorcodebase.BudgetAudit
+  languages: en-US
+  logo_path: C:\Users\markk\OneDrive\Desktop\programming\bgtAudit\Budget_Audit\assets\images\logo.png
 
 
 # The following section is specific to Flutter packages.

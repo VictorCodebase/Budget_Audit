@@ -2,7 +2,7 @@
 
 import 'dart:io';
 import 'package:budget_audit/core/models/client_models.dart';
-import 'package:budget_audit/core/services/parser/hsbc_parser.dart';
+import 'package:budget_audit/core/services/parser/hsbc_parser.txt';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

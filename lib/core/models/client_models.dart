@@ -36,34 +36,38 @@ class UploadedDocument extends Equatable {
 
 /// Financial institutions supported by the app
 enum FinancialInstitution {
-  hsbc,
+  csv,
+  ofx,
   equity,
-  mpesa,
-  custom;
+  mpesa;
 
   String get displayName {
     switch (this) {
-      case FinancialInstitution.hsbc:
-        return 'HSBC';
+      // case FinancialInstitution.hsbc:
+      //   return 'HSBC';
       case FinancialInstitution.equity:
         return 'Equity';
       case FinancialInstitution.mpesa:
         return 'M-PESA';
-      case FinancialInstitution.custom:
-        return 'Custom';
+      case FinancialInstitution.csv:
+        return 'CSV';
+      case FinancialInstitution.ofx:
+        return 'OFX';
     }
   }
 
   String get logoPath {
     switch (this) {
-      case FinancialInstitution.hsbc:
-        return 'assets/banks/hsbc.png';
+      // case FinancialInstitution.hsbc:
+      //   return 'assets/banks/hsbc.png';
       case FinancialInstitution.equity:
         return 'assets/banks/equity.png';
       case FinancialInstitution.mpesa:
         return 'assets/banks/mpesa.png';
-      case FinancialInstitution.custom:
-        return 'assets/banks/custom.png';
+      case FinancialInstitution.csv:
+        return 'assets/banks/csv.png';
+      case FinancialInstitution.ofx:
+        return 'assets/banks/ofx.png';
     }
   }
 }
@@ -132,6 +136,7 @@ class ParsedTransaction extends Equatable {
     AccountData? suggestedAccount,
     MatchStatus? originalStatus,
     bool? autoUpdated,
+    bool? ignoreTransaction,
   }) {
     return ParsedTransaction(
       id: id ?? this.id,
@@ -150,6 +155,7 @@ class ParsedTransaction extends Equatable {
       suggestedAccount: suggestedAccount ?? this.suggestedAccount,
       originalStatus: originalStatus ?? this.originalStatus,
       autoUpdated: autoUpdated ?? this.autoUpdated,
+      ignoreTransaction: ignoreTransaction ?? this.ignoreTransaction,
     );
   }
 
@@ -195,8 +201,10 @@ enum ValidationErrorType {
   none,
   passwordRequired,
   passwordIncorrect,
+  missingRequiredFields,
   fileNotFound,
   parsingFailed,
+  fileReadError,
   invalidFormat,
   unknown
 }

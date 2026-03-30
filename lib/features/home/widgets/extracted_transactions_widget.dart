@@ -181,7 +181,8 @@ class _ExtractedTransactionsWidgetState
                     _buildMetadataItem(
                       icon: Icons.person,
                       label: 'Owner',
-                      value: 'Participant ${group.document.ownerParticipantId}',
+                      value: viewModel.getParticipantName(
+                          group.document.ownerParticipantId),
                     ),
                     _buildMetadataItem(
                       icon: Icons.account_balance,
@@ -428,7 +429,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: criticalTxns,
             status: MatchStatus.critical,
-            title: 'Your Input is Required',
+            title: 'UNRECOGNIZED: Your Input is Required',
             description:
                 'The vendors are not recognized by the system. Your review is required to continue.',
             color: context.colors.error,
@@ -440,7 +441,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: potentialTxns,
             status: MatchStatus.potential,
-            title: 'Please review vendor names',
+            title: 'SEMBLANCE: Please review vendor names',
             description:
                 'Vendor names resemble vendors you have interacted with. Consider reviewing to ensure accuracy',
             color: Colors.orange,
@@ -452,7 +453,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: ambiguousTxns,
             status: MatchStatus.ambiguous,
-            title: 'Review historical associations',
+            title: 'AMBIGUOUS: Review historical associations',
             description:
                 'Transaction Vendors have been matched, but there exist differing historical associations. Consider reviewing for accuracy.',
             color: const Color(0xFF86EFAC),
@@ -464,7 +465,7 @@ class _ExtractedTransactionsWidgetState
             viewModel: viewModel,
             transactions: confidentTxns,
             status: MatchStatus.confident,
-            title: 'Recognized transactions',
+            title: 'SURE: Recognized transactions',
             description:
                 'Transaction Vendors have been accurately matched. Consider reviewing for accuracy.',
             color: context.colors.success,
@@ -484,8 +485,9 @@ class _ExtractedTransactionsWidgetState
   }) {
     final unmodifiedCount = transactions
         .where((txn) =>
-            txn.suggestedAccount == null ||
-            (!txn.userModified && !txn.autoUpdated))
+            !txn.ignoreTransaction &&
+            (txn.suggestedAccount == null ||
+                (!txn.userModified && !txn.autoUpdated)))
         .length;
 
     return ContentBox(
@@ -608,7 +610,7 @@ class _ExtractedTransactionsWidgetState
                 'You are about to save all transactions to the database.'),
             const SizedBox(height: 16),
             Text(
-              'Total: ${viewModel.documentGroups.fold(0, (sum, group) => sum + group.transactions.length)} transactions',
+              'Total: ${viewModel.documentGroups.fold(0, (sum, group) => sum + group.transactions.where((t) => !t.ignoreTransaction).length)} transactions',
               style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -704,6 +706,9 @@ class _TransactionContentBox extends StatelessWidget {
   }
 
   Color _getCurrentColor(BuildContext context) {
+    if (transaction.ignoreTransaction) {
+      return context.colors.textSecondary; // Grey for ignored
+    }
     if (transaction.userModified) {
       return context.colors.success;
     } else if (transaction.autoUpdated) {
@@ -750,83 +755,102 @@ class _TransactionContentBox extends StatelessWidget {
               ),
           ],
         ),
-        Text(
-          '${transaction.amount < 0 ? '-' : '+'}${transaction.amount.abs().toStringAsFixed(2)}',
-          style: AppTheme.bodyMedium.copyWith(
-            color: transaction.amount < 0
-                ? context.colors.error
-                : context.colors.success,
-            fontWeight: FontWeight.w600,
+        if (transaction.ignoreTransaction)
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                  color: context.colors.surface,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: context.colors.border)),
+              child: Text(
+                'IGNORED',
+                style: AppTheme.caption.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: context.colors.textSecondary),
+              ),
+            ),
+          )
+        else
+          Text(
+            '${transaction.amount < 0 ? '-' : '+'}${transaction.amount.abs().toStringAsFixed(2)}',
+            style: AppTheme.bodyMedium.copyWith(
+              color: transaction.amount < 0
+                  ? context.colors.error
+                  : context.colors.success,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        EnhancedAccountSelector(
-          categories: categories,
-          selectedAccountId: transaction.suggestedAccount?.id,
-          vendorId: transaction.vendorId,
-          onAccountSelected: (account) async {
-            final viewModel = context.read<HomeViewModel>();
+        if (!transaction.ignoreTransaction)
+          EnhancedAccountSelector(
+            categories: categories,
+            selectedAccountId: transaction.suggestedAccount?.id,
+            vendorId: transaction.vendorId,
+            onAccountSelected: (account) async {
+              final viewModel = context.read<HomeViewModel>();
 
-            // Check if we should prompt for vendor-wide update
-            // Allow prompt if vendorId IS present OR vendorName is present (relaxed)
-            final shouldPrompt = viewModel.autoUpdateVendorAssociations &&
-                !transaction.userModified;
+              // Check if we should prompt for vendor-wide update
+              // Allow prompt if vendorId IS present OR vendorName is present (relaxed)
+              final shouldPrompt = viewModel.autoUpdateVendorAssociations &&
+                  !transaction.userModified;
 
-            if (shouldPrompt) {
-              // Count other transactions with same vendor
-              final sameVendorCount = viewModel.documentGroups
-                  .expand((g) => g.transactions)
-                  .where((t) {
-                // Must not be self
-                if (t.id == transaction.id) return false;
-                // Must not be already modified
-                if (t.userModified) return false;
+              if (shouldPrompt) {
+                // Count other transactions with same vendor
+                final sameVendorCount = viewModel.documentGroups
+                    .expand((g) => g.transactions)
+                    .where((t) {
+                  // Must not be self
+                  if (t.id == transaction.id) return false;
+                  // Must not be already modified
+                  if (t.userModified) return false;
 
-                // Match by ID if both have it
-                if (t.vendorId != null && transaction.vendorId != null) {
-                  return t.vendorId == transaction.vendorId;
-                }
-                // Fallback to name match
-                return t.vendorName.toLowerCase().trim() ==
-                    transaction.vendorName.toLowerCase().trim();
-              }).length;
+                  // Match by ID if both have it
+                  if (t.vendorId != null && transaction.vendorId != null) {
+                    return t.vendorId == transaction.vendorId;
+                  }
+                  // Fallback to name match
+                  return t.vendorName.toLowerCase().trim() ==
+                      transaction.vendorName.toLowerCase().trim();
+                }).length;
 
-              if (sameVendorCount > 0) {
-                final result = await _showVendorUpdateDialog(
-                  context,
-                  transaction.vendorName,
-                  account.name,
-                  sameVendorCount,
-                  viewModel.toggleAutoUpdateVendorAssociations,
-                );
-
-                if (result == true) {
-                  // Update with propagation
-                  viewModel.updateTransaction(
-                    transaction.copyWith(
-                      account: account.name,
-                      suggestedAccount: account,
-                      matchStatus: MatchStatus.confident,
-                      userModified: true,
-                      autoUpdated: false,
-                    ),
-                    propagateToOthers: true,
+                if (sameVendorCount > 0) {
+                  final result = await _showVendorUpdateDialog(
+                    context,
+                    transaction.vendorName,
+                    account.name,
+                    sameVendorCount,
+                    viewModel.toggleAutoUpdateVendorAssociations,
                   );
-                  return;
+
+                  if (result == true) {
+                    // Update with propagation
+                    viewModel.updateTransaction(
+                      transaction.copyWith(
+                        account: account.name,
+                        suggestedAccount: account,
+                        matchStatus: MatchStatus.confident,
+                        userModified: true,
+                        autoUpdated: false,
+                      ),
+                      propagateToOthers: true,
+                    );
+                    return;
+                  }
                 }
               }
-            }
 
-            // Standard update without propagation
-            onUpdate(transaction.copyWith(
-              account: account.name,
-              suggestedAccount: account,
-              matchStatus: MatchStatus.confident,
-              userModified: true,
-              autoUpdated: false,
-            ));
-          },
-          onDeleteRecommendation: onDeleteRecommendation,
-        ),
+              // Standard update without propagation
+              onUpdate(transaction.copyWith(
+                account: account.name,
+                suggestedAccount: account,
+                matchStatus: MatchStatus.confident,
+                userModified: true,
+                autoUpdated: false,
+              ));
+            },
+            onDeleteRecommendation: onDeleteRecommendation,
+          ),
       ],
       headerWidgets: [
         Row(
@@ -887,10 +911,18 @@ class _TransactionContentBox extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     transaction.vendorName,
-                    style: AppTheme.bodyMedium
-                        .copyWith(fontWeight: FontWeight.w600),
+                    style: AppTheme.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      decoration: transaction.ignoreTransaction
+                          ? TextDecoration.lineThrough
+                          : null,
+                      color: transaction.ignoreTransaction
+                          ? context.colors.textSecondary
+                          : null,
+                    ),
                   ),
-                  if (transaction.potentialMatches.isNotEmpty) ...[
+                  if (transaction.potentialMatches.isNotEmpty &&
+                      !transaction.ignoreTransaction) ...[
                     const SizedBox(height: 4),
                     Text(
                       'Similar: ${transaction.potentialMatches.join(", ")}',
@@ -912,10 +944,15 @@ class _TransactionContentBox extends StatelessWidget {
                 Text(
                   '${transaction.amount < 0 ? '-' : '+'}${transaction.amount.abs().toStringAsFixed(2)}',
                   style: AppTheme.bodyMedium.copyWith(
-                    color: transaction.amount < 0
-                        ? context.colors.error
-                        : context.colors.success,
+                    color: transaction.ignoreTransaction
+                        ? context.colors.textSecondary
+                        : (transaction.amount < 0
+                            ? context.colors.error
+                            : context.colors.success),
                     fontWeight: FontWeight.w600,
+                    decoration: transaction.ignoreTransaction
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
               ],
@@ -923,98 +960,126 @@ class _TransactionContentBox extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        const Text('Account', style: AppTheme.caption),
-        const SizedBox(height: 8),
-        EnhancedAccountSelector(
-          categories: categories,
-          selectedAccountId: transaction.suggestedAccount?.id,
-          vendorId: transaction.vendorId,
-          onAccountSelected: (account) async {
-            final viewModel = context.read<HomeViewModel>();
+        if (!transaction.ignoreTransaction) ...[
+          const Text('Account', style: AppTheme.caption),
+          const SizedBox(height: 8),
+          EnhancedAccountSelector(
+            categories: categories,
+            selectedAccountId: transaction.suggestedAccount?.id,
+            vendorId: transaction.vendorId,
+            onAccountSelected: (account) async {
+              final viewModel = context.read<HomeViewModel>();
 
-            // Check if we should prompt for vendor-wide update
-            final shouldPrompt = viewModel.autoUpdateVendorAssociations &&
-                transaction.vendorId != null &&
-                !transaction.userModified;
+              // Check if we should prompt for vendor-wide update
+              final shouldPrompt = viewModel.autoUpdateVendorAssociations &&
+                  transaction.vendorId != null &&
+                  !transaction.userModified;
 
-            if (shouldPrompt) {
-              // Count other transactions with same vendor
-              final sameVendorCount = viewModel.documentGroups
-                  .expand((g) => g.transactions)
-                  .where((t) =>
-                      t.id != transaction.id &&
-                      t.vendorId == transaction.vendorId &&
-                      !t.userModified)
-                  .length;
+              if (shouldPrompt) {
+                // Count other transactions with same vendor
+                final sameVendorCount = viewModel.documentGroups
+                    .expand((g) => g.transactions)
+                    .where((t) =>
+                        t.id != transaction.id &&
+                        t.vendorId == transaction.vendorId &&
+                        !t.userModified)
+                    .length;
 
-              if (sameVendorCount > 0) {
-                final result = await _showVendorUpdateDialog(
-                  context,
-                  transaction.vendorName,
-                  account.name,
-                  sameVendorCount,
-                  viewModel.toggleAutoUpdateVendorAssociations,
-                );
-
-                if (result == true) {
-                  // Update with propagation
-                  viewModel.updateTransaction(
-                    transaction.copyWith(
-                      account: account.name,
-                      suggestedAccount: account,
-                      matchStatus: MatchStatus.confident,
-                      userModified: true,
-                      autoUpdated: false,
-                    ),
-                    propagateToOthers: true,
+                if (sameVendorCount > 0) {
+                  final result = await _showVendorUpdateDialog(
+                    context,
+                    transaction.vendorName,
+                    account.name,
+                    sameVendorCount,
+                    viewModel.toggleAutoUpdateVendorAssociations,
                   );
-                  return;
+
+                  if (result == true) {
+                    // Update with propagation
+                    viewModel.updateTransaction(
+                      transaction.copyWith(
+                        account: account.name,
+                        suggestedAccount: account,
+                        matchStatus: MatchStatus.confident,
+                        userModified: true,
+                        autoUpdated: false,
+                      ),
+                      propagateToOthers: true,
+                    );
+                    return;
+                  }
                 }
               }
-            }
 
-            // Standard update without propagation
-            onUpdate(transaction.copyWith(
-              account: account.name,
-              suggestedAccount: account,
-              matchStatus: MatchStatus.confident,
-              userModified: true,
-              autoUpdated: false,
-            ));
-          },
-          onDeleteRecommendation: onDeleteRecommendation,
-        ),
-        const SizedBox(height: 16),
+              // Standard update without propagation
+              onUpdate(transaction.copyWith(
+                account: account.name,
+                suggestedAccount: account,
+                matchStatus: MatchStatus.confident,
+                userModified: true,
+                autoUpdated: false,
+              ));
+            },
+            onDeleteRecommendation: onDeleteRecommendation,
+          ),
+          const SizedBox(height: 16),
+        ],
         Row(
           children: [
-            ElevatedButton.icon(
-              onPressed: () => _showSplitDialog(context),
-              icon: const Icon(Icons.call_split, size: 18),
-              label: const Text('Split Transaction'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.colors.secondary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+            if (!transaction.ignoreTransaction)
+              ElevatedButton.icon(
+                onPressed: () => _showSplitDialog(context),
+                icon: const Icon(Icons.call_split, size: 18),
+                label: const Text('Split Transaction'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.secondary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                 ),
               ),
-            ),
             const Spacer(),
+            // Ignore Toggle
             Row(
               children: [
                 Checkbox(
-                  value: transaction.useMemory,
+                  value: transaction.ignoreTransaction,
                   onChanged: (val) {
                     onUpdate(transaction.copyWith(
-                      useMemory: val,
-                      userModified: true,
+                      ignoreTransaction: val,
+                      userModified: true, // Mark as modified so it persists
                     ));
                   },
-                  activeColor: context.colors.primary,
+                  activeColor: context.colors.textSecondary,
                 ),
-                const Text('Remember', style: AppTheme.bodySmall),
+                Text(
+                  'Ignore',
+                  style: AppTheme.bodySmall.copyWith(
+                    color: transaction.ignoreTransaction
+                        ? context.colors.textSecondary
+                        : null,
+                  ),
+                ),
               ],
             ),
+            const SizedBox(width: 16),
+            if (!transaction.ignoreTransaction)
+              Row(
+                children: [
+                  Checkbox(
+                    value: transaction.useMemory,
+                    onChanged: (val) {
+                      onUpdate(transaction.copyWith(
+                        useMemory: val,
+                        userModified: true,
+                      ));
+                    },
+                    activeColor: context.colors.primary,
+                  ),
+                  const Text('Remember', style: AppTheme.bodySmall),
+                ],
+              ),
           ],
         ),
       ],

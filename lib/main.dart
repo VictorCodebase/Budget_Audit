@@ -52,17 +52,12 @@ class BudgetAudit extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        String initialRoute = '/onboarding';
-
-        if (appContext.hasValidSession) {
-          initialRoute = '/home';
-        }
         return MaterialApp(
           title: 'BudgetAudit',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-          initialRoute: initialRoute,
+          initialRoute: '/splash',
           onGenerateRoute: AppRouter.generateRoute,
           builder: (context, child) {
             return GradientBackground(

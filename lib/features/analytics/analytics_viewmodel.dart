@@ -219,19 +219,19 @@ class AnalyticsViewModel extends ChangeNotifier {
       _availableTemplates =
           await _budgetService.templateService.getAllTemplates();
 
-
       // Select template (use provided, current from context, or first available)
       _selectedTemplate = template ??
           _appContext.currentTemplate ??
           (_availableTemplates.isNotEmpty ? _availableTemplates.first : null);
 
       if (_selectedTemplate == null) {
-        _setError('No templates available. Please create a budget first.');
+        _setError('No budgets available. Please create a budget first.');
         return;
       }
 
-      _templateParticipants = await _participantService
-          .getParticipantsWithTransactionsInTemplate(_selectedTemplate!.templateId);
+      _templateParticipants =
+          await _participantService.getParticipantsWithTransactionsInTemplate(
+              _selectedTemplate!.templateId);
 
       await _loadTemplateData();
       await _computeAnalytics();
@@ -460,7 +460,7 @@ class AnalyticsViewModel extends ChangeNotifier {
     _vendorSpendingData.sort((a, b) => b.totalSpent.compareTo(a.totalSpent));
   }
 
-  /// Compute expenditure vs budget variation over time
+  /// Compute expenditure vs budget variation over time (Cumulative)
   void _computeExpenditureVsBudgetChart() {
     if (_startDate == null || _endDate == null) {
       _expenditureVsBudgetData = [];
@@ -477,14 +477,17 @@ class AnalyticsViewModel extends ChangeNotifier {
 
     // Generate time intervals based on selected time unit
     final intervals = _generateTimeIntervals(periodStart, periodEnd, _timeUnit);
-    debugPrint('intervals: ${intervals.toString()}');
+
+    // Track cumulative spending
+    double cumulativeSpent = 0.0;
 
     for (final interval in intervals) {
-      debugPrint(
-          'participant filter condition: ${_participantFilter == ParticipantFilter.all} \n');
       if (_participantFilter == ParticipantFilter.all) {
-        // Calculate average across all participants
-        final participantValues = <int, double>{};
+        // For "All", we calculate the total spent across all users for this interval
+        // and add it to our running total.
+
+        // Sum spending for all participants in this interval
+        double intervalSpent = 0.0;
 
         for (final participant in _templateParticipants) {
           final participantTransactions = _allTransactions
@@ -495,25 +498,18 @@ class AnalyticsViewModel extends ChangeNotifier {
                   t.date.isBefore(interval['end']))
               .toList();
 
-          final spent = _calculateTotalSpent(participantTransactions);
-          final double percentage =
-              totalBudgeted > 0 ? (spent / totalBudgeted) * 100 : 0;
-          participantValues[participant.participantId] = percentage;
+          intervalSpent += _calculateTotalSpent(participantTransactions);
         }
-        debugPrint('participantValues: ${participantValues.toString()}');
-        debugPrint(
-            'total tenplate participants: ${_templateParticipants.length.toString()}');
 
-        // Average the percentages
-        final avgPercentage = participantValues.values.isEmpty
-            ? 0.0
-            : participantValues.values.reduce((a, b) => a + b) /
-                participantValues.length;
-        debugPrint('calculated avgPercentage: ${avgPercentage.toString()}');
+        cumulativeSpent += intervalSpent;
+
+        // Calculate cumulative percentage against TOTAL budget
+        final floatTotalBudget = totalBudgeted > 0 ? totalBudgeted : 1.0;
+        final cumulativePercentage = (cumulativeSpent / floatTotalBudget) * 100;
 
         dataPoints.add(TimeSeriesDataPoint(
           date: interval['start'],
-          value: avgPercentage,
+          value: cumulativePercentage,
           label: interval['label'],
         ));
       } else if (_selectedParticipant != null) {
@@ -526,14 +522,17 @@ class AnalyticsViewModel extends ChangeNotifier {
                 t.date.isBefore(interval['end']))
             .toList();
 
-        final spent = _calculateTotalSpent(participantTransactions);
-        final double percentage =
-            totalBudgeted > 0 ? (spent / totalBudgeted) * 100 : 0;
-        debugPrint('calculated percentage: ${percentage.toString()}');
+        final intervalSpent = _calculateTotalSpent(participantTransactions);
+        cumulativeSpent += intervalSpent;
+
+        // Calculate cumulative percentage against TOTAL budget (or should it be individual budget share?
+        // Usually budget is shared, so total budget makes sense contextually for "budget used")
+        final floatTotalBudget = totalBudgeted > 0 ? totalBudgeted : 1.0;
+        final cumulativePercentage = (cumulativeSpent / floatTotalBudget) * 100;
 
         dataPoints.add(TimeSeriesDataPoint(
           date: interval['start'],
-          value: percentage,
+          value: cumulativePercentage,
           label: interval['label'],
         ));
       }

@@ -1,6 +1,5 @@
 import 'package:budget_audit/core/theme/app_theme.dart';
 import 'package:budget_audit/core/widgets/app_header.dart';
-import 'package:budget_audit/core/widgets/content_box.dart';
 import 'package:budget_audit/features/settings/settings_viewmodel.dart';
 
 import 'package:budget_audit/features/settings/widgets/profile_section.dart';
@@ -33,9 +32,7 @@ class _SettingsViewContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const AppHeader(
-                subtitle: 'Manage your account, budgets, and preferences',
-              ),
+              const AppHeader(),
               Padding(
                 padding: const EdgeInsets.all(AppTheme.spacingLg),
                 child: Column(
@@ -59,7 +56,7 @@ class _SettingsViewContent extends StatelessWidget {
                     const SizedBox(height: AppTheme.spacingMd),
                     Text(
                       settingsViewModel.isManager
-                          ? 'Manage all templates, categories, and accounts'
+                          ? 'Manage all budgets, categories, and accounts'
                           : 'View and manage your budgets',
                       style: AppTheme.bodyMedium.copyWith(
                         color: context.colors.textSecondary,

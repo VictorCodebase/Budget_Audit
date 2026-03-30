@@ -26,9 +26,14 @@ import '../services/participant_service.dart';
 import '../services/service_locator.dart';
 import '../context.dart';
 
+import 'package:budget_audit/features/splash/splash_view.dart';
+
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      case '/splash':
+        return MaterialPageRoute(builder: (_) => const SplashView());
+
       case '/':
       case '/onboarding':
         return MaterialPageRoute(

@@ -1,3 +1,4 @@
+import 'package:budget_audit/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:budget_audit/core/models/client_models.dart';
 
@@ -141,7 +142,7 @@ class _EnhancedAccountSelectorState extends State<EnhancedAccountSelector> {
                 width: constraints.maxWidth,
                 constraints: const BoxConstraints(maxHeight: 300),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ListView.builder(

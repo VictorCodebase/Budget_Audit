@@ -49,6 +49,7 @@ class ParticipantManagementViewModel extends ChangeNotifier {
     'nickname': '',
     'email': '',
     'password': '',
+    'currentPassword': '',
   };
 
   String getFormValue(String field) => _formData[field] ?? '';
@@ -105,6 +106,7 @@ class ParticipantManagementViewModel extends ChangeNotifier {
       'nickname': '',
       'email': '',
       'password': '',
+      'currentPassword': '',
     });
     _editingParticipantId = null;
   }
@@ -115,6 +117,7 @@ class ParticipantManagementViewModel extends ChangeNotifier {
     final firstName = _formData['firstName']?.trim() ?? '';
     final email = _formData['email']?.trim() ?? '';
     final password = _formData['password']?.trim() ?? '';
+    final currentPassword = _formData['currentPassword']?.trim() ?? '';
 
     if (firstName.isEmpty) {
       return 'First name is required';
@@ -137,6 +140,11 @@ class ParticipantManagementViewModel extends ChangeNotifier {
 
     if (password.isNotEmpty && password.length < 6) {
       return 'Password must be at least 6 characters';
+    }
+
+    // Current password required when editing self
+    if (isEditMode && isEditingSelf && currentPassword.isEmpty) {
+      return 'Current password is required to update your profile';
     }
 
     return null;
@@ -214,6 +222,7 @@ class ParticipantManagementViewModel extends ChangeNotifier {
     _formData['nickname'] = participant.nickname ?? '';
     _formData['email'] = participant.email;
     _formData['password'] = ''; // Never populate password
+    _formData['currentPassword'] = ''; // Never populate password
     _clearError();
     notifyListeners();
   }
@@ -240,6 +249,21 @@ class ParticipantManagementViewModel extends ChangeNotifier {
       final existingParticipant = _participants.firstWhere(
         (p) => p.participantId == _editingParticipantId,
       );
+
+      // Verify current password if editing self
+      if (isEditingSelf) {
+        final currentPassword = _formData['currentPassword']?.trim() ?? '';
+        final isPasswordValid = await _participantService.verifyParticipant(
+          existingParticipant.email,
+          currentPassword,
+        );
+
+        if (!isPasswordValid) {
+          _setError('Incorrect current password');
+          _setLoading(false);
+          return false;
+        }
+      }
 
       final participant = models.Participant(
         participantId: _editingParticipantId!,

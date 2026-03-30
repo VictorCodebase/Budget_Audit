@@ -7,18 +7,6 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../analytics_viewmodel.dart';
 
-class _ChartDisplayData {
-  final String label;
-  final double value;
-  final bool isOther;
-
-  _ChartDisplayData({
-    required this.label,
-    required this.value,
-    this.isOther = false,
-  });
-}
-
 class SpendingDeepDiveTab extends StatelessWidget {
   const SpendingDeepDiveTab({Key? key}) : super(key: key);
 
@@ -444,50 +432,41 @@ class SpendingDeepDiveTab extends StatelessWidget {
             'Expenditure Relative to Budget',
             style: AppTheme.h3.copyWith(color: context.colors.textPrimary),
           ),
+          const SizedBox(height: AppTheme.spacing2xs),
+          Text(
+            'Daily spending contribution to total budget',
+            style: AppTheme.bodySmall
+                .copyWith(color: context.colors.textSecondary),
+          ),
           const SizedBox(height: AppTheme.spacingLg),
           SizedBox(
-            height: 300,
+            height: 350, // Increased height for rotated labels
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // COLLAPSING LOGIC:
-                // We want each bar to have at least 50px of space for the bar + label.
-                const double minBarSpace = 55.0;
-                final int maxBarsPossible =
-                    (constraints.maxWidth / minBarSpace).floor();
+                final displayData = viewModel.expenditureRelativeToBudgetData;
+                final dataCount = displayData.length;
 
-                List<_ChartDisplayData> displayData = viewModel
-                    .expenditureRelativeToBudgetData
-                    .map((e) =>
-                        _ChartDisplayData(label: e.label, value: e.value))
-                    .toList();
+                // Dynamic sizing logic
+                const double minBarWidth =
+                    12.0; // Minimum thickness for visibility
+                const double barSpacing = 8.0; // Space between bars
+                const double minSlotWidth = minBarWidth + barSpacing;
 
-                if (displayData.length > maxBarsPossible &&
-                    maxBarsPossible > 2) {
-                  final visibleCount = maxBarsPossible - 1;
-                  final mainItems = displayData.take(visibleCount).toList();
-                  final otherItems = displayData.skip(visibleCount).toList();
+                final double minRequiredWidth = dataCount * minSlotWidth;
+                final double availableWidth = constraints.maxWidth;
 
-                  // Create a dummy "Others" data point
-                  final avgValue =
-                      otherItems.map((e) => e.value).reduce((a, b) => a + b) /
-                          otherItems.length;
+                final bool isScrollable = minRequiredWidth > availableWidth;
+                final double chartWidth =
+                    isScrollable ? minRequiredWidth : availableWidth;
 
-                  final othersEntry = _ChartDisplayData(
-                    label: 'Others (${otherItems.length})',
-                    value: avgValue,
-                    isOther: true,
-                  );
+                // Calculate actual bar width to fill space if not scrollable
+                final double actualBarWidth = isScrollable
+                    ? minBarWidth
+                    : (availableWidth / dataCount) * 0.6; // 60% of slot width
 
-                  displayData = [...mainItems, othersEntry];
-                }
-
-                double barWidth =
-                    (constraints.maxWidth / (displayData.length * 2))
-                        .clamp(16.0, 40.0);
-
-                return BarChart(
+                Widget chart = BarChart(
                   BarChartData(
-                    alignment: BarChartAlignment.spaceAround,
+                    alignment: BarChartAlignment.center,
                     maxY: _calculateMaxYForRelativeBudget(viewModel),
                     barTouchData: BarTouchData(
                       touchTooltipData: BarTouchTooltipData(
@@ -499,7 +478,7 @@ class SpendingDeepDiveTab extends StatelessWidget {
                             AppTheme.bodySmall
                                 .copyWith(fontWeight: FontWeight.bold),
                             children: [
-                              TextSpan(text: '${rod.toY.toStringAsFixed(1)}%'),
+                              TextSpan(text: '${rod.toY.toStringAsFixed(2)}%'),
                             ],
                           );
                         },
@@ -510,9 +489,8 @@ class SpendingDeepDiveTab extends StatelessWidget {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          interval:
-                              1, // Always 1 because we manually collapsed the data
-                          reservedSize: 40,
+                          interval: 1,
+                          reservedSize: 60, // Space for rotated labels
                           getTitlesWidget: (value, meta) {
                             final index = value.toInt();
                             if (index < 0 || index >= displayData.length) {
@@ -520,15 +498,17 @@ class SpendingDeepDiveTab extends StatelessWidget {
                             }
                             final label = displayData[index].label;
 
+                            // Rotate labels if many items
                             return Padding(
                               padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                label,
-                                style: AppTheme.caption.copyWith(
-                                  fontSize: 10,
-                                  fontWeight: label.startsWith('Others')
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                              child: Transform.rotate(
+                                angle: -0.785398, // -45 degrees in radians
+                                child: Text(
+                                  label,
+                                  style: AppTheme.caption.copyWith(
+                                    fontSize: 10,
+                                  ),
+                                  textAlign: TextAlign.right,
                                 ),
                               ),
                             );
@@ -552,13 +532,10 @@ class SpendingDeepDiveTab extends StatelessWidget {
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
-                      horizontalInterval: 20,
+                      horizontalInterval: 10,
                       getDrawingHorizontalLine: (value) => FlLine(
-                        color: value == 100
-                            ? context.colors.warning
-                            : context.colors.border,
-                        strokeWidth: value == 100 ? 2 : 1,
-                        dashArray: value == 100 ? [5, 5] : null,
+                        color: context.colors.border,
+                        strokeWidth: 1,
                       ),
                     ),
                     borderData: FlBorderData(show: false),
@@ -568,18 +545,28 @@ class SpendingDeepDiveTab extends StatelessWidget {
                         barRods: [
                           BarChartRodData(
                             toY: entry.value.value,
-                            color: entry.value.isOther
-                                ? context.colors.textTertiary
-                                : context.colors.secondary,
-                            width: barWidth,
+                            color: context.colors.secondary,
+                            width: actualBarWidth,
                             borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(6)),
+                                top: Radius.circular(4)),
                           ),
                         ],
                       );
                     }).toList(),
                   ),
                 );
+
+                if (isScrollable) {
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: chartWidth,
+                      child: chart,
+                    ),
+                  );
+                } else {
+                  return chart;
+                }
               },
             ),
           ),
@@ -589,11 +576,14 @@ class SpendingDeepDiveTab extends StatelessWidget {
   }
 
   double _calculateMaxYForRelativeBudget(AnalyticsViewModel viewModel) {
-    if (viewModel.expenditureRelativeToBudgetData.isEmpty) return 120;
+    if (viewModel.expenditureRelativeToBudgetData.isEmpty) return 10;
     final maxValue = viewModel.expenditureRelativeToBudgetData
         .map((d) => d.value)
-        .reduce((a, b) => a > b ? a : b);
-    return maxValue > 100 ? maxValue * 1.2 : 120;
+        .fold(0.0,
+            (a, b) => a > b ? a : b); // Use fold instead of reduce for safety
+
+    // Add some headroom
+    return maxValue == 0 ? 10 : maxValue * 1.2;
   }
 
   Widget _buildEmptyState(BuildContext context, String title, String message) {

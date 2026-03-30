@@ -260,7 +260,10 @@ class MPesaParser with ParserMixin implements StatementParser {
             RegExp(r'(Customer Transfer of Funds Charge)'), 'M-PESA Charge')
         .replaceAll(
             RegExp(
-                r'Sent to |Received from |Paid to |Withdraw from |Deposit to '),
+                r'Sent to |Received from |Paid to |Withdraw from |Deposit to '), '')
+        .replaceAll(
+          RegExp(
+            r'Customer Send Money to Micro SMEBusiness | Customer Send Money to Micro SMEBusiness with Fuliza '),
             '')
         .trim();
 

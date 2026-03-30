@@ -1,3 +1,4 @@
+import 'package:budget_audit/core/config/env.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/context.dart';
@@ -56,7 +57,7 @@ class MenuViewModel extends ChangeNotifier {
           return _appContext.hasValidSession;
         case '/dev':
           // Only available if NOT in production
-          return _appContext.isProduction ==
+          return Env.isProduction ==
               false; 
         case '/home':
           // Only show home after a valid session is established
@@ -80,7 +81,6 @@ class MenuViewModel extends ChangeNotifier {
 
   void menuToggled() {
     _isOpen = !_isOpen;
-    debugPrint("Development env is: ${_appContext.isProduction}");
   }
 
   /// Handles the business logic for the selected menu destination.

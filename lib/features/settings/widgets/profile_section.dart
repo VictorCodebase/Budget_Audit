@@ -256,6 +256,26 @@ class _ProfileSectionState extends State<ProfileSection> {
           ),
           const SizedBox(height: AppTheme.spacingMd),
 
+          // Current Password (required when editing self)
+          TextFormField(
+            initialValue: viewModel.getFormValue('currentPassword'),
+            decoration: const InputDecoration(
+              labelText: 'Current Password',
+              prefixIcon: Icon(Icons.lock),
+              helperText: 'Required to update your profile',
+            ),
+            obscureText: true,
+            onChanged: (value) =>
+                viewModel.updateFormField('currentPassword', value),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Current password is required';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: AppTheme.spacingMd),
+
           // Password (optional when editing)
           TextFormField(
             initialValue: viewModel.getFormValue('password'),
