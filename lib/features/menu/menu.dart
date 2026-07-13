@@ -113,8 +113,8 @@ class _MenuState extends State<Menu> {
                           const SizedBox(width: AppTheme.spacingXs),
                           Text(
                             isDark
-                                ? 'Switch to Light Mode'
-                                : 'Switch to Dark Mode',
+                                ? 'Switch to Dark Mode'
+                                : 'Switch to Light Mode',
                             style: AppTheme.bodyMedium.copyWith(
                               color: context.colors.textPrimary,
                               fontWeight: FontWeight.w500,

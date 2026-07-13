@@ -52,6 +52,7 @@ class MenuViewModel extends ChangeNotifier {
     return allDestinations.where((dest) {
       switch (dest.route) {
         case '/budgeting':
+          return _appContext.hasValidSession;
         case '/analytics':
           // Only available if the user is logged in
           return _appContext.hasValidSession;
@@ -63,6 +64,9 @@ class MenuViewModel extends ChangeNotifier {
           // Only show home after a valid session is established
           return _appContext.hasValidSession;
         case '/onboarding':
+          // Only show "Sign Out" if logged in
+          return _appContext.hasValidSession;
+        case '/settings':
           // Only show "Sign Out" if logged in
           return _appContext.hasValidSession;
         default:
