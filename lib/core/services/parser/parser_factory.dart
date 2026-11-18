@@ -2,7 +2,6 @@
 
 import '../../models/client_models.dart';
 import 'parser_interface.dart';
-import 'hsbc_parser.dart';
 import 'equity_parser.dart';
 import 'mpesa_parser.dart';
 import 'csv_parser.dart';

@@ -24,7 +24,7 @@ Future<void> initializeApp() async {
 
 // syncfusion
   final key = Env.syncfusionKey;
-  if (key != null && key.isNotEmpty) {
+  if ( key.isNotEmpty) {
     SyncfusionLicense.registerLicense(key);
   } else {
     _logger.warning("⚠️ Syncfusion license not found in .env");

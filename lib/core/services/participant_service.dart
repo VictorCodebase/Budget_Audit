@@ -50,7 +50,7 @@ class ParticipantService {
       }
 
       return PasswordUtils.verifyPassword(password, participant.pwdhash);
-    } catch (e, stack) {
+    } catch (e) {
       _logger.severe("Error verifying participant with email $mailLower");
       rethrow;
     }

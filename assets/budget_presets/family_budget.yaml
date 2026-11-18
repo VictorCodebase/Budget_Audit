@@ -1,0 +1,111 @@
+# Family Budget Preset (Kenya – Middle Class)
+# Monthly budget ~90,000 KES
+
+name: "Family Budget"
+description: "Realistic monthly budget template for young Kenyan families"
+targetAudience: "Young families with children"
+period: "Monthly"
+totalBudget: 90000
+
+categories:
+  - name: "Housing"
+    color: "Coral Red"
+    accounts:
+      - name: "Rent"
+        budget: 30000
+      - name: "Electricity & Gas"
+        budget: 3500
+      - name: "Water"
+        budget: 1500
+      - name: "Insurance"
+        budget: 2000
+
+  - name: "Giving and Ministry"
+    color: "Mint Green"
+    accounts:
+      - name: "Tithes and Offerings"
+        budget: 3000
+      - name: "Gifts & Donations"
+        budget: 1000
+
+  - name: "Savings"
+    color: "Strong Blue"
+    accounts:
+      - name: "Emergency Savings"
+        budget: 5000
+      - name: "Family Savings"
+        budget: 3000
+      - name: "Annual Expenditure Fund"
+        budget: 2000
+
+  - name: "Education and Career"
+    color: "Purple"
+    accounts:
+      - name: "School Fees"
+        budget: 8000
+      - name: "Professional Development"
+        budget: 2000
+
+  - name: "Food and Shopping"
+    color: "Orange"
+    accounts:
+      - name: "Supermarket"
+        budget: 12000
+      - name: "Vegetables and Fruit"
+        budget: 4000
+      - name: "Meat"
+        budget: 5000
+      - name: "Medicine"
+        budget: 2000
+
+  - name: "Family Transport"
+    color: "Teal"
+    accounts:
+      - name: "Daily Commute"
+        budget: 6000
+      - name: "Ride Share"
+        budget: 2000
+
+  - name: "Personal Allowance"
+    color: "Pink"
+    accounts:
+      - name: "Individual Allowance 1"
+        budget: 3000
+      - name: "Individual Allowance 2"
+        budget: 3000
+
+  - name: "Loans"
+    color: "Grey Blue"
+    accounts:
+      - name: "Loan Repayment"
+        budget: 4000
+
+  - name: "Family Responsibility"
+    color: "Amethyst"
+    accounts:
+      - name: "Parents Support"
+        budget: 3000
+      - name: "Birthday Gifts"
+        budget: 1000
+
+  - name: "Entertainment"
+    color: "Cyan"
+    accounts:
+      - name: "Internet & Airtime"
+        budget: 3000
+      - name: "Streaming Services"
+        budget: 1000
+
+  - name: "Hair and Grooming"
+    color: "Purple"
+    accounts:
+      - name: "Hair & Grooming"
+        budget: 2000
+      - name: "Clothing & Shoes"
+        budget: 2000
+
+  - name: "Healthcare"
+    color: "Coral Red"
+    accounts:
+      - name: "NHIF / Medical Cover"
+        budget: 2000
