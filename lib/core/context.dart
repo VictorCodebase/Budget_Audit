@@ -164,7 +164,6 @@ class AppContext extends ChangeNotifier {
 
   /// Check if a participant is currently signed in with valid data
   bool get hasValidSession {
-    print("Session valid");
     return _isSignedIn && _currentParticipant != null;
   }
 

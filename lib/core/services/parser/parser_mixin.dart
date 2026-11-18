@@ -35,7 +35,9 @@ mixin ParserMixin {
   ///
   /// Returns null if amount cannot be parsed
   double? parseAmount(String amountString) {
-    final cleaned = amountString.replaceAll(RegExp(r'[£KES\$\s,]'), '').trim();
+    final cleaned = amountString
+        .replaceAll(RegExp(r'[£KESh\$\s,]', caseSensitive: false), '')
+        .trim();
     try {
       return double.parse(cleaned);
     } catch (e) {

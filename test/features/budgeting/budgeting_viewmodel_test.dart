@@ -3,12 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:budget_audit/core/models/preset_models.dart';
 import 'package:budget_audit/features/budgeting/budgeting_viewmodel.dart';
 import 'package:budget_audit/core/models/models.dart' as models;
-import 'package:budget_audit/core/models/client_models.dart' as clientModels;
 import 'package:budget_audit/core/services/budget_service.dart';
 import 'package:budget_audit/core/services/participant_service.dart';
 import 'package:budget_audit/core/services/preset_service.dart';
 import 'package:budget_audit/core/context.dart';
-import 'package:budget_audit/core/data/database.dart'; // Needed for AppDatabase type
 
 // Fake classes
 class FakeAppContext extends ChangeNotifier implements AppContext {
@@ -208,7 +206,7 @@ void main() {
     );
 
     test('Initial state', () {
-      expect(viewModel.currentFilter, FilterType.name);
+      expect(viewModel.currentFilter, isNull);
       expect(viewModel.sortOrder, SortOrder.asc);
       expect(viewModel.filterParticipant, null);
       expect(viewModel.filterColor, null);

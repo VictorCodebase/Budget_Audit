@@ -121,26 +121,47 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _buildDataHandlingNotice(BuildContext context) {
+    final isNarrowScreen = MediaQuery.of(context).size.width < 600;
+    final noticeContents = [
+      Icon(
+        Icons.shield_outlined,
+        color: context.colors.success,
+        size: 20,
+      ),
+      const SizedBox(width: AppTheme.spacingXs),
+      const Expanded(
+        child: Text('Your financial documents never leave your device.'),
+      ),
+    ];
+    final learnMore = TextButton.icon(
+      onPressed: () => _launchDataHandling(),
+      label: Text(
+        'Learn how budgeting works in the Budget Audit',
+        style: AppTheme.bodySmall.copyWith(
+          color: context.colors.primary,
+          decoration: TextDecoration.underline,
+        ),
+        overflow: TextOverflow.visible,
+      ),
+    );
+
+    if (isNarrowScreen) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: noticeContents,
+          ),
+          Align(alignment: Alignment.centerLeft, child: learnMore),
+        ],
+      );
+    }
+
     return Row(
       children: [
-        Icon(
-          Icons.shield_outlined,
-          color: context.colors.success,
-          size: 20,
-        ),
-        const SizedBox(width: AppTheme.spacingXs),
-        const Text('Your financial documents never leave your device.'),
-        TextButton.icon(
-          onPressed: () => _launchDataHandling(),
-          label: Text(
-            'Learn how budgeting works in the Budget Audit',
-            style: AppTheme.bodySmall.copyWith(
-              color: context.colors.primary,
-              decoration: TextDecoration.underline,
-            ),
-            overflow: TextOverflow.visible,
-          ),
-        ),
+        ...noticeContents,
+        learnMore,
       ],
     );
   }

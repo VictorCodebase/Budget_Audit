@@ -71,13 +71,28 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
             const SizedBox(height: AppTheme.spacingMd),
 
             // Password and Document Owner in a Row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: _buildPasswordField()),
-                const SizedBox(width: AppTheme.spacingMd),
-                Expanded(child: _buildDocumentOwner(viewModel)),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 600) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPasswordField(),
+                      const SizedBox(height: AppTheme.spacingMd),
+                      _buildDocumentOwner(viewModel),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _buildPasswordField()),
+                    const SizedBox(width: AppTheme.spacingMd),
+                    Expanded(child: _buildDocumentOwner(viewModel)),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: AppTheme.spacingMd),
 
@@ -103,9 +118,11 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       children: [
         Row(
           children: [
-            Text(
-              'Browse Document ${_selectedInstitution != null ? "(${_getFileExtension(_selectedInstitution!).toUpperCase()})" : ""}',
-              style: AppTheme.label,
+            Expanded(
+              child: Text(
+                'Browse Document ${_selectedInstitution != null ? "(${_getFileExtension(_selectedInstitution!).toUpperCase()})" : ""}',
+                style: AppTheme.label,
+              ),
             ),
             const SizedBox(width: 4),
             Text(
@@ -184,9 +201,11 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       children: [
         Row(
           children: [
-            const Text(
-              'Document Password',
-              style: AppTheme.label,
+            const Expanded(
+              child: Text(
+                'Document Password',
+                style: AppTheme.label,
+              ),
             ),
             const SizedBox(width: AppTheme.spacing2xs),
             Tooltip(
@@ -221,9 +240,11 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       children: [
         Row(
           children: [
-            const Text(
-              'Document Owner',
-              style: AppTheme.label,
+            const Expanded(
+              child: Text(
+                'Document Owner',
+                style: AppTheme.label,
+              ),
             ),
             const SizedBox(width: 4),
             Text(
@@ -284,9 +305,11 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       children: [
         Row(
           children: [
-            const Text(
-              "Select the document's financial institution",
-              style: AppTheme.label,
+            const Expanded(
+              child: Text(
+                "Select the document's financial institution",
+                style: AppTheme.label,
+              ),
             ),
             const SizedBox(width: 4),
             Text(
@@ -674,8 +697,6 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         ),
       );
     }
-
-      
 
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
