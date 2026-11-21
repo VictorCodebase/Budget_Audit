@@ -37,7 +37,7 @@ dependencies:
   syncfusion_flutter_pdf: ^24.1.41
 
   # File Operations
-  file_picker: ^6.1.1
+  file_picker: ^13.4.0
   yaml: ^3.1.2
   csv: ^6.0.0
 

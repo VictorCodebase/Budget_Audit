@@ -534,15 +534,15 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
 
     try {
       final allowedExtension = _getFileExtension(_selectedInstitution!);
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: [allowedExtension],
       );
 
-      if (result != null && result.files.single.path != null) {
+      if (result != null && result.single.path != null) {
         setState(() {
-          _selectedFilePath = result.files.single.path;
-          _selectedFileName = result.files.single.name;
+          _selectedFilePath = result.single.path;
+          _selectedFileName = result.single.name;
         });
       }
     } finally {

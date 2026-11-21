@@ -27,7 +27,7 @@ class Participant extends Equatable {
         lastName,
         nickname,
         role,
-        email,
+        email ,
       ];
 }
 
