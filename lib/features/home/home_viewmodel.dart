@@ -309,7 +309,7 @@ class HomeViewModel extends ChangeNotifier {
     final vendors = await _budgetService.transactionService.getAllVendors();
     final existing = vendors.firstWhere(
       (v) => v.vendorName.toLowerCase() == vendorName.toLowerCase(),
-      orElse: () => models.Vendor(vendorId: -1, vendorName: ''),
+      orElse: () => const models.Vendor(vendorId: -1, vendorName: ''),
     );
 
     if (existing.vendorId != -1) {

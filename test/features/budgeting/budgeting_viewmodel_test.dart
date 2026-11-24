@@ -151,7 +151,7 @@ void main() {
   });
 
   group('BudgetingViewModel Filter & Sort Tests', () {
-    final p1 = models.Participant(
+    const p1 = models.Participant(
       participantId: 1,
       firstName: 'John',
       lastName: 'Doe',
@@ -167,14 +167,14 @@ void main() {
       period: 'Monthly',
     );
 
-    final c1 = models.Category(
+    const c1 = models.Category(
       categoryId: 1,
       templateId: 1,
       categoryName: 'Category A',
       colorHex: '#FF0000',
     );
 
-    final c2 = models.Category(
+    const c2 = models.Category(
       categoryId: 2,
       templateId: 1,
       categoryName: 'Category B',
@@ -282,7 +282,7 @@ void main() {
       expect(viewModel.categories.length, 2);
 
       // Create a participant p2 and account a3 for c2
-      final p2 = models.Participant(
+      const p2 = models.Participant(
         participantId: 2,
         firstName: 'Jane',
         lastName: 'Doe',

@@ -46,3 +46,6 @@ app.*.map.json
 
 # secrets
 .env
+
+# test raw file inputes
+.pdf/*
