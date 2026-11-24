@@ -14,13 +14,13 @@ void main() {
     expect(rule.fields['money_in'], 'Money In');
   });
 
-  test('Equity redacted CSV golden has opening balance and rows', () {
-    final golden = File(
-      '../../test/golden/Equity_Statement_2026-03-02_to_2026-04-01.csv',
+  test('Equity redacted CSV fixture has opening balance and rows', () {
+    final fixture = File(
+      '../../test/fixtures/Equity_Statement_2026-03-02_to_2026-04-01.csv',
     );
-    expect(golden.existsSync(), isTrue);
+    expect(fixture.existsSync(), isTrue);
 
-    final lines = golden.readAsLinesSync();
+    final lines = fixture.readAsLinesSync();
     expect(lines.first, contains('Money Out'));
     expect(
       lines.any((line) => line.contains('Balance Brought Forward')),

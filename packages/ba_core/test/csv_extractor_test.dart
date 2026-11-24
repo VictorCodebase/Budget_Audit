@@ -14,9 +14,9 @@ void main() {
     expect(document.rows.first['Amount'], '1,234.56');
   });
 
-  test('matches M-PESA redacted CSV golden row shape', () {
+  test('matches M-PESA redacted CSV fixture row shape', () {
     final file = File(
-      '../../test/golden/MPESA_Statement_2026-07-01_to_2026-07-18.csv',
+      '../../test/fixtures/MPESA_Statement_2026-07-01_to_2026-07-18.csv',
     );
     final document = const CsvExtractor().extractFile(file);
     expect(document.headers, contains('Paid In'));

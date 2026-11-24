@@ -27,127 +27,187 @@ class HeaderTableInterpreter {
     List<PositionedWord> words, {
     required List<String> headers,
     required String rowStartPattern,
+    String? rowStartColumn,
+    String? continuationColumn,
+    List<String> skipLinesContaining = const [],
     double yTolerance = 3,
   }) {
-    if (words.isEmpty) return const [];
-    final pageWords = words
-        .where((word) => word.page == words.first.page)
-        .toList();
-    final headerY = <String, double>{};
-    for (final header in headers) {
-      final matches = pageWords.where(
-        (word) => word.text.trim().toLowerCase() == header.trim().toLowerCase(),
-      );
-      if (matches.isNotEmpty) {
-        headerY[header] = matches
-            .map((word) => word.centerY)
-            .reduce((a, b) => a < b ? a : b);
-      }
-    }
-    if (headerY.isEmpty) return const [];
-
-    final headerWords = pageWords.where(
-      (word) =>
-          headerY.values.any((y) => (word.centerY - y).abs() <= yTolerance * 3),
-    );
-    final ranges = <String, List<PositionedWord>>{};
-    for (final entry in headerY.entries) {
-      ranges[entry.key] = headerWords
-          .where(
-            (word) =>
-                (word.centerY - entry.value).abs() <= yTolerance * 3 &&
-                word.text.trim().toLowerCase().contains(
-                  entry.key.toLowerCase(),
-                ),
-          )
-          .toList();
-    }
-
-    final content = pageWords.where(
-      (word) => !headerY.values.any(
-        (y) => (word.centerY - y).abs() <= yTolerance * 3,
-      ),
-    );
-    final grouped = <double, List<PositionedWord>>{};
-    for (final word in content) {
-      double? key;
-      for (final existing in grouped.keys) {
-        if ((existing - word.centerY).abs() <= yTolerance) {
-          key = existing;
-          break;
-        }
-      }
-      key ??= word.centerY;
-      grouped.putIfAbsent(key, () => []).add(word);
-    }
-
-    final rowStart = RegExp(rowStartPattern);
-    final orderedRows = grouped.entries.toList()
-      ..sort((a, b) => b.key.compareTo(a.key));
+    if (words.isEmpty || headers.isEmpty) return const [];
     final rows = <Map<String, String>>[];
-    var current = <String, String>{};
-    for (final entry in orderedRows) {
-      final line = entry.value..sort((a, b) => a.centerX.compareTo(b.centerX));
-      String columnFor(PositionedWord word) {
-        for (final header in headers) {
-          final matches = pageWords.where(
-            (candidate) =>
-                candidate.text.trim().toLowerCase() ==
-                header.trim().toLowerCase(),
-          );
-          if (matches.isNotEmpty) {
-            final center = matches.first.centerX;
-            final nearestCenter = headers.map((candidate) {
-              final candidateMatches = pageWords.where(
-                (item) =>
-                    item.text.trim().toLowerCase() ==
-                    candidate.trim().toLowerCase(),
-              );
-              return candidateMatches.isEmpty
-                  ? double.infinity
-                  : candidateMatches.first.centerX;
-            }).toList();
-            final distance = (word.centerX - center).abs();
-            if (distance <=
-                nearestCenter
-                        .map((value) => (word.centerX - value).abs())
-                        .reduce((a, b) => a < b ? a : b) +
-                    0.01) {
-              return header;
-            }
+    final pages = words.map((word) => word.page).toSet().toList()..sort();
+    final rowStart = RegExp(rowStartPattern);
+
+    for (final page in pages) {
+      final pageWords = words.where((word) => word.page == page).toList();
+      final lines = _groupLines(pageWords, yTolerance);
+      final headerLineIndex = _findHeaderLine(lines, headers);
+      if (headerLineIndex < 0) continue;
+
+      final anchors = _findHeaderAnchors(lines[headerLineIndex], headers);
+      if (anchors.isEmpty) continue;
+      final sortedAnchors = anchors.entries.toList()
+        ..sort((a, b) => a.value.compareTo(b.value));
+      final startHeader = rowStartColumn ?? headers.first;
+      var current = <String, String>{};
+
+      for (final line in lines.skip(headerLineIndex + 1)) {
+        final cells = _assignCells(line.words, sortedAnchors);
+        final lineText = cells.values.join(' ').toLowerCase();
+        if (skipLinesContaining.any(
+          (pattern) => lineText.contains(pattern.toLowerCase()),
+        )) {
+          continue;
+        }
+        final startValue = cells[startHeader] ?? '';
+        if (rowStart.hasMatch(startValue)) {
+          if (current.isNotEmpty) rows.add(Map.of(current));
+          current = cells;
+        } else if (current.isNotEmpty) {
+          final continuation = continuationColumn == null
+              ? cells
+              : {
+                  if (cells[continuationColumn] case final value?)
+                    continuationColumn: value,
+                };
+          for (final entry in continuation.entries) {
+            current.update(
+              entry.key,
+              (value) => _joinCell(value, entry.value),
+              ifAbsent: () => entry.value,
+            );
           }
         }
-        return headers.first;
       }
+      if (current.isNotEmpty) rows.add(current);
+    }
 
-      final cellValues = <String, List<String>>{};
-      for (final word in line) {
-        final column = columnFor(word);
-        cellValues.putIfAbsent(column, () => []).add(word.text);
-      }
-      final lineMap = {
-        for (final entry in cellValues.entries)
-          entry.key: entry.value.join(' ').trim(),
-      };
-      final startColumn = headers.first;
-      final startValue = lineMap[startColumn] ?? '';
-      if (rowStart.hasMatch(startValue)) {
-        if (current.isNotEmpty) rows.add(Map.of(current));
-        current = lineMap;
-      } else if (current.isNotEmpty) {
-        for (final entry in lineMap.entries) {
-          current.update(
-            entry.key,
-            (value) => '$value ${entry.value}'.trim(),
-            ifAbsent: () => entry.value,
-          );
+    return rows;
+  }
+
+  List<_PositionedLine> _groupLines(
+    List<PositionedWord> words,
+    double tolerance,
+  ) {
+    final ordered = words.toList()
+      ..sort((a, b) {
+        final yOrder = a.centerY.compareTo(b.centerY);
+        return yOrder == 0 ? a.centerX.compareTo(b.centerX) : yOrder;
+      });
+    final lines = <_PositionedLine>[];
+    for (final word in ordered) {
+      if (word.text.trim().isEmpty) continue;
+      _PositionedLine? line;
+      for (final candidate in lines.reversed) {
+        if ((candidate.centerY - word.centerY).abs() <= tolerance) {
+          line = candidate;
+          break;
         }
+        if (word.centerY - candidate.centerY > tolerance) break;
+      }
+      if (line == null) {
+        lines.add(_PositionedLine([word]));
       } else {
-        current = lineMap;
+        line.words.add(word);
+        line.recalculateY();
       }
     }
-    if (current.isNotEmpty) rows.add(current);
-    return rows;
+    for (final line in lines) {
+      line.words.sort((a, b) => a.centerX.compareTo(b.centerX));
+    }
+    lines.sort((a, b) => a.centerY.compareTo(b.centerY));
+    return lines;
+  }
+
+  int _findHeaderLine(List<_PositionedLine> lines, List<String> headers) {
+    var bestIndex = -1;
+    var bestMatches = 0;
+    for (var index = 0; index < lines.length; index++) {
+      final found = _findHeaderAnchors(lines[index], headers).length;
+      if (found > bestMatches) {
+        bestMatches = found;
+        bestIndex = index;
+      }
+    }
+    return bestMatches >= 2 ? bestIndex : -1;
+  }
+
+  Map<String, double> _findHeaderAnchors(
+    _PositionedLine line,
+    List<String> headers,
+  ) {
+    final result = <String, double>{};
+    final visible = line.words
+        .where((word) => word.text.trim().isNotEmpty)
+        .toList();
+    for (final header in headers) {
+      final expected = _normalizeHeader(header);
+      for (var start = 0; start < visible.length; start++) {
+        final buffer = StringBuffer();
+        for (var end = start; end < visible.length && end < start + 5; end++) {
+          buffer.write(visible[end].text);
+          if (_normalizeHeader(buffer.toString()) == expected) {
+            final left = visible[start].x;
+            final right = visible[end].right;
+            result[header] = (left + right) / 2;
+            break;
+          }
+        }
+        if (result.containsKey(header)) break;
+      }
+    }
+    return result;
+  }
+
+  Map<String, String> _assignCells(
+    List<PositionedWord> words,
+    List<MapEntry<String, double>> anchors,
+  ) {
+    final cells = <String, List<PositionedWord>>{};
+    for (final word in words) {
+      var index = 0;
+      while (index < anchors.length - 1) {
+        final boundary = (anchors[index].value + anchors[index + 1].value) / 2;
+        if (word.centerX < boundary) break;
+        index++;
+      }
+      cells.putIfAbsent(anchors[index].key, () => []).add(word);
+    }
+    return {
+      for (final entry in cells.entries)
+        entry.key: _cleanCell(
+          (entry.value..sort((a, b) => a.centerX.compareTo(b.centerX)))
+              .map((word) => word.text)
+              .join(' '),
+        ),
+    };
+  }
+
+  String _normalizeHeader(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+  String _cleanCell(String value) => value
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .replaceAllMapped(RegExp(r'\s+([,.:;!?])'), (match) => match.group(1)!)
+      .replaceAllMapped(RegExp(r'\s+([-/:])\s+'), (match) => match.group(1)!)
+      .trim();
+
+  String _joinCell(String left, String right) {
+    if (left.isEmpty) return right;
+    if (right.isEmpty) return left;
+    return _cleanCell('$left $right');
+  }
+}
+
+class _PositionedLine {
+  final List<PositionedWord> words;
+  double centerY;
+
+  _PositionedLine(this.words) : centerY = words.first.centerY;
+
+  void recalculateY() {
+    centerY =
+        words.map((word) => word.centerY).reduce((a, b) => a + b) /
+        words.length;
   }
 }
 

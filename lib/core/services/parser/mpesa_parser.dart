@@ -85,7 +85,7 @@ class MPesaParser with ParserMixin implements StatementParser {
         "Receipt No",
         "Completion Time",
         "Details",
-        "Paid in",
+        "Paid In",
         "Withdrawn"
       ];
 

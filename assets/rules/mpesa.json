@@ -4,12 +4,14 @@
   "engine_min": 1,
   "extractor": "pdf_words",
   "detect": {
-    "markers": ["M-PESA", "Receipt No", "Completion Time", "Paid in", "Withdrawn"]
+    "markers": ["M-PESA", "Receipt No", "Completion Time", "Paid In", "Withdrawn"]
   },
   "layout": {
     "header_labels": ["Receipt No", "Completion Time", "Details", "Transaction Status", "Paid In", "Withdrawn", "Balance"],
-    "row_start": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}",
-    "details_continuation": true
+    "row_start_column": "Transaction Status",
+    "row_start": "Completed",
+    "details_continuation": true,
+    "inherit_previous": ["Receipt No", "Completion Time"]
   },
   "direction": "drcr_column",
   "fields": {
@@ -25,7 +27,16 @@
   ],
   "skip_rows_containing": [
     "Transaction Status",
-    "Balance Brought Forward"
+    "Balance Brought Forward",
+    "Disclaimer",
+    "Statement Verification",
+    "www.safaricom.co.ke",
+    "@SafaricomPLC",
+    "@safaricom_care",
+    "Facebook:",
+    "Twitter:",
+    "For self-help",
+    "Terms and conditions apply"
   ],
   "vendor": [
     {"contains": "OverDraft", "normalize": "M-PESA Overdraft"},
