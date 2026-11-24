@@ -24,3 +24,9 @@
   intentionally parses the seven supplied rows with the generic CSV rule and
   fully reconciles them from the fixture's 1,324.88 Cr opening balance to its
   1,970.91 Cr ending balance.
+- 2026-11-25: OFX parity covers all seven Equity and 47 M-PESA transactions by
+  date and amount magnitude. The V1 OFX parser turns negative `DEBIT`
+  `TRNAMT` values positive, so V2 intentionally preserves the signed source
+  amounts as debit/credit directions; V2 also retains each `FITID` as
+  `source_ref`. The generic rule maps its ending balance to `BALAMT`, not the
+  enclosing `LEDGERBAL` tag.
