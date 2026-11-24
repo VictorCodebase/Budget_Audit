@@ -12,17 +12,18 @@
   "layout": {
     "header_row": 0
   },
-  "direction": "signed",
+  "direction": "drcr_column",
   "fields": {
-    "date": "Date",
-    "vendor": ["Description", "Details", "Vendor", "Payee"],
+    "date": ["Date", "Transaction Date", "Posted Date", "Value Date", "Completion Time"],
+    "vendor": ["Description", "Details", "Particulars", "Vendor", "Payee"],
     "amount": "Amount",
-    "source_ref": "Receipt No",
-    "debit": "Debit",
-    "credit": "Credit"
+    "source_ref": ["Receipt No.", "Receipt No", "FITID"],
+    "debit": ["Debit", "Withdrawal", "Money Out", "Withdrawn"],
+    "credit": ["Credit", "Deposit", "Money In", "Paid In"],
+    "balance": "Balance"
   },
   "keep_rows": [],
-  "skip_rows_containing": [],
+  "skip_rows_containing": ["Balance Brought Forward"],
   "vendor": [
     {"match": ".*", "normalize": "Preserve"}
   ]
