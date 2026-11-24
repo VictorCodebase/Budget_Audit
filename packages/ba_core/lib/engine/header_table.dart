@@ -155,7 +155,7 @@ List<Map<String, String>> interpretHeaderTable(
   List<PositionedWord> words, {
   required List<String> headers,
   required String rowStartPattern,
-}) => HeaderTableInterpreter().interpret(
+}) => const HeaderTableInterpreter().interpret(
   words,
   headers: headers,
   rowStartPattern: rowStartPattern,
