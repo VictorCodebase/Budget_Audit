@@ -4,7 +4,7 @@ This file records defects and blockers that are intentionally not fixed in the
 current task. "Becomes within scope" identifies the earliest task fence or
 milestone where the item must be handled.
 
-## M-PESA paid-in column
+## KI-001: M-PESA paid-in column
 
 - **Status:** Known defect in the current V1 M-PESA PDF parser.
 - **Evidence:** The parser does not reliably capture the M-PESA "Paid In"
@@ -19,7 +19,7 @@ milestone where the item must be handled.
   `test/fixtures/` and matching redacted CSV/OFX exports under
   `test/golden/`. Never add real transaction data.
 
-## V1 data preservation
+## KI-002: V1 data preservation
 
 - **Status:** Low priority. Few tester users used V1 and their databases remain
   on local devices.
@@ -32,7 +32,7 @@ milestone where the item must be handled.
   copy of real V1 data. T4.7 must preserve the exact read-only V1 path,
   `budget_audit/db.sqlite`, and create the timestamped backup before migration.
 
-## Supabase project setup
+## KI-003: Supabase project setup
 
 - **Status:** Waiting for owner configuration.
 - **Out-of-scope until:** T6.1 for server migrations and policy tests.
@@ -45,7 +45,7 @@ milestone where the item must be handled.
 - **Secrets:** Never commit the service-role key, database password or JWT
   secrets. The app must receive only `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 
-## Windows validation
+## KI-004: Windows validation
 
 - **Status:** Not executable on this Fedora/Linux host.
 - **Out-of-scope until:** T4.7 and cutover/release validation.
@@ -55,7 +55,7 @@ milestone where the item must be handled.
 - **Linux substitute:** A Linux debug build is useful extra validation, but it
   does not replace the Windows app gate.
 
-## Existing analyzer debt
+## KI-005: Existing analyzer debt
 
 - **Status:** The current analyzer baseline is not green.
 - **Out-of-scope until:** An owner-approved baseline-cleanup task.

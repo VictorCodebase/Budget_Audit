@@ -2,18 +2,19 @@
 
 This handout splits the v2 build into small numbered tasks. Do one task at a time, touch only the files that task allows, and stop when its done-when is true. If a task seems to need more than it allows, file a rescope note and wait. Do not widen the scope yourself.
 
-## Preflight sanity check (2026-11-22)
+## Preflight sanity check (updated 2026-11-24)
 
-These findings are binding prerequisites, not optional cleanup:
+These findings are prerequisites, not optional cleanup:
 
-1. **Baseline state.** On the current project, `flutter test` passes (12 existing tests) and `flutter build linux --debug` succeeds. `flutter analyze` does not pass: it reports 251 existing issues, including warning-level issues and missing direct dependencies. No task may treat the existing analyzer debt as a green baseline. For tasks that do not change analyzer scope, require no additional issue count in the touched files. Strict zero-new-issue enforcement begins only after an owner-approved baseline-cleanup task.
-2. **Baseline build scope.** The document's required Windows app gate cannot be run from this Linux host. Record a Windows runner result before cutover, release, or T4.7 completion. A Linux debug build is useful extra validation but does not replace `flutter build windows --debug`.
-3. **Clean branch required.** Start implementation from a clean worktree or explicitly preserve and isolate the owner's existing uncommitted changes. Do not mix task branches with unrelated edits. _[UPDATE: outdated, safe to build upon. If unsure about current branch or its state, do not rely on this]_ The repository is currently dirty and is already on `v2/integration`; create task branches only after confirming the owner approves the existing changes as the integration baseline.
-4. **Toolchain.** The checked project declares `environment: sdk >=3.0.0 <4.0.0`, but this handout is executable only with the verified baseline toolchain: Flutter 3.44.8 and Dart 3.12.2 or newer compatible releases. T0.2 must add/verify package SDK constraints instead of assuming every Dart 3.0 SDK can resolve the selected dependencies.
-5. **Required inputs are missing.** No `test/fixtures/**`, `test/golden/**`, `assets/rules/**`, or `supabase/**` content exists yet. Owner-supplied statement fixtures and Supabase credentials are blockers. No synthetic or real transaction may be invented or committed.
-6. **Existing database path.** V1 opens `budget_audit/db.sqlite` under `getApplicationSupportDirectory()`. T2.4 and T4.7 must use that exact path as read-only input. The v2 database must have a separate filename and T4.7 must first copy the v1 file to a backup beside the v2 data directory.
-7. **New dependencies need resolution.** The root project does not currently contain `cryptography`, `cryptography_flutter`, `supabase_flutter`, `flutter_secure_storage`, or a BIP-39/QR package. T0.2/T6.x tasks must add only dependencies that belong in each package and update lockfiles through `flutter pub get`.
-8. **Existing naming drift.** V1 currently uses the term "Account" in the database and UI, while v2 uses "Category". The migrator and v2 UI must maintain the explicit mapping in section 7.2; the user-facing v2 UI must never call a v2 Category an Account.
+1. **Baseline state ([KI-005](KNOWN_ISSUES.md#ki-005-existing-analyzer-debt)).** `flutter test` passes (12 existing tests) and `flutter build linux --debug` succeeds. `flutter analyze` is not green and currently reports 90 info issues on this Linux baseline. No task may treat analyzer debt as green. For tasks that do not change analyzer scope, require no additional issue count in the touched files. Strict zero-new-issue enforcement begins only after an owner-approved baseline-cleanup task.
+2. **Baseline build scope ([KI-004](KNOWN_ISSUES.md#ki-004-windows-validation)).** The required Windows app gate cannot run on this Linux host. Record a Windows runner result before T4.7 completion, cutover, or release. A Linux debug build is useful extra validation but does not replace `flutter build windows --debug`. Windows validation is out of scope until T4.7.
+3. **Integration baseline.** The repository is on `v2/integration`. The existing integration edits were committed at `0ff2638`; do not rely on a clean-worktree assumption while task branches and unrelated changes remain. One task branch per task, cut from `v2/integration`, remains the required process.
+4. **Toolchain.** The project declares `environment: sdk >=3.0.0 <4.0.0`, but this handout is executable only with a compatible verified baseline: Flutter 3.44.8 and Dart 3.12.2 or newer. T0.2 must add/verify package SDK constraints instead of assuming every Dart 3.0 SDK can resolve selected dependencies.
+5. **Statement fixtures ([KI-001](KNOWN_ISSUES.md#ki-001-m-pesa-paid-in-column)).** Redacted PDF fixtures exist under `test/fixtures/`, and matching redacted CSV/OFX exports exist under `test/golden/`. They are currently untracked, so T0.1 must bring the golden safety net into scope. Do not add real or invented transaction data. The M-PESA Paid In parser defect is not active in tasks outside T1.6 and its fixture-dependent follow-ups.
+6. **Existing database path ([KI-002](KNOWN_ISSUES.md#ki-002-v1-data-preservation)).** V1 opens `budget_audit/db.sqlite` under `getApplicationSupportDirectory()`. T2.4 and T4.7 must use that exact path as read-only input. The v2 database is separate. V1 preservation is low priority and is not a blocker for parser, package, or data-package tasks before T2.4/T4.7.
+7. **Supabase configuration ([KI-003](KNOWN_ISSUES.md#ki-003-supabase-project-setup)).** The owner already has a Supabase project. Configuration is out of scope until T6.1/T6.x and is not a blocker for earlier tasks. When account/sync tasks begin, use the existing dashboard project plus versioned CLI migrations, and require build-time `SUPABASE_URL` and `SUPABASE_ANON_KEY` values.
+8. **New dependencies need resolution.** The root project does not currently contain `cryptography`, `cryptography_flutter`, `supabase_flutter`, `flutter_secure_storage`, or a BIP-39/QR package. T0.2/T6.x tasks must add only dependencies that belong in each package and update lockfiles through `flutter pub get`.
+9. **Existing naming drift.** V1 uses "Account" in the database and UI, while v2 uses "Category". The migrator and v2 UI must maintain the explicit mapping in section 7.2; the user-facing v2 UI must never call a v2 Category an Account.
 
 ## 0. Rules of engagement (read first)
 
@@ -21,16 +22,16 @@ These findings are binding prerequisites, not optional cleanup:
 2. **Allowed files are a hard fence.** Each task lists the paths it may create or edit. Everything else is read-only: v1 code, the router, themes, pubspec (unless the task says so) and generated files you did not generate.
 3. **Do not rebuild, rename, move, reformat or tidy anything outside the task.** No refactors for taste, no folder moves, no style churn, no dependency upgrades, and no new abstractions the task does not name.
 4. **Size cap: about 15 files changed and 600 net lines per task.** If you are heading past that, stop and propose a split.
-5. **Rescope note, not rescope.** If a task cannot be finished inside its fence, stop and write a note: what blocks it, the smallest extra change that would unblock it, and what you could do without it. Then wait for the owner. Preferences and 'it would be cleaner if' are not blockers.
+5. **Rescope note, not rescope.** If a task cannot be finished inside its fence, stop and write a note: what blocks it, the smallest extra change that would unblock it, and what you could do without it. Then wait for the owner. Attach the matching `KI-*` ID from `docs/KNOWN_ISSUES.md` if the blocker is recorded there. A recorded issue is active only when the task is within that issue's listed scope. Preferences and 'it would be cleaner if' are not blockers.
 6. **Ambiguity:** choose the simplest option, log it in one line in `docs/DECISIONS.md`, and continue. Ask only about blockers.
-7. **Never invent data.** Fixture statements, a v1 database copy and Supabase credentials come from the owner. If one is missing when a task needs it, stop and ask. Never commit real transactions.
+7. **Never invent data.** Redacted fixture statements supplied under `test/fixtures/` and `test/golden/` may be used only for parser tasks. A V1 database copy is required only at T2.4/T4.7 ([KI-002](KNOWN_ISSUES.md#ki-002-v1-data-preservation)); Supabase credentials are required only for account, sync, or server tasks ([KI-003](KNOWN_ISSUES.md#ki-003-supabase-project-setup)). Never commit real transactions or substitute invented data.
 8. **Secrets.** Never commit credentials. Read them from build-time defines (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `RULES_BUNDLE_URL`, `RULES_PUBLIC_KEY`). The service-role key never appears in the app.
 9. **Report at the end of each task:** files changed, tests added, gate results, decisions logged, open questions. Keep it short.
 
 ### Gates
 
 - **Core gate (every task):** `dart analyze` and the tests of every package you touched are green. `dart analyze` is run in each touched package.
-- **App gate (tasks that touch `lib/`):** In a clean Windows environment, `flutter analyze` and `flutter build windows --debug` succeed, and the existing v1 tests still pass. Until the baseline debt is cleaned by an owner-approved task, report the baseline analyzer issue delta instead of falsely claiming 251 existing issues are green.
+- **App gate (tasks that touch `lib/`):** In a clean Windows environment, `flutter analyze` and `flutter build windows --debug` succeed, and the existing v1 tests still pass. Until baseline debt is cleaned by an owner-approved task ([KI-005](KNOWN_ISSUES.md#ki-005-existing-analyzer-debt)), report the baseline analyzer issue delta instead of falsely claiming the analyzer is green.
 - **Cutover (T4.7) onward:** the app gate covers everything, plus a launch smoke test.
 
 ### Why v1 keeps working during the build
@@ -129,7 +130,7 @@ Each row is one task, one branch, one merge. Allowed files are the fence from se
 
 | ID | Task | Allowed files | Done when |
 | --- | --- | --- | --- |
-| T0.1 | Record golden outputs of the existing M-PESA, Equity, CSV and OFX parsers from owner-supplied synthetic fixtures _[CSV and OFX are standardized formats, if the format matches what is in test/golden, no parsing is needed]_ | `test/golden/**`, `~~test/fixtures/**~~ _[UPDATE .pdf/**]_ `  | One golden JSON per fixture; a test re-runs the old parser and matches it; no `lib/` change |
+| T0.1 | Record golden outputs of the existing M-PESA, Equity, CSV and OFX parsers from the supplied redacted fixtures ([KI-001](KNOWN_ISSUES.md#ki-001-m-pesa-paid-in-column)) | `test/golden/**`, `test/fixtures/**` | One golden JSON per fixture; a test re-runs the old parser and matches it; no `lib/` change; no real or invented transactions |
 | T0.2 | Create empty packages `ba_core`, `ba_data`, `ba_crypto` and path dependencies | `packages/**`, `pubspec.yaml`, `analysis_options.yaml`, `pubspec.lock` | Each package has its own pubspec with a compatible SDK constraint and placeholder test; root path dependencies resolve; `flutter pub get` and the app build succeed |
 
 ### Milestone B - Parser engine (core stays pure)
@@ -141,7 +142,7 @@ Each row is one task, one branch, one merge. Allowed files are the fence from se
 | T1.3 | Rule model, JSON loader, validator | `packages/ba_core/lib/rules/**`, tests | Invalid rules rejected with a clear message; sample rules load |
 | T1.4 | `header_table` interpreter over a list of positioned words (pure) | `packages/ba_core/lib/engine/**`, tests | Hand-built word lists cover wrapped details, an empty cell, reordered columns |
 | T1.5 | Syncfusion adapter: PDF to positioned words | `lib/v2/adapters/**`, its test | Returns words with bounds for a fixture; the verified API is noted in `DECISIONS.md` |
-| T1.6 | `mpesa.json` rule and parity with its golden | `assets/rules/mpesa.json`, parity test | Output equals the golden except differences listed in `DECISIONS.md` |
+| T1.6 | `mpesa.json` rule and parity with its golden ([KI-001](KNOWN_ISSUES.md#ki-001-m-pesa-paid-in-column)) | `assets/rules/mpesa.json`, parity test | Output equals the golden except differences listed in `DECISIONS.md`; Paid In capture becomes in scope |
 | T1.7 | `equity.json` rule and parity | `assets/rules/equity.json`, parity test | Same as T1.6 |
 | T1.8 | CSV extractor and one CSV rule | `packages/ba_core/lib/extract/csv/**`, rule, tests | Parity with the CSV golden |
 | T1.9 | Tolerant OFX extractor (tag scanner, not an XML parser) and rule | `packages/ba_core/lib/extract/ofx/**`, rule, tests | Handles SGML-style v1 files with unclosed tags and date suffixes such as `[3:EAT]`; `FITID` becomes `source_ref` |
@@ -153,7 +154,7 @@ Each row is one task, one branch, one merge. Allowed files are the fence from se
 | T2.1 | Drift v2 schema | `packages/ba_data/lib/schema/**`, tests | In-memory tests for the unique `source_ref` index and foreign keys |
 | T2.2 | DAOs: groups, categories, vendors, vendor defaults | `packages/ba_data/lib/dao/**`, tests | CRUD plus archive; default upsert increments `use_count` |
 | T2.3 | DAOs: transactions (dedupe) and immutable budgets with lines | `packages/ba_data/lib/dao/**`, tests | Duplicate `source_ref` is ignored; budgets cannot be mutated through the API |
-| T2.4 | V1 migrator reading the v1 file with raw read-only SQL | `packages/ba_data/lib/migrator/**`, `test/fixtures/v1/**`, `packages/ba_data/test/**` | Fixture migrates with matching counts and totals; idempotent; the input path `budget_audit/db.sqlite` is opened in read-only mode and is never modified |
+| T2.4 | V1 migrator reading the v1 file with raw read-only SQL ([KI-002](KNOWN_ISSUES.md#ki-002-v1-data-preservation)) | `packages/ba_data/lib/migrator/**`, `test/fixtures/v1/**`, `packages/ba_data/test/**` | Fixture migrates with matching counts and totals; idempotent; the input path `budget_audit/db.sqlite` is opened in read-only mode and is never modified |
 
 ### Milestone D - Domain logic (no UI)
 
@@ -175,7 +176,7 @@ Build these only inside `lib/v2/features/**`, using the existing MVVM convention
 | T4.4 | Import screen | `lib/v2/features/import/**` | Validate, preview, assign, confirm; reconciliation level shown |
 | T4.5 | Home and Analysis screens driven by `Report` | `lib/v2/features/home/**`, `analysis/**` | Matches the section 5 description |
 | T4.6 | Onboarding | `lib/v2/features/onboarding/**` | New user reaches Home with categories and a budget |
-| T4.7 | **Cutover.** Needs owner approval after the owner has validated the migrator on a copy of real v1 data. Copy `budget_audit/db.sqlite` as a backup before migration, migrate at first launch, flip the default | `lib/main.dart`, `lib/v2/app/**` | v1 users open v2 with their data; the timestamped backup exists beside the v2 data; migration is idempotent and never opens v1 for write |
+| T4.7 | **Cutover.** Needs owner approval after the owner has validated the migrator on a copy of real v1 data ([KI-002](KNOWN_ISSUES.md#ki-002-v1-data-preservation)). Copy `budget_audit/db.sqlite` as a backup before migration, migrate at first launch, flip the default | `lib/main.dart`, `lib/v2/app/**` | v1 users open v2 with their data; the timestamped backup exists beside the v2 data; migration is idempotent and never opens v1 for write |
 | T4.8 | Delete v1 Dart code and the flag, in its own easily reverted merge | `lib/**` (deletions only) | Everything green; no import of removed v1 code |
 | T4.9 | Remove obsolete v1 dependencies, assets and platform integrations | `pubspec.yaml`, `pubspec.lock`, `assets/**`, `android/**`, `ios/**`, `linux/**`, `macos/**`, `windows/**` | Remove Google Sheets/group/participant-only dependencies and assets only when no v2 code imports them; app builds on owner-approved platforms |
 
@@ -188,7 +189,7 @@ Build these only inside `lib/v2/features/**`, using the existing MVVM convention
 | T5.3 | Fallback ladder in `ImportService`, opt-in failure-report queue, plain-language UI | `lib/v2/services/**`, `lib/v2/features/import/**` | A changed header fails on old rules and succeeds after a newer bundle loads |
 | T5.4 | Bundle signing script and fixture check | `tool/rules/**` | Script signs a bundle and runs every rule on fixtures |
 
-### Milestone G - Account and keys (needs Supabase credentials from the owner)
+### Milestone G - Account and keys ([KI-003](KNOWN_ISSUES.md#ki-003-supabase-project-setup); needs Supabase credentials from the owner)
 
 | ID | Task | Allowed files | Done when |
 | --- | --- | --- | --- |
