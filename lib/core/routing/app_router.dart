@@ -174,7 +174,7 @@ class AppRouter {
             create: (_) => DevViewModel(
               DevService(
                 sl<AppDatabase>(),
-                Provider.of<AppContext>(_, listen: false),
+                Provider.of<AppContext>(context, listen: false),
               ),
             )..loadTables(),
             child: const DevView(),
