@@ -9,7 +9,8 @@
   "layout": {
     "header_labels": ["Date", "Value Date", "Particulars", "Money Out", "Money In", "Balance"],
     "row_start": "\\d{2}-\\d{2}-\\d{4}",
-    "details_continuation": true
+    "details_continuation": true,
+    "numeric_columns": ["Money Out", "Money In"]
   },
   "direction": "drcr_column",
   "fields": {
@@ -25,7 +26,8 @@
     "Balance Brought Forward",
     "Uncleared",
     "Foreign exchange",
-    "Contact your Manager"
+    "Contact your Manager",
+    "errors in this document should be promptly advised"
   ],
   "vendor": [
     {"contains": "MPS", "normalize": "M-PESA"},

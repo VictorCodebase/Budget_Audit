@@ -29,6 +29,7 @@ class HeaderTableInterpreter {
     required String rowStartPattern,
     String? rowStartColumn,
     String? continuationColumn,
+    List<String> numericColumns = const [],
     List<String> skipLinesContaining = const [],
     double yTolerance = 3,
   }) {
@@ -51,7 +52,12 @@ class HeaderTableInterpreter {
       var current = <String, String>{};
 
       for (final line in lines.skip(headerLineIndex + 1)) {
-        final cells = _assignCells(line.words, sortedAnchors);
+        final cells = _assignCells(
+          line.words,
+          sortedAnchors,
+          numericColumns: numericColumns,
+          continuationColumn: continuationColumn,
+        );
         final lineText = cells.values.join(' ').toLowerCase();
         if (skipLinesContaining.any(
           (pattern) => lineText.contains(pattern.toLowerCase()),
@@ -160,8 +166,10 @@ class HeaderTableInterpreter {
 
   Map<String, String> _assignCells(
     List<PositionedWord> words,
-    List<MapEntry<String, double>> anchors,
-  ) {
+    List<MapEntry<String, double>> anchors, {
+    List<String> numericColumns = const [],
+    String? continuationColumn,
+  }) {
     final cells = <String, List<PositionedWord>>{};
     for (final word in words) {
       var index = 0;
@@ -172,6 +180,22 @@ class HeaderTableInterpreter {
       }
       cells.putIfAbsent(anchors[index].key, () => []).add(word);
     }
+    if (continuationColumn != null) {
+      for (final column in numericColumns) {
+        final values = cells[column];
+        if (values == null) continue;
+        final amounts = values.where(_isNumericAmountWord).toList();
+        final details = values.where((word) => !_isNumericAmountWord(word));
+        if (amounts.isEmpty) {
+          cells.remove(column);
+        } else {
+          cells[column] = amounts;
+          if (details.isNotEmpty) {
+            cells.putIfAbsent(continuationColumn, () => []).addAll(details);
+          }
+        }
+      }
+    }
     return {
       for (final entry in cells.entries)
         entry.key: _cleanCell(
@@ -181,6 +205,10 @@ class HeaderTableInterpreter {
         ),
     };
   }
+
+  bool _isNumericAmountWord(PositionedWord word) => RegExp(
+    r'^[+-]?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?$',
+  ).hasMatch(word.text.trim());
 
   String _normalizeHeader(String value) =>
       value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
