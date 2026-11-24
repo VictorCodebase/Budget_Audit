@@ -11,3 +11,11 @@
   later completed rows. The rule starts rows at `Transaction Status` and
   inherits only the date and receipt reference. Footer text is ignored rather
   than appended to the last transaction's details.
+- 2026-11-25: Equity PDF parity is verified against the legacy golden's seven
+  transaction dates and signed minor-unit amounts. The PDF positions some
+  counterparty/detail words in the Money Out/In columns, so the rule marks
+  those columns numeric and the table interpreter keeps amount tokens while
+  moving adjacent text into particulars when an amount is present. Non-amount
+  counterparty text in an otherwise empty amount column is ignored. Vendor
+  names are intentionally normalized by the V2 rule; parity does not require
+  the legacy vendor labels or exact description strings.

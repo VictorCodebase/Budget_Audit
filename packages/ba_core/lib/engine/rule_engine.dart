@@ -29,6 +29,7 @@ class RuleEngine {
         rule.layout['row_start_column'] ?? rule.fields['date'];
     final continuationColumn =
         rule.fields['vendor_raw'] ?? rule.fields['vendor'];
+    final numericColumns = rule.layout['numeric_columns'];
     if (headers is! List ||
         headers.any((value) => value is! String) ||
         rowStartPattern is! String ||
@@ -36,6 +37,14 @@ class RuleEngine {
       return const RuleExecutionResult(
         rows: [],
         errors: ['PDF rule layout needs header_labels, row_start and date'],
+      );
+    }
+    if (numericColumns != null &&
+        (numericColumns is! List ||
+            numericColumns.any((value) => value is! String))) {
+      return const RuleExecutionResult(
+        rows: [],
+        errors: ['PDF rule layout numeric_columns must be a list of strings'],
       );
     }
 
@@ -47,6 +56,9 @@ class RuleEngine {
       continuationColumn: continuationColumn is String
           ? continuationColumn
           : null,
+      numericColumns: numericColumns == null
+          ? const []
+          : numericColumns.cast<String>(),
       skipLinesContaining: rule.skipRowsContaining,
     );
     return interpretRecords(rule, _inheritFields(rule, records));

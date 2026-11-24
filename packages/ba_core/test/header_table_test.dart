@@ -43,4 +43,35 @@ void main() {
     expect(rows, hasLength(1));
     expect(rows.first['Amount'], '209.00');
   });
+
+  test('numeric columns retain amounts and move spilled descriptions', () {
+    final words = [
+      word('Date', 10, 10),
+      word('Particulars', 100, 10),
+      word('Money Out', 200, 10),
+      word('Money In', 280, 10),
+      word('05-03-2026', 10, 30),
+      word('Shop', 100, 30),
+      word('REF123', 205, 30),
+      word('2,000.00', 230, 30),
+      word('06-03-2026', 10, 50),
+      word('M-PESA', 100, 50),
+      word('JOHN', 205, 50),
+      word('50.00', 280, 50),
+    ];
+    final rows = const HeaderTableInterpreter().interpret(
+      words,
+      headers: ['Date', 'Particulars', 'Money Out', 'Money In'],
+      rowStartPattern: r'^\d{2}-\d{2}-\d{4}$',
+      rowStartColumn: 'Date',
+      continuationColumn: 'Particulars',
+      numericColumns: ['Money Out', 'Money In'],
+    );
+
+    expect(rows, hasLength(2));
+    expect(rows.first['Particulars'], 'Shop REF123');
+    expect(rows.first['Money Out'], '2,000.00');
+    expect(rows.last.containsKey('Money Out'), isFalse);
+    expect(rows.last['Money In'], '50.00');
+  });
 }
