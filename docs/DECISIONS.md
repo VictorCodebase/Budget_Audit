@@ -19,3 +19,8 @@
   counterparty text in an otherwise empty amount column is ignored. Vendor
   names are intentionally normalized by the V2 rule; parity does not require
   the legacy vendor labels or exact description strings.
+- 2026-11-25: The legacy Equity CSV golden contains no transactions because
+  the V1 CSV parser reports "No valid transactions found in CSV file." T1.8
+  intentionally parses the seven supplied rows with the generic CSV rule and
+  fully reconciles them from the fixture's 1,324.88 Cr opening balance to its
+  1,970.91 Cr ending balance.
