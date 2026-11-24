@@ -1,0 +1,37 @@
+{
+  "institution": "Equity Bank",
+  "rule_version": 1,
+  "engine_min": 1,
+  "extractor": "pdf_words",
+  "detect": {
+    "markers": ["Equity", "Date", "Particulars", "Money Out", "Money In", "Balance"]
+  },
+  "layout": {
+    "header_labels": ["Date", "Value Date", "Particulars", "Money Out", "Money In", "Balance"],
+    "row_start": "\\d{2}-\\d{2}-\\d{4}",
+    "details_continuation": true
+  },
+  "direction": "drcr_column",
+  "fields": {
+    "source_ref": null,
+    "date": "Date",
+    "vendor_raw": "Particulars",
+    "money_out": "Money Out",
+    "money_in": "Money In",
+    "balance": "Balance"
+  },
+  "keep_rows": [],
+  "skip_rows_containing": [
+    "Balance Brought Forward",
+    "Uncleared",
+    "Foreign exchange",
+    "Contact your Manager"
+  ],
+  "vendor": [
+    {"contains": "MPS", "normalize": "M-PESA"},
+    {"contains": "APP/MPESA", "normalize": "M-PESA"},
+    {"contains": "TRANSACTION + SMS CHARGE", "normalize": "Bank Charges"},
+    {"contains": "VISA", "normalize": "Card Purchase"},
+    {"match": ".*", "normalize": "Preserve"}
+  ]
+}
