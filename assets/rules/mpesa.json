@@ -1,0 +1,37 @@
+{
+  "institution": "M-PESA",
+  "rule_version": 1,
+  "engine_min": 1,
+  "extractor": "pdf_words",
+  "detect": {
+    "markers": ["M-PESA", "Receipt No", "Completion Time", "Paid in", "Withdrawn"]
+  },
+  "layout": {
+    "header_labels": ["Receipt No", "Completion Time", "Details", "Transaction Status", "Paid In", "Withdrawn", "Balance"],
+    "row_start": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}",
+    "details_continuation": true
+  },
+  "direction": "drcr_column",
+  "fields": {
+    "source_ref": "Receipt No",
+    "date": "Completion Time",
+    "vendor_raw": "Details",
+    "paid_in": "Paid In",
+    "withdrawn": "Withdrawn",
+    "balance": "Balance"
+  },
+  "keep_rows": [
+    "Completed"
+  ],
+  "skip_rows_containing": [
+    "Transaction Status",
+    "Balance Brought Forward"
+  ],
+  "vendor": [
+    {"contains": "OverDraft", "normalize": "M-PESA Overdraft"},
+    {"contains": "Bundle Purchase", "normalize": "Safaricom Data Bundles"},
+    {"contains": "Customer Payment", "normalize": "Mobile Money Payment"},
+    {"contains": "Funds received", "normalize": "Funds Received"},
+    {"match": ".*", "normalize": "Preserve"}
+  ]
+}
