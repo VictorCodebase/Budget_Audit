@@ -1,0 +1,14 @@
+name: ba_data
+description: Local persistence for Budget Audit.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: '>=3.12.0 <4.0.0'
+
+dependencies:
+  ba_core:
+    path: ../ba_core
+
+dev_dependencies:
+  test: ^1.26.3

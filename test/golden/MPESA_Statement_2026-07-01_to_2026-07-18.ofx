@@ -1,0 +1,461 @@
+OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+<OFX>
+  <SIGNONMSGSRSV1>
+    <SONRS>
+      <STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS>
+      <DTSERVER>20261124211200</DTSERVER>
+      <LANGUAGE>EN</LANGUAGE>
+      <FI><ORG>Safaricom</ORG><FID>MPESA-KE</FID></FI>
+    </SONRS>
+  </SIGNONMSGSRSV1>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <TRNUID>MPESA-587023738754-202607</TRNUID>
+      <STATUS><CODE>0</CODE><SEVERITY>INFO</SEVERITY></STATUS>
+      <STMTRS>
+        <CURDEF>KES</CURDEF>
+        <BANKACCTFROM><BANKID>MPESA</BANKID><ACCTID>587023738754</ACCTID><ACCTTYPE>CHECKING</ACCTTYPE></BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20260701000000</DTSTART>
+          <DTEND>20260718235959</DTEND>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>137.00</TRNAMT>
+            <DTPOSTED>20260718122910</DTPOSTED>
+            <FITID>UGIATBMA60-20260718122910-1</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-130.00</TRNAMT>
+            <DTPOSTED>20260718122910</DTPOSTED>
+            <FITID>UGIATBMA60-20260718122910-2</FITID>
+            <NAME>Customer Send Money to Micro SMEBusiness with Fuliza MPesa to 587042***650 Phani</NAME>
+            <MEMO>Customer Send Money to Micro SMEBusiness with Fuliza MPesa to 587042***650 Charles Njoroge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-7.00</TRNAMT>
+            <DTPOSTED>20260718122910</DTPOSTED>
+            <FITID>UGIATBMA60-20260718122910-3</FITID>
+            <NAME>Customer Transfer of Funds Charge</NAME>
+            <MEMO>Customer Transfer of Funds Charge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260717212116</DTPOSTED>
+            <FITID>UGHATBKXKH-20260717212116-1</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>10.00</TRNAMT>
+            <DTPOSTED>20260717212116</DTPOSTED>
+            <FITID>UGHATBKXKH-20260717212116-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>15.00</TRNAMT>
+            <DTPOSTED>20260717191524</DTPOSTED>
+            <FITID>UGHATBK3K6-20260717191524-1</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-15.00</TRNAMT>
+            <DTPOSTED>20260717191524</DTPOSTED>
+            <FITID>UGHATBK3K6-20260717191524-2</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-15.00</TRNAMT>
+            <DTPOSTED>20260717171414</DTPOSTED>
+            <FITID>UGHATBJNOC-20260717171414-1</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>15.00</TRNAMT>
+            <DTPOSTED>20260717171414</DTPOSTED>
+            <FITID>UGHATBJNOC-20260717171414-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-25.00</TRNAMT>
+            <DTPOSTED>20260717152638</DTPOSTED>
+            <FITID>UGHATBIZIU-20260717152638-1</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>25.00</TRNAMT>
+            <DTPOSTED>20260717152638</DTPOSTED>
+            <FITID>UGHATBIZIU-20260717152638-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260717131603</DTPOSTED>
+            <FITID>UGHATBILB7-20260717131603-1</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>10.00</TRNAMT>
+            <DTPOSTED>20260717131603</DTPOSTED>
+            <FITID>UGHATBILB7-20260717131603-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260717115452</DTPOSTED>
+            <FITID>UGHATBIHBZ-20260717115452-1</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>10.00</TRNAMT>
+            <DTPOSTED>20260717115452</DTPOSTED>
+            <FITID>UGHATBIHBZ-20260717115452-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-20.00</TRNAMT>
+            <DTPOSTED>20260717101123</DTPOSTED>
+            <FITID>UGHATBHZL7-20260717101123-1</FITID>
+            <NAME>Customer Transfer Fuliza MPesa to 587052***313 BRENDA WANJALA</NAME>
+            <MEMO>Customer Transfer Fuliza MPesa to 587052***313 BRENDA WANJALA</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>20.00</TRNAMT>
+            <DTPOSTED>20260717101123</DTPOSTED>
+            <FITID>UGHATBHZL7-20260717101123-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260717090901</DTPOSTED>
+            <FITID>UGHATBHQD9-20260717090901-1</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>10.00</TRNAMT>
+            <DTPOSTED>20260717090901</DTPOSTED>
+            <FITID>UGHATBHQD9-20260717090901-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>2000.00</TRNAMT>
+            <DTPOSTED>20260703123903</DTPOSTED>
+            <FITID>UG360A9QCF-20260703123903</FITID>
+            <NAME>Funds received from 587047***965 ANNE NJAMBI</NAME>
+            <MEMO>Funds received from 587047***965 ANNE NJAMBI</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260703113722</DTPOSTED>
+            <FITID>UG3AT9XSX6-20260703113722</FITID>
+            <NAME>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY </NAME>
+            <MEMO>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-2586.00</TRNAMT>
+            <DTPOSTED>20260703113525</DTPOSTED>
+            <FITID>UG3AT9XX8W-20260703113525-1</FITID>
+            <NAME>Customer Transfer to 3075***687 ANN ONYIS</NAME>
+            <MEMO>Customer Transfer to 3075***687 ANN ONYIS</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-53.00</TRNAMT>
+            <DTPOSTED>20260703113525</DTPOSTED>
+            <FITID>UG3AT9XX8W-20260703113525-2</FITID>
+            <NAME>Customer Transfer of Funds Charge</NAME>
+            <MEMO>Customer Transfer of Funds Charge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>3000.00</TRNAMT>
+            <DTPOSTED>20260703113138</DTPOSTED>
+            <FITID>UG3AT9XU9C-20260703113138</FITID>
+            <NAME>Business Payment from 300600 Equity Bulk Account via API. Original conversation </NAME>
+            <MEMO>Business Payment from 300600 Equity Bulk Account via API. Original conversation ID EOA623E0950DA92</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-7.00</TRNAMT>
+            <DTPOSTED>20260703102521</DTPOSTED>
+            <FITID>UG3AT9XPA3-20260703102521-1</FITID>
+            <NAME>Customer Transfer of Funds Charge</NAME>
+            <MEMO>Customer Transfer of Funds Charge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-300.00</TRNAMT>
+            <DTPOSTED>20260703102521</DTPOSTED>
+            <FITID>UG3AT9XPA3-20260703102521-2</FITID>
+            <NAME>Customer Payment to Small Business to 587023***383 LUCKY BETTY</NAME>
+            <MEMO>Customer Payment to Small Business to 587023***383 LUCKY BETTY</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-15.00</TRNAMT>
+            <DTPOSTED>20260703101134</DTPOSTED>
+            <FITID>UG3AT9XMEV-20260703101134</FITID>
+            <NAME>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY </NAME>
+            <MEMO>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-7.00</TRNAMT>
+            <DTPOSTED>20260703092017</DTPOSTED>
+            <FITID>UG3AT9XH5V-20260703092017-1</FITID>
+            <NAME>Customer Transfer of Funds Charge</NAME>
+            <MEMO>Customer Transfer of Funds Charge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-150.00</TRNAMT>
+            <DTPOSTED>20260703092017</DTPOSTED>
+            <FITID>UG3AT9XH5V-20260703092017-2</FITID>
+            <NAME>Customer Payment to Small Business to 3079***415 collins owino</NAME>
+            <MEMO>Customer Payment to Small Business to 3079***415 collins owino</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-200.00</TRNAMT>
+            <DTPOSTED>20260703085717</DTPOSTED>
+            <FITID>UG3AT9XADG-20260703085717-1</FITID>
+            <NAME>Customer Withdrawal At Agent Till 494208 Sidoman Network Jambo Coast Fries Hotel</NAME>
+            <MEMO>Customer Withdrawal At Agent Till 494208 Sidoman Network Jambo Coast Fries Hotel</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-29.00</TRNAMT>
+            <DTPOSTED>20260703085717</DTPOSTED>
+            <FITID>UG3AT9XADG-20260703085717-2</FITID>
+            <NAME>Withdrawal Charge</NAME>
+            <MEMO>Withdrawal Charge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-15.00</TRNAMT>
+            <DTPOSTED>20260703070600</DTPOSTED>
+            <FITID>UG3AT9WV7G-20260703070600</FITID>
+            <NAME>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY </NAME>
+            <MEMO>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260703025442</DTPOSTED>
+            <FITID>UG3AT9WTEZ-20260703025442</FITID>
+            <NAME>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY </NAME>
+            <MEMO>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-160.00</TRNAMT>
+            <DTPOSTED>20260703024451</DTPOSTED>
+            <FITID>UG3AT9WVTY-20260703024451</FITID>
+            <NAME>MEAL PARK LIMITED NAIROBI</NAME>
+            <MEMO>MEAL PARK LIMITED NAIROBI</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-50.00</TRNAMT>
+            <DTPOSTED>20260702201947</DTPOSTED>
+            <FITID>UG2AT9W38B-20260702201947</FITID>
+            <NAME>Collins Mwangi</NAME>
+            <MEMO>Collins Mwangi</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260702200117</DTPOSTED>
+            <FITID>UG2AT9VZX9-20260702200117</FITID>
+            <NAME>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY </NAME>
+            <MEMO>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260702161920</DTPOSTED>
+            <FITID>UG2AT9USLO-20260702161920</FITID>
+            <NAME>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY </NAME>
+            <MEMO>Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>3000.00</TRNAMT>
+            <DTPOSTED>20260701221057</DTPOSTED>
+            <FITID>UG160A3UNB-20260701221057</FITID>
+            <NAME>Funds received from 587047***965 ANNE NJAMBI</NAME>
+            <MEMO>Funds received from 587047***965 ANNE NJAMBI</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-994.65</TRNAMT>
+            <DTPOSTED>20260701221057</DTPOSTED>
+            <FITID>UG1AT9SIN3-20260701221057</FITID>
+            <NAME>OD Loan Repayment to 232323 M-PESA Overdraw</NAME>
+            <MEMO>OD Loan Repayment to 232323 M-PESA Overdraw</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-4500.00</TRNAMT>
+            <DTPOSTED>20260701200821</DTPOSTED>
+            <FITID>UG1AT9RXDB-20260701200821-1</FITID>
+            <NAME>PayBill Online Fuliza MPesa to 809888 MADARAKA EXPRESS Acc.12716870</NAME>
+            <MEMO>PayBill Online Fuliza MPesa to 809888 MADARAKA EXPRESS Acc.12716870</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-60.00</TRNAMT>
+            <DTPOSTED>20260701200821</DTPOSTED>
+            <FITID>UG1AT9RXDB-20260701200821-2</FITID>
+            <NAME>Pay Bill Charge</NAME>
+            <MEMO>Pay Bill Charge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-20.00</TRNAMT>
+            <DTPOSTED>20260701200543</DTPOSTED>
+            <FITID>UG1AT9RXAF-20260701200543-1</FITID>
+            <NAME>PayBill Charge</NAME>
+            <MEMO>PayBill Charge</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-2300.00</TRNAMT>
+            <DTPOSTED>20260701200543</DTPOSTED>
+            <FITID>UG1AT9RXAF-20260701200543-2</FITID>
+            <NAME>Pay Bill Online to 681325 DREAMLINE EXPRESS LTD ACC.7LFDJSFXK3</NAME>
+            <MEMO>Pay Bill Online to 681325 DREAMLINE EXPRESS LTD ACC.7LFDJSFXK3</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-2104.80</TRNAMT>
+            <DTPOSTED>20260701182430</DTPOSTED>
+            <FITID>UG1AT9R9R9-20260701182430</FITID>
+            <NAME>OD Loan Repayment to 232323 M-PESA Overdraw</NAME>
+            <MEMO>OD Loan Repayment to 232323 M-PESA Overdraw</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>8000.00</TRNAMT>
+            <DTPOSTED>20260701182430</DTPOSTED>
+            <FITID>UG1AT9R9R6-20260701182430</FITID>
+            <NAME>Business Payment from 300600 Equity Bulk Account via API. Original conversation </NAME>
+            <MEMO>Business Payment from 300600 Equity Bulk Account via API. Original conversation ID EQAB3A0275E14D6</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <TRNAMT>-10.00</TRNAMT>
+            <DTPOSTED>20260701121654</DTPOSTED>
+            <FITID>UG1AT9POV3-20260701121654-1</FITID>
+            <NAME>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023</NAME>
+            <MEMO>Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+          <STMTTRN>
+            <TRNTYPE>CREDIT</TRNTYPE>
+            <TRNAMT>10.00</TRNAMT>
+            <DTPOSTED>20260701121654</DTPOSTED>
+            <FITID>UG1AT9POV3-20260701121654-2</FITID>
+            <NAME>OverDraft of Credit Party</NAME>
+            <MEMO>OverDraft of Credit Party</MEMO>
+            <CURRENCY>KES</CURRENCY>
+          </STMTTRN>
+        </BANKTRANLIST>
+        <LEDGERBAL>
+          <BALAMT>0.00</BALAMT>
+          <DTASOF>20260718122910</DTASOF>
+        </LEDGERBAL>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
