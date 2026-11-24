@@ -54,15 +54,15 @@ class HomeViewModel extends ChangeNotifier {
   final Logger _logger = Logger('HomeViewModel');
 
   // State
-  List<UploadedDocument> _uploadedDocuments = [];
-  Map<String, List<ParsedTransaction>> _transactionsByDocument = {};
+  final List<UploadedDocument> _uploadedDocuments = [];
+  final Map<String, List<ParsedTransaction>> _transactionsByDocument = {};
   List<models.Participant> _participants = [];
   List<models.Template> _templateHistory = [];
   bool _isLoading = false;
   bool _hasRunAudit = false;
   String? _errorMessage;
   int _currentDocumentIndex = 0;
-  Set<String> _completedDocumentIds = {};
+  final Set<String> _completedDocumentIds = {};
   bool _autoUpdateVendorAssociations = true; // Toggle for vendor auto-update
   bool _auditCompletedSuccessfully = false;
 
@@ -566,8 +566,9 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   Future<void> matchTransactions() async {
-    if (_appContext.currentTemplate == null || currentDocumentGroup == null)
+    if (_appContext.currentTemplate == null || currentDocumentGroup == null) {
       return;
+    }
 
     _isLoading = true;
     notifyListeners();

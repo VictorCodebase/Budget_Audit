@@ -173,7 +173,7 @@ class ParticipantSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           border: Border.all(
             color: isCurrentUser
-                ? context.colors.primary.withOpacity(0.5)
+                ? context.colors.primary.withValues(alpha: 0.5)
                 : context.colors.border,
             width: isCurrentUser ? 2 : 1,
           ),
@@ -185,7 +185,7 @@ class ParticipantSection extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: context.colors.primary.withOpacity(0.1),
+                  backgroundColor: context.colors.primary.withValues(alpha: 0.1),
                   child: Text(
                     viewModel.getDisplayName(participant)[0].toUpperCase(),
                     style: AppTheme.bodyLarge.copyWith(
@@ -224,7 +224,7 @@ class ParticipantSection extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: context.colors.primary.withOpacity(0.1),
+                      color: context.colors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -247,7 +247,7 @@ class ParticipantSection extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: participant.role.value == 'manager'
-                        ? context.colors.secondary.withOpacity(0.1)
+                        ? context.colors.secondary.withValues(alpha: 0.1)
                         : context.colors.surfaceVariant,
                     borderRadius: BorderRadius.circular(4),
                   ),

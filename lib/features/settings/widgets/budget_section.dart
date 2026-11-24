@@ -2,47 +2,46 @@ import 'package:budget_audit/core/theme/app_theme.dart';
 import 'package:budget_audit/core/widgets/content_box.dart';
 import 'package:budget_audit/features/settings/management_viewmodels/template_management_viewmodel.dart';
 import 'package:budget_audit/features/settings/management_viewmodels/category_management_viewmodel.dart';
-import 'package:budget_audit/features/settings/management_viewmodels/account_management_viewmodel.dart';
-import 'package:budget_audit/features/settings/widgets/category_content_box.dart';
+import 'package:budget_audit/features/settings/widgets/group_content_box.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-/// Template section showing templates with nested categories and accounts
-class TemplateSection extends StatelessWidget {
-  const TemplateSection({Key? key}) : super(key: key);
+/// Budget section showing groups with nested categories.
+class BudgetSection extends StatelessWidget {
+  const BudgetSection({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final templateViewModel = context.watch<TemplateManagementViewModel>();
+    final budgetViewModel = context.watch<TemplateManagementViewModel>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          templateViewModel.isManager ? 'All Budgets' : 'My Budgets',
+          budgetViewModel.isManager ? 'All Budgets' : 'My Budgets',
           style: AppTheme.h3.copyWith(
             color: context.colors.textPrimary,
           ),
         ),
         const SizedBox(height: AppTheme.spacingSm),
         Text(
-          templateViewModel.isManager
+          budgetViewModel.isManager
               ? 'View and manage all budgets'
-              : 'Budgets you are part of',
+              : 'Your budgets',
           style: AppTheme.bodyMedium.copyWith(
             color: context.colors.textSecondary,
           ),
         ),
         const SizedBox(height: AppTheme.spacingLg),
-        if (templateViewModel.isLoading)
+        if (budgetViewModel.isLoading)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(AppTheme.spacingXl),
               child: CircularProgressIndicator(),
             ),
           )
-        else if (templateViewModel.templates.isEmpty)
+        else if (budgetViewModel.templates.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spacingXl),
@@ -55,18 +54,18 @@ class TemplateSection extends StatelessWidget {
             ),
           )
         else
-          ...templateViewModel.templates.map((template) {
-            return _buildTemplateContentBox(
+          ...budgetViewModel.templates.map((budget) {
+            return _buildBudgetContentBox(
               context,
-              templateViewModel,
-              template,
+              budgetViewModel,
+              budget,
             );
           }).toList(),
-        if (templateViewModel.error != null)
+        if (budgetViewModel.error != null)
           Padding(
             padding: const EdgeInsets.only(top: AppTheme.spacingSm),
             child: Text(
-              templateViewModel.error!,
+              budgetViewModel.error!,
               style: AppTheme.bodySmall.copyWith(
                 color: context.colors.error,
               ),
@@ -76,27 +75,19 @@ class TemplateSection extends StatelessWidget {
     );
   }
 
-  Widget _buildTemplateContentBox(
+  Widget _buildBudgetContentBox(
     BuildContext context,
     TemplateManagementViewModel viewModel,
-    dynamic template,
+    dynamic budget,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.spacingMd),
-      child: FutureBuilder<List<dynamic>>(
-        future: Future.wait([
-          viewModel.getTemplateTotalBudget(template.templateId),
-          viewModel.getTemplateParticipants(template.templateId),
-          viewModel.getCreatorName(template.creatorParticipantId),
-        ]),
+      child: FutureBuilder<double>(
+        future: viewModel.getTemplateTotalBudget(budget.templateId),
         builder: (context, snapshot) {
           final budgetAmount = snapshot.hasData
-              ? '\$${(snapshot.data![0] as double).toStringAsFixed(2)}'
+              ? '\$${snapshot.data!.toStringAsFixed(2)}'
               : '\$0.00';
-          final participants =
-              snapshot.hasData ? snapshot.data![1] as List : [];
-          final creatorName =
-              snapshot.hasData ? snapshot.data![2] as String? : null;
 
           return ContentBox(
             minimizedHeight: 60,
@@ -109,7 +100,7 @@ class TemplateSection extends StatelessWidget {
               ContentBoxControl(
                 action: ContentBoxAction.delete,
                 onPressed: () =>
-                    _confirmDeleteTemplate(context, viewModel, template),
+                    _confirmDeleteTemplate(context, viewModel, budget),
               ),
             ],
             headerWidgets: [
@@ -118,7 +109,7 @@ class TemplateSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      template.templateName,
+                      budget.templateName,
                       style: AppTheme.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -133,30 +124,10 @@ class TemplateSection extends StatelessWidget {
                   ],
                 ),
               ),
-              if (creatorName != null)
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Creator',
-                        style: AppTheme.caption.copyWith(
-                          color: context.colors.textSecondary,
-                        ),
-                      ),
-                      Text(
-                        creatorName,
-                        style: AppTheme.bodySmall.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
             ],
             previewWidgets: [
               Text(
-                template.templateName,
+                budget.templateName,
                 style: AppTheme.bodyMedium.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -170,13 +141,7 @@ class TemplateSection extends StatelessWidget {
                 ),
               ),
               Text(
-                '${participants.length} ${participants.length == 1 ? 'member' : 'members'}',
-                style: AppTheme.bodySmall.copyWith(
-                  color: context.colors.textSecondary,
-                ),
-              ),
-              Text(
-                template.period,
+                budget.period,
                 style: AppTheme.bodySmall.copyWith(
                   color: context.colors.textSecondary,
                 ),
@@ -185,7 +150,7 @@ class TemplateSection extends StatelessWidget {
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Template Info
+                // Budget Info
                 Row(
                   children: [
                     Expanded(
@@ -193,19 +158,19 @@ class TemplateSection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Period: ${template.period}',
+                            'Period: ${budget.period}',
                             style: AppTheme.bodySmall.copyWith(
                               color: context.colors.textSecondary,
                             ),
                           ),
                           Text(
-                            'Created: ${DateFormat('MMM d, yyyy').format(template.dateCreated)}',
+                            'Created: ${DateFormat('MMM d, yyyy').format(budget.dateCreated)}',
                             style: AppTheme.bodySmall.copyWith(
                               color: context.colors.textSecondary,
                             ),
                           ),
                           Text(
-                            'Times Used: ${template.timesUsed}',
+                            'Times Used: ${budget.timesUsed}',
                             style: AppTheme.bodySmall.copyWith(
                               color: context.colors.textSecondary,
                             ),
@@ -213,49 +178,20 @@ class TemplateSection extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (participants.isNotEmpty)
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Participants:',
-                              style: AppTheme.caption.copyWith(
-                                color: context.colors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: AppTheme.spacing2xs),
-                            ...participants.take(3).map((p) => Text(
-                                  '• ${p.nickname ?? p.firstName}',
-                                  style: AppTheme.bodySmall.copyWith(
-                                    color: context.colors.textSecondary,
-                                  ),
-                                )),
-                            if (participants.length > 3)
-                              Text(
-                                '  +${participants.length - 3} more',
-                                style: AppTheme.caption.copyWith(
-                                  color: context.colors.textSecondary,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
                   ],
                 ),
                 const SizedBox(height: AppTheme.spacingLg),
 
-                // Categories Section
+                // Groups Section (v1 Categories)
                 Text(
-                  'Categories',
+                  'Groups',
                   style: AppTheme.bodyMedium.copyWith(
                     fontWeight: FontWeight.w600,
                     color: context.colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacingSm),
-                _buildCategoriesForTemplate(context, template.templateId),
+                _buildGroupsForBudget(context, budget.templateId),
               ],
             ),
           );
@@ -264,17 +200,17 @@ class TemplateSection extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoriesForTemplate(BuildContext context, int templateId) {
+  Widget _buildGroupsForBudget(BuildContext context, int budgetId) {
     final categoryViewModel = context.watch<CategoryManagementViewModel>();
-    final categories = categoryViewModel.getCategoriesForTemplate(templateId);
-    final isLoading = categoryViewModel.isTemplateLoading(templateId);
-    final isLoaded = categoryViewModel.isTemplateLoaded(templateId);
+    final categories = categoryViewModel.getCategoriesForTemplate(budgetId);
+    final isLoading = categoryViewModel.isTemplateLoading(budgetId);
+    final isLoaded = categoryViewModel.isTemplateLoaded(budgetId);
 
     // Initial load trigger
     if (!isLoaded && !isLoading) {
       // Use microtask to avoid build-phase updates
       Future.microtask(() {
-        categoryViewModel.loadCategoriesForTemplate(templateId);
+        categoryViewModel.loadCategoriesForTemplate(budgetId);
       });
     }
 
@@ -292,7 +228,7 @@ class TemplateSection extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spacingMd),
           child: Text(
-            'No categories in this budget',
+            'No groups in this budget',
             style: AppTheme.bodySmall.copyWith(
               color: context.colors.textSecondary,
             ),
@@ -305,9 +241,9 @@ class TemplateSection extends StatelessWidget {
       children: categories.map((category) {
         return Padding(
           padding: const EdgeInsets.only(bottom: AppTheme.spacingSm),
-          child: CategoryContentBox(
-            category: category,
-            templateId: templateId,
+          child: GroupContentBox(
+            group: category,
+            budgetId: budgetId,
           ),
         );
       }).toList(),
@@ -317,15 +253,15 @@ class TemplateSection extends StatelessWidget {
   void _confirmDeleteTemplate(
     BuildContext context,
     TemplateManagementViewModel viewModel,
-    dynamic template,
+    dynamic budget,
   ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Budget'),
         content: Text(
-          'Are you sure you want to delete "${template.templateName}"?\n\n'
-          'This will delete all categories and accounts within this budget.',
+          'Are you sure you want to delete "${budget.templateName}"?\n\n'
+          'This will delete all groups and categories within this budget.',
         ),
         actions: [
           TextButton(
@@ -335,7 +271,7 @@ class TemplateSection extends StatelessWidget {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final success = await viewModel.deleteTemplate(template);
+              final success = await viewModel.deleteTemplate(budget);
               if (success && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

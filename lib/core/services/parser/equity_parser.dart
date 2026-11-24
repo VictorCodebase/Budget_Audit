@@ -60,7 +60,7 @@ class EquityParser with ParserMixin implements StatementParser {
           error: unlockResult == ValidationErrorType.passwordRequired
               ? 'Document is password protected'
               : 'Incorrect password',
-          missing: ['PDF unlock failed'],
+          missing: const ['PDF unlock failed'],
           type: unlockResult,
         );
       }
@@ -128,7 +128,7 @@ class EquityParser with ParserMixin implements StatementParser {
           inputBytes: pdfFile.readAsBytesSync(), password: password);
 
       String fullText = PdfTextExtractor(document).extractText();
-      final uuid = const Uuid();
+      const uuid = Uuid();
 
       // New regex that captures: Date, Particulars (everything in between), ONE amount, and Balance
       final rowPattern = RegExp(
@@ -175,7 +175,9 @@ class EquityParser with ParserMixin implements StatementParser {
         if (rawDate == null ||
             rawParticulars == null ||
             rawAmount == null ||
-            rawBalance == null) continue;
+            rawBalance == null) {
+          continue;
+        }
 
         // Skip non-transaction rows
         if (rawParticulars.contains('Total:') ||
@@ -253,7 +255,7 @@ class EquityParser with ParserMixin implements StatementParser {
         success: false,
         errorMessage: "Error parsing Equity Bank PDF: $e",
         document: documentMetadata,
-        transactions: [],
+        transactions: const [],
       );
     } finally {
       document?.dispose();

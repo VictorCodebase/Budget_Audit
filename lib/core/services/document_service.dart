@@ -5,7 +5,6 @@ import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
 import '../models/client_models.dart';
 import 'parser/parser_factory.dart';
-import 'parser/parser_interface.dart';
 
 /// Service for handling document upload, validation, and parsing
 class DocumentService {

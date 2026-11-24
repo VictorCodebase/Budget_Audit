@@ -19,111 +19,14 @@ class SidePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Participants Section
-          _buildParticipantsSection(context, viewModel),
-          const SizedBox(height: AppTheme.spacingXl),
-
-          //TODO: Template Actions Section (deactivated for now)
+          // TODO: Budget actions (deactivated for now)
           // _buildTemplateActionsSection(),
           // const SizedBox(height: AppTheme.spacingXl),
 
-          // Template History Section
+          // Budget history
           _buildTemplateHistorySection(context, viewModel),
         ],
       ),
-    );
-  }
-
-  Widget _buildParticipantsSection(
-      BuildContext context, HomeViewModel viewModel) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Participants',
-          style: AppTheme.h4,
-        ),
-        const SizedBox(height: AppTheme.spacingMd),
-        ...viewModel.participants.map((participant) {
-          final initialsName = (participant.nickname ?? participant.firstName);
-          final initials =
-              initialsName.substring(0, (initialsName.length > 2 ? 2 : initialsName.length)).toUpperCase();
-          final isCurrentUser =
-              participant.participantId == viewModel.currentParticipantId;
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppTheme.spacingMd),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: isCurrentUser
-                      ? context.colors.primary
-                      : context.colors.secondary,
-                  radius: 20,
-                  child: Text(
-                    initials,
-                    style: AppTheme.bodySmall.copyWith(
-                      color: context.colors.surface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spacingMd),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        participant.nickname ?? participant.firstName,
-                        style: AppTheme.bodyMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        participant.email,
-                        style: AppTheme.caption,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (isCurrentUser)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppTheme.spacingXs,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: context.colors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusXs),
-                    ),
-                    child: Text(
-                      'You',
-                      style: AppTheme.caption.copyWith(
-                        color: context.colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        }).toList(),
-        const SizedBox(height: AppTheme.spacingSm),
-        // OutlinedButton.icon(
-        //   onPressed: () {
-        //     // TODO: Add participant functionality
-        //   },
-        //   icon: const Icon(Icons.add, size: 18),
-        //   label: const Text('Add participant'),
-        //   style: OutlinedButton.styleFrom(
-        //     foregroundColor: context.colors.secondary,
-        //     side: BorderSide(color: context.colors.secondary, width: 1),
-        //     minimumSize: const Size(double.infinity, 40),
-        //   ),
-        // ),
-      ],
     );
   }
 
@@ -152,9 +55,9 @@ class SidePanel extends StatelessWidget {
         _buildActionButton(
           context: context,
           label: 'Open your current template',
-          buttonLabel: 'Open Template',
+          buttonLabel: 'Open Budget',
           onPressed: () {
-            // TODO: Implement open template
+            // TODO: Implement open budget
           },
         ),
         const SizedBox(height: AppTheme.spacingMd),
@@ -209,7 +112,7 @@ class SidePanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Budget History',
           style: AppTheme.h4,
         ),
@@ -294,7 +197,7 @@ class SidePanel extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: context.colors.success.withOpacity(0.1),
+                    color: context.colors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

@@ -18,7 +18,7 @@ class ParticipantDetailModal extends StatefulWidget {
 
 class _ParticipantDetailModalState extends State<ParticipantDetailModal> {
   final _formKey = GlobalKey<FormState>();
-  bool _isEditing = false;
+  final bool _isEditing = false;
 
   @override
   void initState() {
@@ -60,7 +60,7 @@ class _ParticipantDetailModalState extends State<ParticipantDetailModal> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: context.colors.primary.withOpacity(0.1),
+                    backgroundColor: context.colors.primary.withValues(alpha: 0.1),
                     child: Text(
                       viewModel
                           .getDisplayName(widget.participant)[0]
@@ -112,7 +112,7 @@ class _ParticipantDetailModalState extends State<ParticipantDetailModal> {
                         Container(
                           padding: const EdgeInsets.all(AppTheme.spacingSm),
                           decoration: BoxDecoration(
-                            color: context.colors.info.withOpacity(0.1),
+                            color: context.colors.info.withValues(alpha: 0.1),
                             borderRadius:
                                 BorderRadius.circular(AppTheme.radiusSm),
                           ),
@@ -263,7 +263,7 @@ class _ParticipantDetailModalState extends State<ParticipantDetailModal> {
                         Container(
                           padding: const EdgeInsets.all(AppTheme.spacingSm),
                           decoration: BoxDecoration(
-                            color: context.colors.error.withOpacity(0.1),
+                            color: context.colors.error.withValues(alpha: 0.1),
                             borderRadius:
                                 BorderRadius.circular(AppTheme.radiusSm),
                           ),

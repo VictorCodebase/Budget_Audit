@@ -224,7 +224,7 @@ class _VendorSectionState extends State<VendorSection> {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    'Account',
+                    'Category',
                     style: AppTheme.bodySmall.copyWith(
                       fontWeight: FontWeight.w600,
                       color: context.colors.textSecondary,

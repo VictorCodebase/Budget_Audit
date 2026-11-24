@@ -21,7 +21,7 @@ Future<T?> showModalBox<T>({
       context: context,
       barrierDismissible: barrierDismissible,
       barrierLabel: 'Modal',
-      barrierColor: Colors.black.withOpacity(0.3),
+      barrierColor: Colors.black.withValues(alpha: 0.3),
       transitionDuration: const Duration(milliseconds: 300),
       // Add useRootNavigator to prevent navigation conflicts
       useRootNavigator: true,
@@ -30,9 +30,9 @@ Future<T?> showModalBox<T>({
         return MouseRegion(
           cursor: SystemMouseCursors.basic,
           child: _DesktopModalBox(
-            child: child,
             width: width,
             height: height,
+            child: child,
           ),
         );
       },
@@ -62,11 +62,11 @@ Future<T?> showModalBox<T>({
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       useRootNavigator: true,
       builder: (context) => _MobileModalBox(
-        child: child,
         height: height,
+        child: child,
       ),
     );
   }
@@ -122,15 +122,15 @@ class _DesktopModalBox extends StatelessWidget {
               filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.85),
+                  color: Colors.white.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 40,
                       offset: const Offset(0, 20),
                     ),
@@ -148,7 +148,7 @@ class _DesktopModalBox extends StatelessWidget {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             width: 1,
                           ),
                         ),

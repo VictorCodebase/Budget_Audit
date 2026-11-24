@@ -62,7 +62,7 @@ class MPesaParser with ParserMixin implements StatementParser {
           error: unlockResult == ValidationErrorType.passwordRequired
               ? 'Document is password protected'
               : 'Incorrect password',
-          missing: ['PDF unlock failed'],
+          missing: const ['PDF unlock failed'],
           type: unlockResult,
         );
       }
@@ -99,7 +99,7 @@ class MPesaParser with ParserMixin implements StatementParser {
       if (missingHeaders.isNotEmpty) {
         return ValidationResult(
           canParse: false,
-          errorMessage: "Missing required column headers.",
+          errorMessage: 'Missing required column headers: $missingHeaders',
           missingCheckpoints: missingHeaders,
         );
       }
@@ -129,7 +129,7 @@ class MPesaParser with ParserMixin implements StatementParser {
           inputBytes: pdfFile.readAsBytesSync(), password: password);
 
       String fullText = PdfTextExtractor(document).extractText();
-      final uuid = const Uuid();
+      const uuid = Uuid();
 
       // Modified regex: Capture TWO consecutive amounts (the Paid In and Withdrawn columns)
       final transactionRowPattern = RegExp(
@@ -220,7 +220,7 @@ class MPesaParser with ParserMixin implements StatementParser {
         success: false,
         errorMessage: "Error parsing M-PESA PDF: $e",
         document: documentMetadata,
-        transactions: [],
+        transactions: const [],
       );
     } finally {
       document?.dispose();

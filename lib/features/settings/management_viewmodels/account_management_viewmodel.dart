@@ -258,11 +258,11 @@ class AccountManagementViewModel extends ChangeNotifier {
     final budgetAmount = _formData['budgetAmount'] as double?;
 
     if (accountName.isEmpty) {
-      return 'Account name is required';
+      return 'Category name is required';
     }
 
     if (categoryId == null) {
-      return 'Category is required';
+      return 'Group is required';
     }
 
     if (colorHex.isEmpty) {
@@ -332,7 +332,7 @@ class AccountManagementViewModel extends ChangeNotifier {
       }
 
       if (existingAccount == null) {
-        _setError('Account not found in cache');
+        _setError('Category not found in cache');
         return false;
       }
 

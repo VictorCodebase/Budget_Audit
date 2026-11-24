@@ -24,7 +24,7 @@ class TemplateManagementViewModel extends ChangeNotifier {
   List<models.Template> _templates = [];
   List<models.Template> get templates => _templates;
 
-  Map<int, List<models.Participant>> _templateParticipants = {};
+  final Map<int, List<models.Participant>> _templateParticipants = {};
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -137,7 +137,7 @@ class TemplateManagementViewModel extends ChangeNotifier {
     final period = _formData['period']?.trim() ?? '';
 
     if (templateName.isEmpty) {
-      return 'Template name is required';
+      return 'Budget name is required';
     }
 
     if (period.isEmpty) {

@@ -150,7 +150,7 @@ class _ExtractedTransactionsWidgetState
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: context.colors.success.withOpacity(0.1),
+                    color: context.colors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: context.colors.success),
                   ),
@@ -207,8 +207,8 @@ class _ExtractedTransactionsWidgetState
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: viewModel.autoUpdateVendorAssociations
-                        ? context.colors.primary.withOpacity(0.1)
-                        : context.colors.border.withOpacity(0.3),
+                        ? context.colors.primary.withValues(alpha: 0.1)
+                        : context.colors.border.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: viewModel.autoUpdateVendorAssociations
@@ -284,7 +284,7 @@ class _ExtractedTransactionsWidgetState
               viewModel.canGoToPrevious ? viewModel.goToPreviousDocument : null,
           icon: const Icon(Icons.arrow_back),
           color: context.colors.secondary,
-          disabledColor: context.colors.textSecondary.withOpacity(0.3),
+          disabledColor: context.colors.textSecondary.withValues(alpha: 0.3),
           tooltip: 'Previous document',
         ),
         const SizedBox(width: 8),
@@ -338,7 +338,7 @@ class _ExtractedTransactionsWidgetState
               viewModel.canProceedToNext ? viewModel.goToNextDocument : null,
           icon: const Icon(Icons.arrow_forward),
           color: context.colors.secondary,
-          disabledColor: context.colors.textSecondary.withOpacity(0.3),
+          disabledColor: context.colors.textSecondary.withValues(alpha: 0.3),
           tooltip: viewModel.isCurrentDocumentComplete
               ? 'Next document'
               : 'Complete all transactions first',
@@ -497,7 +497,7 @@ class _ExtractedTransactionsWidgetState
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '$title',
+              title,
               style: AppTheme.bodySmall
                   .copyWith(color: context.colors.textSecondary),
             ),
@@ -961,7 +961,7 @@ class _TransactionContentBox extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         if (!transaction.ignoreTransaction) ...[
-          const Text('Account', style: AppTheme.caption),
+          const Text('Category', style: AppTheme.caption),
           const SizedBox(height: 8),
           EnhancedAccountSelector(
             categories: categories,
@@ -1196,7 +1196,7 @@ class _SplitTransactionDialogState extends State<_SplitTransactionDialog> {
               },
             ),
             const SizedBox(height: 16),
-            const Text('Assign to Account', style: AppTheme.caption),
+            const Text('Assign to Category', style: AppTheme.caption),
             const SizedBox(height: 8),
             EnhancedAccountSelector(
               categories: widget.categories,
@@ -1280,10 +1280,10 @@ Future<bool?> _showVendorUpdateDialog(
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: context.colors.primary.withOpacity(0.1),
+                color: context.colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border:
-                    Border.all(color: context.colors.primary.withOpacity(0.3)),
+                    Border.all(color: context.colors.primary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [

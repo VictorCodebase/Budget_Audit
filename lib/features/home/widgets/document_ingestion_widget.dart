@@ -265,7 +265,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         ),
         const SizedBox(height: AppTheme.spacingXs),
         DropdownButtonFormField<int>(
-          value: _selectedOwnerId,
+          initialValue: _selectedOwnerId,
           isExpanded: true,
           decoration: InputDecoration(
             hintText: 'Owner',
@@ -425,7 +425,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       ),
       decoration: BoxDecoration(
         color: isSelected
-            ? context.colors.primary.withOpacity(0.1)
+            ? context.colors.primary.withValues(alpha: 0.1)
             : context.colors.surface,
         border: Border.all(
           color: isSelected ? context.colors.primary : context.colors.border,
@@ -539,7 +539,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
         allowedExtensions: [allowedExtension],
       );
 
-      if (result != null && result.single.path != null) {
+      if (result.single.path != null) {
         setState(() {
           _selectedFilePath = result.single.path;
           _selectedFileName = result.single.name;
@@ -664,7 +664,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
       return Container(
         padding: const EdgeInsets.all(AppTheme.spacingMd),
         decoration: BoxDecoration(
-          color: Colors.amber.withOpacity(0.1),
+          color: Colors.amber.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(color: Colors.amber),
         ),
@@ -701,7 +701,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
-        color: context.colors.secondary.withOpacity(0.1),
+        color: context.colors.secondary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         border: Border.all(color: context.colors.secondary),
       ),
@@ -721,7 +721,7 @@ class _DocumentIngestionWidgetState extends State<DocumentIngestionWidget> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  viewModel.currentTemplate?.templateName ?? 'Unknown Template',
+                  viewModel.currentTemplate?.templateName ?? 'Unknown Budget',
                   style: AppTheme.bodyMedium.copyWith(
                     fontWeight: FontWeight.bold,
                     color: context.colors.secondary,

@@ -12,7 +12,7 @@ import 'budgeting_viewmodel.dart';
 import 'widgets/import_option_card.dart';
 import 'widgets/search_filter_bar.dart';
 import 'widgets/category_widget.dart';
-import 'widgets/template_history_item.dart';
+import 'widgets/budget_history_item.dart';
 import 'widgets/preset_card.dart';
 
 class BudgetingView extends StatefulWidget {
@@ -103,7 +103,7 @@ class _BudgetingViewState extends State<BudgetingView> {
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -238,7 +238,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                     size: 22, color: context.colors.primary),
                 const SizedBox(width: 6),
                 Text(
-                  "Add Category",
+                  "Add Group",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -293,9 +293,9 @@ class _BudgetingViewState extends State<BudgetingView> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
-        color: context.colors.secondary.withOpacity(0.05),
+        color: context.colors.secondary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: context.colors.secondary.withOpacity(0.2)),
+        border: Border.all(color: context.colors.secondary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -367,7 +367,7 @@ class _BudgetingViewState extends State<BudgetingView> {
             margin: const EdgeInsets.only(bottom: AppTheme.spacingMd),
             padding: const EdgeInsets.all(AppTheme.spacingMd),
             decoration: BoxDecoration(
-              color: context.colors.warning.withOpacity(0.1),
+              color: context.colors.warning.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               border: Border.all(color: context.colors.warning),
             ),
@@ -543,7 +543,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                   Container(
                     padding: const EdgeInsets.all(AppTheme.spacingXs),
                     decoration: BoxDecoration(
-                      color: colors.warning.withOpacity(0.1),
+                      color: colors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppTheme.radiusXs),
                       border: Border.all(color: colors.warning),
                     ),
@@ -580,9 +580,9 @@ class _BudgetingViewState extends State<BudgetingView> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    _handleSave(this.context, viewModel, then: () {
-                      final messenger = ScaffoldMessenger.of(this.context);
-                      final successColor = this.context.colors.success;
+                    _handleSave(context, viewModel, then: () {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final successColor = context.colors.success;
                       final nav = Navigator.of(modalContext);
 
                       viewModel.adoptPreset(preset,
@@ -603,8 +603,8 @@ class _BudgetingViewState extends State<BudgetingView> {
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
 
-                  final messenger = ScaffoldMessenger.of(this.context);
-                  final successColor = this.context.colors.success;
+                  final messenger = ScaffoldMessenger.of(context);
+                  final successColor = context.colors.success;
                   final nav = Navigator.of(modalContext);
 
                   viewModel.adoptPreset(preset,
@@ -645,8 +645,8 @@ class _BudgetingViewState extends State<BudgetingView> {
     String? period,
     int? customMonths,
   }) {
-    final messenger = ScaffoldMessenger.of(this.context);
-    final successColor = this.context.colors.success;
+    final messenger = ScaffoldMessenger.of(context);
+    final successColor = context.colors.success;
     final nav = Navigator.of(modalContext);
 
     viewModel.adoptPreset(preset, period: period, customMonths: customMonths);
@@ -732,12 +732,9 @@ class _BudgetingViewState extends State<BudgetingView> {
                                     final templateData = snapshot.data;
                                     final totalBudget =
                                         templateData?.totalBudget ?? 0.0;
-                                    final participants =
-                                        templateData?.participants ?? [];
 
-                                    return TemplateHistoryItem(
-                                      template: template,
-                                      participants: participants,
+                                    return BudgetHistoryItem(
+                                      budget: template,
                                       totalBudget: totalBudget,
                                       isCurrent: isCurrent,
                                       onAdopt: () => _handleAdoptTemplate(
@@ -828,7 +825,7 @@ class _BudgetingViewState extends State<BudgetingView> {
                   Container(
                     padding: const EdgeInsets.all(AppTheme.spacingXs),
                     decoration: BoxDecoration(
-                      color: colors.warning.withOpacity(0.1),
+                      color: colors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppTheme.radiusXs),
                       border: Border.all(color: colors.warning),
                     ),
@@ -865,12 +862,12 @@ class _BudgetingViewState extends State<BudgetingView> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
-                    _handleSave(this.context, viewModel, then: () async {
-                      final messenger = ScaffoldMessenger.of(this.context);
-                      final successColor = this.context.colors.success;
+                    _handleSave(context, viewModel, then: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final successColor = context.colors.success;
 
                       final appContext =
-                          Provider.of<AppContext>(this.context, listen: false);
+                          Provider.of<AppContext>(context, listen: false);
                       final currentParticipant = appContext.currentParticipant;
                       if (currentParticipant != null) {
                         await viewModel.adoptTemplate(
@@ -892,11 +889,11 @@ class _BudgetingViewState extends State<BudgetingView> {
                 onPressed: () async {
                   Navigator.of(dialogContext).pop();
 
-                  final messenger = ScaffoldMessenger.of(this.context);
-                  final successColor = this.context.colors.success;
+                  final messenger = ScaffoldMessenger.of(context);
+                  final successColor = context.colors.success;
 
                   final appContext =
-                      Provider.of<AppContext>(this.context, listen: false);
+                      Provider.of<AppContext>(context, listen: false);
                   final currentParticipant = appContext.currentParticipant;
 
                   if (currentParticipant != null) {
@@ -931,12 +928,12 @@ class _BudgetingViewState extends State<BudgetingView> {
     BudgetingViewModel viewModel,
     template,
   ) async {
-    final appContext = Provider.of<AppContext>(this.context, listen: false);
+    final appContext = Provider.of<AppContext>(context, listen: false);
     final currentParticipant = appContext.currentParticipant;
 
-    final messenger = ScaffoldMessenger.of(this.context);
-    final errorColor = this.context.colors.error;
-    final successColor = this.context.colors.success;
+    final messenger = ScaffoldMessenger.of(context);
+    final errorColor = context.colors.error;
+    final successColor = context.colors.success;
 
     if (currentParticipant == null) {
       messenger.showSnackBar(
@@ -981,7 +978,7 @@ class _BudgetingViewState extends State<BudgetingView> {
             ),
             TextButton(
               onPressed: () async {
-                final messenger = ScaffoldMessenger.of(this.context);
+                final messenger = ScaffoldMessenger.of(context);
                 final nav = Navigator.of(modalContext);
 
                 await viewModel.deleteTemplate(template.templateId);

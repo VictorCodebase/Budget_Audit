@@ -81,10 +81,10 @@ class _AccountRowState extends State<AccountRow> {
       padding: const EdgeInsets.all(AppTheme.spacingSm),
       margin: const EdgeInsets.only(bottom: AppTheme.spacingXs),
       decoration: BoxDecoration(
-        color: widget.account.color.withOpacity(0.1),
+        color: widget.account.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         border: Border.all(
-          color: widget.account.color.withOpacity(0.3),
+          color: widget.account.color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -120,7 +120,7 @@ class _AccountRowState extends State<AccountRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Account Name:',
+                      'Category Name:',
                       style: AppTheme.caption,
                     ),
                     const SizedBox(height: 4),
@@ -147,8 +147,8 @@ class _AccountRowState extends State<AccountRow> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Account Budget:',
+                    const Text(
+                      'Category Budget:',
                       style: AppTheme.caption,
                     ),
                     const SizedBox(height: 4),

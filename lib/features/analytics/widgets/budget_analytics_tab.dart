@@ -106,7 +106,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         boxShadow: [
           BoxShadow(
-            color: context.colors.primary.withOpacity(0.3),
+            color: context.colors.primary.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -118,7 +118,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
           Text(
             'Total Budgeted',
             style: AppTheme.label.copyWith(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
           const SizedBox(height: AppTheme.spacing2xs),
@@ -132,7 +132,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
           Text(
             viewModel.selectedTemplate?.period ?? '',
             style: AppTheme.bodySmall.copyWith(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -192,7 +192,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Budget by Category',
+            'Budget by Group',
             style: AppTheme.h3.copyWith(
               color: context.colors.textPrimary,
             ),
@@ -259,7 +259,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                     ),
                   ],
@@ -295,7 +295,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
               vertical: AppTheme.spacing2xs,
             ),
             decoration: BoxDecoration(
-              color: data.category.color.withOpacity(0.1),
+              color: data.category.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               border: Border.all(
                 color: viewModel
@@ -370,7 +370,7 @@ class BudgetAnalyticsTab extends StatelessWidget {
           ),
           const SizedBox(height: AppTheme.spacing2xs),
           Text(
-            'Account Breakdown',
+            'Category Breakdown',
             style: AppTheme.bodySmall.copyWith(
               color: context.colors.textSecondary,
             ),

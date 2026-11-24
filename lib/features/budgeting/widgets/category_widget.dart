@@ -127,7 +127,7 @@ class CategoryWidget extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: AppTheme.spacingSm),
               padding: const EdgeInsets.all(AppTheme.spacingSm),
               decoration: BoxDecoration(
-                color: context.colors.error.withOpacity(0.1),
+                color: context.colors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 border: Border.all(color: context.colors.error, width: 1),
               ),
@@ -188,7 +188,7 @@ class CategoryWidget extends StatelessWidget {
                   ),
                   const SizedBox(width: AppTheme.spacing2xs),
                   Text(
-                    'Add Account',
+                    'Add Category',
                     style: AppTheme.bodySmall.copyWith(
                       color: context.colors.primary,
                       fontWeight: FontWeight.w500,
@@ -212,7 +212,7 @@ class CategoryWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Budgeted in Category:',
+                  'Budgeted in Group:',
                   style: AppTheme.bodyMedium.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -244,7 +244,7 @@ class CategoryWidget extends StatelessWidget {
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -317,9 +317,9 @@ class CategoryWidget extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete Category'),
+          title: const Text('Delete Group'),
           content: Text(
-            'Are you sure you want to delete "${category.name}"? This will also delete all accounts in this category.',
+            'Are you sure you want to delete "${category.name}"? This will also delete all categories in this group.',
           ),
           actions: [
             TextButton(

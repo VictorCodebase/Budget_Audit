@@ -66,7 +66,7 @@ class _HomeViewState extends State<HomeView> {
           child: _buildMainContent(context, viewModel),
         ),
         // Side panel
-        Container(
+        SizedBox(
           width: MediaQuery.of(context).size.width * 0.25,
           child: const SidePanel(),
         ),
@@ -170,7 +170,7 @@ class _HomeViewState extends State<HomeView> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingMd),
       decoration: BoxDecoration(
-        color: context.colors.error.withOpacity(0.1),
+        color: context.colors.error.withValues(alpha: 0.1),
         border: Border.all(color: context.colors.error, width: 1),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       ),
@@ -200,16 +200,16 @@ class _HomeViewState extends State<HomeView> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingXl),
       decoration: BoxDecoration(
-        color: context.colors.success.withOpacity(0.05),
+        color: context.colors.success.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: context.colors.success.withOpacity(0.2)),
+        border: Border.all(color: context.colors.success.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingLg),
             decoration: BoxDecoration(
-              color: context.colors.success.withOpacity(0.1),
+              color: context.colors.success.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

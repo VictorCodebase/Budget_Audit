@@ -2,20 +2,17 @@ import 'package:flutter/material.dart';
 import '../../../core/models/models.dart' as models;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/content_box.dart';
-import 'participant_avatar.dart';
 
-class TemplateHistoryItem extends StatelessWidget {
-  final models.Template template;
-  final List<models.Participant> participants;
+class BudgetHistoryItem extends StatelessWidget {
+  final models.Template budget;
   final double totalBudget;
   final bool isCurrent;
   final VoidCallback onAdopt;
   final VoidCallback onDelete;
 
-  const TemplateHistoryItem({
+  const BudgetHistoryItem({
     Key? key,
-    required this.template,
-    required this.participants,
+    required this.budget,
     this.totalBudget = 0.0,
     this.isCurrent = false,
     required this.onAdopt,
@@ -39,7 +36,7 @@ class TemplateHistoryItem extends StatelessWidget {
       ],
       previewWidgets: [
         Text(
-          template.templateName,
+          budget.templateName,
           style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
           overflow: TextOverflow.ellipsis,
         ),
@@ -70,7 +67,7 @@ class TemplateHistoryItem extends StatelessWidget {
         _buildInfoRow(
           context,
           'Date Created',
-          _formatDate(template.dateCreated),
+          _formatDate(budget.dateCreated),
         ),
         _buildInfoRow(
           context,
@@ -82,7 +79,7 @@ class TemplateHistoryItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Current template badge
+          // Current budget badge
           if (isCurrent)
             Container(
               margin: const EdgeInsets.only(bottom: AppTheme.spacingSm),
@@ -91,7 +88,7 @@ class TemplateHistoryItem extends StatelessWidget {
                 vertical: AppTheme.spacingXs,
               ),
               decoration: BoxDecoration(
-                color: context.colors.success.withOpacity(0.1),
+                color: context.colors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 border: Border.all(color: context.colors.success, width: 1),
               ),
@@ -105,7 +102,7 @@ class TemplateHistoryItem extends StatelessWidget {
                   ),
                   const SizedBox(width: AppTheme.spacingXs),
                   Text(
-                    'Currently Active Template',
+                    'Currently Active Budget',
                     style: AppTheme.bodySmall.copyWith(
                       color: context.colors.success,
                       fontWeight: FontWeight.w600,
@@ -115,42 +112,13 @@ class TemplateHistoryItem extends StatelessWidget {
               ),
             ),
 
-          // Participants section
-          const Text(
-            'Participants:',
-            style: AppTheme.label,
-          ),
-          const SizedBox(height: AppTheme.spacingXs),
-
-          if (participants.isEmpty)
-            Text(
-              'No participants',
-              style: AppTheme.bodySmall.copyWith(
-                color: context.colors.textSecondary,
-                fontStyle: FontStyle.italic,
-              ),
-            )
-          else
-            Wrap(
-              spacing: AppTheme.spacingXs,
-              runSpacing: AppTheme.spacingXs,
-              children: participants.map((participant) {
-                return ParticipantAvatar(
-                  participant: participant,
-                  size: 32,
-                );
-              }).toList(),
-            ),
-
-          const SizedBox(height: AppTheme.spacingMd),
-
           // Adopt button (only if not current)
           if (!isCurrent)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: onAdopt,
-                child: const Text('Adopt Template'),
+                child: const Text('Use Budget'),
               ),
             ),
         ],

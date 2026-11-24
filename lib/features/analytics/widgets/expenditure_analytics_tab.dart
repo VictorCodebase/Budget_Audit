@@ -19,12 +19,12 @@ class ExpenditureAnalyticsTab extends StatelessWidget {
     return Column(
       children: [
         // Chart controls
-        ExpenditureChartControls(),
+        const ExpenditureChartControls(),
         const SizedBox(height: AppTheme.spacingSm),
 
         // Main expenditure vs budget chart
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppTheme.spacingMd),
           child: ExpenditureVsBudgetChart(),
         ),
         const SizedBox(height: AppTheme.spacingLg),

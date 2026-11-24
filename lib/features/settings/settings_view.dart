@@ -3,8 +3,7 @@ import 'package:budget_audit/core/widgets/app_header.dart';
 import 'package:budget_audit/features/settings/settings_viewmodel.dart';
 
 import 'package:budget_audit/features/settings/widgets/profile_section.dart';
-import 'package:budget_audit/features/settings/widgets/participant_section.dart';
-import 'package:budget_audit/features/settings/widgets/template_section.dart';
+import 'package:budget_audit/features/settings/widgets/budget_section.dart';
 import 'package:budget_audit/features/settings/widgets/vendor_section.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -42,10 +41,6 @@ class _SettingsViewContent extends StatelessWidget {
                     const ProfileSection(),
                     const SizedBox(height: AppTheme.spacingXl),
 
-                    // Participant Management Section
-                    const ParticipantSection(),
-                    const SizedBox(height: AppTheme.spacingXl),
-
                     // Budget Management Header
                     Text(
                       'Budget Management',
@@ -56,7 +51,7 @@ class _SettingsViewContent extends StatelessWidget {
                     const SizedBox(height: AppTheme.spacingMd),
                     Text(
                       settingsViewModel.isManager
-                          ? 'Manage all budgets, categories, and accounts'
+                          ? 'Manage all budgets, groups, and categories'
                           : 'View and manage your budgets',
                       style: AppTheme.bodyMedium.copyWith(
                         color: context.colors.textSecondary,
@@ -64,8 +59,8 @@ class _SettingsViewContent extends StatelessWidget {
                     ),
                     const SizedBox(height: AppTheme.spacingLg),
 
-                    // Template/Category/Account Section
-                    const TemplateSection(),
+                    // Budget/Group/Category Section
+                    const BudgetSection(),
                     const SizedBox(height: AppTheme.spacingXl),
 
                     // Vendor Management Section

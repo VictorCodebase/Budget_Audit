@@ -84,7 +84,7 @@ class CSVParser extends StatementParser {
       final headers =
           csvData.first.map((e) => e.toString().toLowerCase().trim()).toList();
       final missingCheckpoints = <String>[];
-      print("Captured headers: ${headers}");
+      print("Captured headers: $headers");
 
       // Check for date column
       if (!_hasAnyColumn(headers, dateColumns)) {

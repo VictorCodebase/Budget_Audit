@@ -182,8 +182,8 @@ class ExpenditureVsBudgetChart extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            context.colors.primary.withOpacity(0.2),
-            context.colors.primary.withOpacity(0.0),
+            context.colors.primary.withValues(alpha: 0.2),
+            context.colors.primary.withValues(alpha: 0.0),
           ],
         ),
       ),

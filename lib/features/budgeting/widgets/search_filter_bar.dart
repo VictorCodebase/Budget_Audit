@@ -49,7 +49,7 @@ class SearchFilterBar extends StatelessWidget {
               //     children: [
               //       _buildFilterChip(
               //         context,
-              //         label: 'Search Categories',
+              //         label: 'Search Groups',
               //         icon: Icons.search,
               //         isActive: false,
               //         onTap: () {},
@@ -57,7 +57,7 @@ class SearchFilterBar extends StatelessWidget {
               //       const SizedBox(width: AppTheme.spacingXs),
               //       _buildFilterChip(
               //         context,
-              //         label: 'Search Accounts',
+              //         label: 'Search Categories',
               //         icon: Icons.account_balance_wallet,
               //         isActive: false,
               //         onTap: () {},
@@ -128,7 +128,7 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isActive
-              ? context.colors.primary.withOpacity(0.1)
+              ? context.colors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(
@@ -181,7 +181,7 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isActive
-              ? context.colors.primary.withOpacity(0.1)
+              ? context.colors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(
@@ -232,7 +232,7 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: hasFilter
-              ? context.colors.primary.withOpacity(0.1)
+              ? context.colors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(
@@ -324,7 +324,7 @@ class SearchFilterBar extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: hasFilter
-              ? context.colors.primary.withOpacity(0.1)
+              ? context.colors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(

@@ -11,7 +11,7 @@ class Participant extends Equatable {
   final String email;
   // PasswordHash is usually not exposed in the app model
 
-  Participant({
+  const Participant({
     required this.participantId,
     required this.firstName,
     this.lastName,
@@ -27,7 +27,7 @@ class Participant extends Equatable {
         lastName,
         nickname,
         role,
-        email ,
+        email,
       ];
 }
 
@@ -47,7 +47,8 @@ enum Role {
   }
 }
 
-// 1.2. Categories Model
+// V1 category groups map to v2 Groups. V2 terminology is introduced at the
+// migration boundary; this model remains tied to the v1 schema for now.
 class Category extends Equatable {
   final int categoryId;
   final int templateId;
@@ -57,7 +58,7 @@ class Category extends Equatable {
   Color get color =>
       Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
-  Category({
+  const Category({
     required this.categoryId,
     required this.templateId,
     required this.categoryName,
@@ -73,7 +74,7 @@ class Category extends Equatable {
       ];
 }
 
-// 1.7. Templates Model
+// V1 templates map to v2 Budgets.
 class Template extends Equatable {
   final int templateId;
   final int? syncId;
@@ -84,7 +85,7 @@ class Template extends Equatable {
   final int? timesUsed;
   final String period;
 
-  Template({
+  const Template({
     required this.templateId,
     this.syncId,
     this.spreadSheetId,
@@ -108,7 +109,7 @@ class Template extends Equatable {
       ];
 }
 
-// 1.3. Accounts Model
+// V1 accounts map to v2 Categories.
 class Account extends Equatable {
   final int accountId;
   final int categoryId;
@@ -126,7 +127,7 @@ class Account extends Equatable {
   Color get color =>
       Color(int.parse(colorHex.substring(1), radix: 16) + 0xFF000000);
 
-  Account({
+  const Account({
     required this.accountId,
     required this.categoryId,
     required this.templateId,
@@ -157,7 +158,7 @@ class Vendor extends Equatable {
   final int vendorId;
   final String vendorName;
 
-  Vendor({
+  const Vendor({
     required this.vendorId,
     required this.vendorName,
   });
@@ -178,7 +179,7 @@ class SyncLogEntry extends Equatable {
   final String sheetUrl;
   final int associatedTemplate;
 
-  SyncLogEntry({
+  const SyncLogEntry({
     required this.syncId,
     this.transactionId,
     required this.syncDirection,
@@ -233,7 +234,7 @@ class Transaction extends Equatable {
   final int editorParticipantId;
   final String? reason;
 
-  Transaction({
+  const Transaction({
     required this.transactionId,
     required this.syncId,
     required this.accountId,
@@ -270,7 +271,7 @@ class VendorMatchHistory extends Equatable {
   final int useCount;
   final DateTime lastUsed;
 
-  VendorMatchHistory({
+  const VendorMatchHistory({
     required this.vendorMatchId,
     required this.vendorId,
     required this.accountId,

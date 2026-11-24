@@ -32,11 +32,11 @@ class MenuViewModel extends ChangeNotifier {
     final allDestinations = [
       MenuDestination(label: 'Home', icon: Icons.home_outlined, route: '/home'),
       MenuDestination(
-          label: 'Budgeting',
+          label: 'Budget',
           icon: Icons.account_balance_wallet_outlined,
           route: '/budgeting'),
       MenuDestination(
-          label: 'Analytics',
+          label: 'Analysis',
           icon: Icons.analytics_outlined,
           route: '/analytics'),
       MenuDestination(
@@ -58,8 +58,7 @@ class MenuViewModel extends ChangeNotifier {
           return _appContext.hasValidSession;
         case '/dev':
           // Only available if NOT in production
-          return Env.isProduction ==
-              false; 
+          return Env.isProduction == false;
         case '/home':
           // Only show home after a valid session is established
           return _appContext.hasValidSession;

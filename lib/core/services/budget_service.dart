@@ -78,7 +78,7 @@ class TemplateService {
   }
 
   Future<int?> createTemplate(client_models.Template newTemplate) async {
-    const int? timesUsed = 0;
+    const int timesUsed = 0;
     try {
       final entry = TemplatesCompanion.insert(
         syncId: drift.Value(newTemplate.syncId),
@@ -168,7 +168,7 @@ class TemplateService {
       } catch (e, st) {
         _logger.severe("Error deleting template $templateId", e, st);
         // Rethrow to rollback transaction
-        throw e;
+        rethrow;
       }
     });
   }

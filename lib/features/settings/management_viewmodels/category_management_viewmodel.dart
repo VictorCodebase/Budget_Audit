@@ -201,7 +201,7 @@ class CategoryManagementViewModel extends ChangeNotifier {
     final colorHex = _formData['colorHex']?.trim() ?? '';
 
     if (categoryName.isEmpty) {
-      return 'Category name is required';
+      return 'Group name is required';
     }
 
     if (colorHex.isEmpty) {

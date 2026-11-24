@@ -282,7 +282,7 @@ class AppTheme {
 
     // Border color adapts to theme
     final borderColor =
-        isDark ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.3);
+        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.3);
 
     return ClipRRect(
       borderRadius: borderRadius ?? BorderRadius.circular(radiusXl),
@@ -293,7 +293,7 @@ class AppTheme {
           height: height,
           padding: padding,
           decoration: BoxDecoration(
-            color: baseColor.withOpacity(opacity),
+            color: baseColor.withValues(alpha: opacity),
             borderRadius: borderRadius ?? BorderRadius.circular(radiusXl),
             border: Border.all(
               color: borderColor,

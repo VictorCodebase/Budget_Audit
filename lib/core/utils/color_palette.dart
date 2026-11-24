@@ -29,7 +29,7 @@ class ColorPalette {
 
   static String getName(Color color) {
     try {
-      return all.firstWhere((nc) => nc.color.value == color.value).name;
+      return all.firstWhere((nc) => nc.color.toARGB32() == color.toARGB32()).name;
     } catch (e) {
       return 'Custom Color';
     }

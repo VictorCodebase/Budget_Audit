@@ -139,7 +139,7 @@ class BudgetingViewModel extends ChangeNotifier {
       return 'All categories must have valid names';
     }
     if (names.length != names.toSet().length) {
-      return 'Category names must be unique';
+      return 'Group names must be unique';
     }
 
     for (var category in _categories) {
@@ -218,7 +218,7 @@ class BudgetingViewModel extends ChangeNotifier {
       debugPrint("Loading categories for template: ${template.templateName}");
       final categoriesFromDb = await _budgetService.categoryService
           .getCategoriesForTemplate(template.templateId);
-      debugPrint("Categories from db (0th): ${categoriesFromDb[0]}");
+      debugPrint("Groups from db (0th): ${categoriesFromDb[0]}");
 
       final List<clientModels.CategoryData> loadedCategories = [];
 
@@ -397,7 +397,7 @@ class BudgetingViewModel extends ChangeNotifier {
       final category = _categories[index];
       final newAccount = clientModels.AccountData(
         id: const Uuid().v4(),
-        name: 'Account name',
+        name: 'Category name',
         budgetAmount: 0.0,
         color: _generateLighterShade(category.color),
       );
@@ -845,7 +845,7 @@ class BudgetingViewModel extends ChangeNotifier {
       }
 
       if (_filterColor != null) {
-        if (category.color.value != _filterColor!.value) return false;
+        if (category.color.toARGB32() != _filterColor!.toARGB32()) return false;
       }
 
       return true;
@@ -875,7 +875,7 @@ class BudgetingViewModel extends ChangeNotifier {
               a.allParticipants.length.compareTo(b.allParticipants.length);
           break;
         case FilterType.color:
-          comparison = a.color.value.compareTo(b.color.value);
+          comparison = a.color.toARGB32().compareTo(b.color.toARGB32());
           break;
         case null:
           return 0;
@@ -912,7 +912,7 @@ class BudgetingViewModel extends ChangeNotifier {
   }
 
   String _colorToHex(Color color) {
-    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
 
   void _validateCategories() {
@@ -927,7 +927,7 @@ class BudgetingViewModel extends ChangeNotifier {
       if (normalizedName.isEmpty || normalizedName == 'CATEGORY NAME') {
         error = 'Please provide a valid category name';
       } else if (names.containsKey(normalizedName)) {
-        error = 'Category name must be unique';
+        error = 'Group name must be unique';
       }
 
       names[normalizedName] = i;

@@ -20,7 +20,7 @@ class PresetCard extends StatefulWidget {
 class _PresetCardState extends State<PresetCard> {
   late String _selectedPeriod;
   late double _calculatedTotal; // To store the locally calculated total
-  int _customMonths = 1;
+  final int _customMonths = 1;
 
   final List<String> _periodOptions = [
     'Monthly',
@@ -108,7 +108,7 @@ class _PresetCardState extends State<PresetCard> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -247,7 +247,7 @@ class _PresetCardState extends State<PresetCard> {
 
           // Categories preview
           Text(
-            'Categories Preview',
+            'Groups Preview',
             style: AppTheme.bodySmall.copyWith(
               color: context.colors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -264,7 +264,7 @@ class _PresetCardState extends State<PresetCard> {
                   vertical: AppTheme.spacingXs,
                 ),
                 decoration: BoxDecoration(
-                  color: context.colors.primary.withOpacity(0.1),
+                  color: context.colors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 ),
                 child: Text(
@@ -312,7 +312,7 @@ class _PresetCardState extends State<PresetCard> {
       height: 36, // Fixed height to match dropdown
       decoration: BoxDecoration(
         color: isHighlight
-            ? context.colors.secondary.withOpacity(0.1)
+            ? context.colors.secondary.withValues(alpha: 0.1)
             : context.colors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         border: Border.all(

@@ -66,8 +66,8 @@ class _OnboardingViewState extends State<OnboardingView> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                context.colors.primary.withOpacity(0.1),
-                context.colors.secondary.withOpacity(0.1),
+                context.colors.primary.withValues(alpha: 0.1),
+                context.colors.secondary.withValues(alpha: 0.1),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -266,8 +266,8 @@ class _OnboardingViewState extends State<OnboardingView> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                context.colors.primary.withOpacity(0.05),
-                context.colors.secondary.withOpacity(0.05),
+                context.colors.primary.withValues(alpha: 0.05),
+                context.colors.secondary.withValues(alpha: 0.05),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -387,11 +387,11 @@ class _OnboardingViewState extends State<OnboardingView> {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : Row(
+                    : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('Sign In'),
-                          const SizedBox(width: AppTheme.spacingXs),
+                          Text('Sign In'),
+                          SizedBox(width: AppTheme.spacingXs),
                           Icon(
                             Icons.arrow_forward,
                             size: 18,
@@ -410,10 +410,10 @@ class _OnboardingViewState extends State<OnboardingView> {
         Container(
           padding: const EdgeInsets.all(AppTheme.spacingMd),
           decoration: BoxDecoration(
-            color: context.colors.info.withOpacity(0.1),
+            color: context.colors.info.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             border: Border.all(
-              color: context.colors.info.withOpacity(0.3),
+              color: context.colors.info.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -480,10 +480,10 @@ class _OnboardingViewState extends State<OnboardingView> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingSm),
       decoration: BoxDecoration(
-        color: context.colors.error.withOpacity(0.1),
+        color: context.colors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
         border: Border.all(
-          color: context.colors.error.withOpacity(0.3),
+          color: context.colors.error.withValues(alpha: 0.3),
         ),
       ),
       child: Row(

@@ -33,7 +33,7 @@ class VendorManagementViewModel extends ChangeNotifier {
   List<models.Vendor> _vendors = [];
   List<models.Vendor> get vendors => _vendors;
 
-  Map<int, List<VendorMatchHistory>> _vendorMatchHistories = {};
+  final Map<int, List<VendorMatchHistory>> _vendorMatchHistories = {};
 
   List<VendorAccountAssociation> _associations = [];
   List<VendorAccountAssociation> get associations => _associations;

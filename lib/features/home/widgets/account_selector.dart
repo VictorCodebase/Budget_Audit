@@ -120,7 +120,7 @@ class _EnhancedAccountSelectorState extends State<EnhancedAccountSelector> {
               }
             },
             decoration: InputDecoration(
-              hintText: 'Select Account',
+              hintText: 'Select Category',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey.shade300),

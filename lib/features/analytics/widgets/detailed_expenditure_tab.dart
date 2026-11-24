@@ -17,9 +17,9 @@ class DetailedExpenditureTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCategoryList(context),
+          _buildGroupList(context),
           const SizedBox(height: AppTheme.spacingXl),
-          _buildAccountList(context),
+          _buildCategoryList(context),
           const SizedBox(height: AppTheme.spacingXl),
           _buildVendorList(context),
         ],
@@ -27,10 +27,10 @@ class DetailedExpenditureTab extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryList(BuildContext context) {
+  Widget _buildGroupList(BuildContext context) {
     final viewModel = context.watch<AnalyticsViewModel>();
 
-    // Sort categories by percentage of budget used
+    // Sort groups by percentage of budget used
     final sortedCategories = List<CategorySpendingData>.from(
       viewModel.categorySpendingData,
     )..sort((a, b) => b.percentageOfBudget.compareTo(a.percentageOfBudget));
@@ -39,26 +39,26 @@ class DetailedExpenditureTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Categories by Budget Usage',
+          'Groups by Budget Usage',
           style: AppTheme.h3.copyWith(
             color: context.colors.textPrimary,
           ),
         ),
         const SizedBox(height: AppTheme.spacingMd),
         if (sortedCategories.isEmpty)
-          _buildEmptyState(context, 'No categories available')
+          _buildEmptyState(context, 'No groups available')
         else
           ...sortedCategories.map((categoryData) {
             return Padding(
               padding: const EdgeInsets.only(bottom: AppTheme.spacingMd),
-              child: _buildCategoryContentBox(context, categoryData),
+              child: _buildGroupContentBox(context, categoryData),
             );
           }),
       ],
     );
   }
 
-  Widget _buildCategoryContentBox(
+  Widget _buildGroupContentBox(
     BuildContext context,
     CategorySpendingData categoryData,
   ) {
@@ -66,7 +66,7 @@ class DetailedExpenditureTab extends StatelessWidget {
 
     return ContentBox(
       initiallyMinimized: true,
-      controls: [
+      controls: const [
         ContentBoxControl(
           action: ContentBoxAction.minimize,
         ),
@@ -74,7 +74,7 @@ class DetailedExpenditureTab extends StatelessWidget {
       previewWidgets: [
         _buildInfoColumn(
           context,
-          'Category',
+          'Group',
           categoryData.category.categoryName,
           categoryData.category.color,
         ),
@@ -121,14 +121,14 @@ class DetailedExpenditureTab extends StatelessWidget {
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Category summary
+          // Group summary
           Container(
             padding: const EdgeInsets.all(AppTheme.spacingMd),
             decoration: BoxDecoration(
-              color: categoryData.category.color.withOpacity(0.1),
+              color: categoryData.category.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               border: Border.all(
-                color: categoryData.category.color.withOpacity(0.3),
+                color: categoryData.category.color.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -153,23 +153,23 @@ class DetailedExpenditureTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppTheme.spacingLg),
-          // Accounts list
+          // Categories list
           Text(
-            'Accounts',
+            'Categories',
             style: AppTheme.h4.copyWith(
               color: context.colors.textPrimary,
             ),
           ),
           const SizedBox(height: AppTheme.spacingSm),
           ...categoryData.accounts.map((accountData) {
-            return _buildAccountItem(context, accountData);
+            return _buildCategoryItem(context, accountData);
           }),
         ],
       ),
     );
   }
 
-  Widget _buildAccountItem(
+  Widget _buildCategoryItem(
       BuildContext context, AccountSpendingData accountData) {
     final formatter = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
 
@@ -228,7 +228,7 @@ class DetailedExpenditureTab extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: _getUsageColor(context, accountData.percentageOfBudget)
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             ),
             child: Text(
@@ -244,7 +244,7 @@ class DetailedExpenditureTab extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountList(BuildContext context) {
+  Widget _buildCategoryList(BuildContext context) {
     final viewModel = context.watch<AnalyticsViewModel>();
     final formatter = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
 
@@ -252,14 +252,14 @@ class DetailedExpenditureTab extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'All Accounts by Budget Usage',
+          'All Categories by Budget Usage',
           style: AppTheme.h3.copyWith(
             color: context.colors.textPrimary,
           ),
         ),
         const SizedBox(height: AppTheme.spacingMd),
         if (viewModel.accountSpendingData.isEmpty)
-          _buildEmptyState(context, 'No accounts available')
+          _buildEmptyState(context, 'No categories available')
         else
           Container(
             decoration: BoxDecoration(
@@ -284,7 +284,7 @@ class DetailedExpenditureTab extends StatelessWidget {
                       Expanded(
                         flex: 3,
                         child: Text(
-                          'Account',
+                          'Category',
                           style: AppTheme.label.copyWith(
                             color: context.colors.textSecondary,
                           ),
@@ -323,7 +323,7 @@ class DetailedExpenditureTab extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Account rows
+                // Category rows
                 ...viewModel.accountSpendingData.asMap().entries.map((entry) {
                   final index = entry.key;
                   final accountData = entry.value;
@@ -389,7 +389,7 @@ class DetailedExpenditureTab extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: _getUsageColor(
                                       context, accountData.percentageOfBudget)
-                                  .withOpacity(0.1),
+                                  .withValues(alpha: 0.1),
                               borderRadius:
                                   BorderRadius.circular(AppTheme.radiusSm),
                             ),

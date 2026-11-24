@@ -44,7 +44,7 @@ class AppHeader extends StatelessWidget {
                     height: effectiveLogoHeight,
                     width: effectiveLogoHeight,
                     decoration: BoxDecoration(
-                      color: context.colors.primary.withOpacity(0.1),
+                      color: context.colors.primary.withValues(alpha: 0.1),
                       borderRadius:
                           BorderRadius.circular(effectiveLogoHeight * 0.2),
                     ),

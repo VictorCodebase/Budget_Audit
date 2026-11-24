@@ -95,7 +95,7 @@ class ExpenditureChartControls extends StatelessWidget {
                 color: context.colors.textPrimary,
               ),
               items: [
-                DropdownMenuItem(
+                const DropdownMenuItem(
                   value: 'all',
                   child: Text(
                     'All (Average)',

@@ -12,6 +12,9 @@ import '../context.dart' as context;
 
 //import '../models/models.dart';
 
+// This is the v1 persistence schema. Its Categories map to v2 Groups, Accounts
+// map to v2 Categories, and Templates map to v2 Budgets. Keep this boundary
+// explicit until the v1-to-v2 data migration replaces these tables.
 part 'database.g.dart'; // generated db
 
 @drift.DataClassName('Participant')
@@ -285,7 +288,6 @@ class ChartSnapshots extends drift.Table {
     SyncLog
   ],
 )
-
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

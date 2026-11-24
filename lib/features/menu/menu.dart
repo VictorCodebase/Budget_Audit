@@ -42,7 +42,7 @@ class _MenuState extends State<Menu> {
             size: 28,
           ),
           padding: EdgeInsets.zero,
-          color: context.colors.surface.withOpacity(0.85),
+          color: context.colors.surface.withValues(alpha: 0.85),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTheme.radiusXl),

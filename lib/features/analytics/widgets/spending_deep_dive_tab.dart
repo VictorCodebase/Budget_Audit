@@ -22,7 +22,7 @@ class SpendingDeepDiveTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Resource Allocation by Category',
+              'Resource Allocation by Group',
               style: AppTheme.h3.copyWith(
                 color: context.colors.textPrimary,
               ),
@@ -91,7 +91,7 @@ class SpendingDeepDiveTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Spending by Category',
+            'Spending by Group',
             style: AppTheme.h4.copyWith(
               color: context.colors.textPrimary,
             ),
@@ -244,8 +244,8 @@ class SpendingDeepDiveTab extends StatelessWidget {
     if (selectedCategory == null || selectedCategory.accounts.isEmpty) {
       return _buildEmptyState(
         context,
-        'No Account Data',
-        'Select a category to view account spending',
+        'No Category Data',
+        'Select a group to view category spending',
       );
     }
 
@@ -268,12 +268,12 @@ class SpendingDeepDiveTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${selectedCategory.category.categoryName} - Account Spending',
+            '${selectedCategory.category.categoryName} - Category Spending',
             style: AppTheme.h4.copyWith(color: context.colors.textPrimary),
           ),
           const SizedBox(height: AppTheme.spacing2xs),
           Text(
-            'Percentage of each account\'s budget spent.',
+            'Percentage of each category\'s budget spent.',
             style: AppTheme.bodySmall
                 .copyWith(color: context.colors.textSecondary),
           ),

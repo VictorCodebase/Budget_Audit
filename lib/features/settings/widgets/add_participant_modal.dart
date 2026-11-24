@@ -56,7 +56,7 @@ class _AddParticipantModalState extends State<AddParticipantModal> {
                     size: 28,
                   ),
                   const SizedBox(width: AppTheme.spacingMd),
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'Add New Participant',
                       style: AppTheme.h3,
@@ -179,7 +179,7 @@ class _AddParticipantModalState extends State<AddParticipantModal> {
                       Container(
                         padding: const EdgeInsets.all(AppTheme.spacingSm),
                         decoration: BoxDecoration(
-                          color: context.colors.info.withOpacity(0.1),
+                          color: context.colors.info.withValues(alpha: 0.1),
                           borderRadius:
                               BorderRadius.circular(AppTheme.radiusSm),
                         ),
@@ -208,7 +208,7 @@ class _AddParticipantModalState extends State<AddParticipantModal> {
                         Container(
                           padding: const EdgeInsets.all(AppTheme.spacingSm),
                           decoration: BoxDecoration(
-                            color: context.colors.error.withOpacity(0.1),
+                            color: context.colors.error.withValues(alpha: 0.1),
                             borderRadius:
                                 BorderRadius.circular(AppTheme.radiusSm),
                           ),

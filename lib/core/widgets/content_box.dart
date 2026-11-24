@@ -192,7 +192,7 @@ class _ContentBoxState extends State<ContentBox>
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Icon(icon, size: 14, color: color),
