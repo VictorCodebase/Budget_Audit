@@ -1,0 +1,62 @@
+{
+  "success": true,
+  "errorMessage": null,
+  "transactions": [
+    {
+      "date": "2026-03-05T00:00:00.000",
+      "vendorName": "MPS",
+      "amount": 2000.0,
+      "ignoreTransaction": true,
+      "originalDescription": "MPS  UC5AT8IIVA",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-12T00:00:00.000",
+      "vendorName": "MA",
+      "amount": -2000.0,
+      "ignoreTransaction": false,
+      "originalDescription": "APP/MPESA//A099E27472BF0/ MA",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-12T00:00:00.000",
+      "vendorName": "Equity Bank Charges",
+      "amount": -28.51000000000022,
+      "ignoreTransaction": false,
+      "originalDescription": "TRANSACTION + SMS CHARGE",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-16T00:00:00.000",
+      "vendorName": "MPS",
+      "amount": 1500.0,
+      "ignoreTransaction": true,
+      "originalDescription": "MPS  UCGAT9KVPE",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-21T00:00:00.000",
+      "vendorName": "VISA-GOOGLE *YouTube Mu/PUR/607970138153",
+      "amount": -209.0,
+      "ignoreTransaction": false,
+      "originalDescription": "VISA-GOOGLE *YouTube Mu/PUR/607970138153",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-31T00:00:00.000",
+      "vendorName": "MA",
+      "amount": -600.0,
+      "ignoreTransaction": false,
+      "originalDescription": "APP/MPESA//A35450842B1AE/ MA",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-31T00:00:00.000",
+      "vendorName": "Equity Bank Charges",
+      "amount": -16.45999999999981,
+      "ignoreTransaction": false,
+      "originalDescription": "TRANSACTION + SMS CHARGE",
+      "useMemory": true
+    }
+  ]
+}

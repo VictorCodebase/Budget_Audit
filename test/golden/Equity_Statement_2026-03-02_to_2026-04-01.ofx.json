@@ -1,0 +1,62 @@
+{
+  "success": true,
+  "errorMessage": null,
+  "transactions": [
+    {
+      "date": "2026-03-05T00:00:00.000",
+      "vendorName": "MPS 587023738754 UC5AT8IIVA JOHN KIPROP",
+      "amount": 2000.0,
+      "ignoreTransaction": false,
+      "originalDescription": "MPS 587023738754 UC5AT8IIVA JOHN KIPROP - MPS 587023738754 UC5AT8IIVA JOHN KIPROP",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-12T00:00:00.000",
+      "vendorName": "APP/MPESA/587023738754/A099E27472BF0/ MA",
+      "amount": 2000.0,
+      "ignoreTransaction": false,
+      "originalDescription": "APP/MPESA/587023738754/A099E27472BF0/ MA - APP/MPESA/587023738754/A099E27472BF0/ MA",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-12T00:00:00.000",
+      "vendorName": "TRANSACTION + SMS CHARGE",
+      "amount": 28.51,
+      "ignoreTransaction": false,
+      "originalDescription": "TRANSACTION + SMS CHARGE - TRANSACTION + SMS CHARGE",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-16T00:00:00.000",
+      "vendorName": "MPS 587023738754 UCGAT9KVPE JOHN KIPROP",
+      "amount": 1500.0,
+      "ignoreTransaction": false,
+      "originalDescription": "MPS 587023738754 UCGAT9KVPE JOHN KIPROP - MPS 587023738754 UCGAT9KVPE JOHN KIPROP",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-21T00:00:00.000",
+      "vendorName": "VISA-GOOGLE *YouTube Mu/PUR/607970138153",
+      "amount": 209.0,
+      "ignoreTransaction": false,
+      "originalDescription": "VISA-GOOGLE *YouTube Mu/PUR/607970138153 - VISA-GOOGLE *YouTube Mu/PUR/607970138153",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-31T00:00:00.000",
+      "vendorName": "APP/MPESA/587023738754/A35450842B1AE/ MA",
+      "amount": 600.0,
+      "ignoreTransaction": false,
+      "originalDescription": "APP/MPESA/587023738754/A35450842B1AE/ MA - APP/MPESA/587023738754/A35450842B1AE/ MA",
+      "useMemory": true
+    },
+    {
+      "date": "2026-03-31T00:00:00.000",
+      "vendorName": "TRANSACTION + SMS CHARGE",
+      "amount": 16.46,
+      "ignoreTransaction": false,
+      "originalDescription": "TRANSACTION + SMS CHARGE - TRANSACTION + SMS CHARGE",
+      "useMemory": true
+    }
+  ]
+}
