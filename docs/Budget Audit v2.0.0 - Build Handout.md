@@ -41,9 +41,27 @@ New engines live in packages that v1 does not import. New UI lives in `lib/v2/` 
 ### Branches and commits
 
 - `main` stays v1 and takes fixes only. `v2/integration` is the long-lived v2 line.
-- One branch per task, cut from `v2/integration`, named `v2/t1-2-reconciler`. Merge with `--no-ff` once the gates pass, then delete the branch. Tag the end of each milestone `v2.0.0-alpha.N`.
+- Cut one branch per task from `v2/integration`. Name it `v2/<task-id>-<short-slug>` using the lowercase task id and hyphenated slug, for example `v2/t1-2-reconciler`.
+- Merge with `--no-ff` only after all task gates pass, then delete the task branch.
 - Never commit directly to `main` or `v2/integration`. Never force-push shared branches.
-- Conventional commits that end with the task id, for example `feat(core): add reconciler with full, partial and none levels (T1.2)`. Several small commits per task are fine.
+- Use Conventional Commits for every task commit:
+  `"<type>(<scope>): <imperative summary> (T<x>.<n>)"`
+- Allowed types are `feat`, `fix`, `docs`, `chore`, `test`, and `refactor`. Keep scopes small and package-specific, such as `core`, `data`, `crypto`, `v2`, `rules`, `docs`, or `deps`.
+- End the subject with the task id in parentheses. Examples:
+  `feat(core): add reconciler with full, partial and none levels (T1.2)`
+  `test(core): cover Cr and Dr balance signatures (T1.2)`
+  `docs(build): standardize task and milestone tags (T1.3)`
+- Use `chore(integration): merge T<x>.<n> <short-task-name> (T<x>.<n>)` for the merge commit. Several small commits may be made on a task branch.
+- Do not add task tags at intermediate task commits. Milestone tags are the only required release tags.
+
+### Milestone tags
+
+- Create one annotated tag after a milestone is merged and owner review has passed:
+  `git tag -a v2.0.0-alpha.<N> -m "Milestone <letter> - <Milestone Name>"`
+- Assign milestone numbers once, in build order: A=`1`, B=`2`, C=`3`, D=`4`, E=`5`, F=`6`, G=`7`, H=`8`, I=`9`, and increment consistently for later milestones.
+- Tag the milestone tip on `v2/integration`, never on a task branch or a task merge commit.
+- Push annotated tags explicitly with `git push origin v2.0.0-alpha.<N>`; do not use `git push --tags`.
+- If a tag must be replaced before release, document the replacement in `docs/DECISIONS.md`; never move or force-update a published tag.
 
 ## 1. Product framing (FIXED)
 
