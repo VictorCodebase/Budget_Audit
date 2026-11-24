@@ -1,0 +1,382 @@
+{
+  "success": true,
+  "errorMessage": null,
+  "transactions": [
+    {
+      "date": "2026-07-18T12:29:10.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 137.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-18T12:29:10.000",
+      "vendorName": "Customer Send Money to Micro SMEBusiness with Fuliza MPesa to 587042***650 Phani",
+      "amount": 130.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Send Money to Micro SMEBusiness with Fuliza MPesa to 587042***650 Phani - Customer Send Money to Micro SMEBusiness with Fuliza MPesa to 587042***650 Charles Njoroge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-18T12:29:10.000",
+      "vendorName": "Customer Transfer of Funds Charge",
+      "amount": 7.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Transfer of Funds Charge - Customer Transfer of Funds Charge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T21:21:16.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T21:21:16.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T19:15:24.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 15.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T19:15:24.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 15.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T17:14:14.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 15.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T17:14:14.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 15.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T15:26:38.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 25.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T15:26:38.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 25.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T13:16:03.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T13:16:03.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T11:54:52.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T11:54:52.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T10:11:23.000",
+      "vendorName": "Customer Transfer Fuliza MPesa to 587052***313 BRENDA WANJALA",
+      "amount": 20.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Transfer Fuliza MPesa to 587052***313 BRENDA WANJALA - Customer Transfer Fuliza MPesa to 587052***313 BRENDA WANJALA",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T10:11:23.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 20.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T09:09:01.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-17T09:09:01.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T12:39:03.000",
+      "vendorName": "Funds received from 587047***965 ANNE NJAMBI",
+      "amount": 2000.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Funds received from 587047***965 ANNE NJAMBI - Funds received from 587047***965 ANNE NJAMBI",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T11:37:22.000",
+      "vendorName": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY - Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T11:35:25.000",
+      "vendorName": "Customer Transfer to 3075***687 ANN ONYIS",
+      "amount": 2586.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Transfer to 3075***687 ANN ONYIS - Customer Transfer to 3075***687 ANN ONYIS",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T11:35:25.000",
+      "vendorName": "Customer Transfer of Funds Charge",
+      "amount": 53.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Transfer of Funds Charge - Customer Transfer of Funds Charge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T11:31:38.000",
+      "vendorName": "Business Payment from 300600 Equity Bulk Account via API. Original conversation",
+      "amount": 3000.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Business Payment from 300600 Equity Bulk Account via API. Original conversation - Business Payment from 300600 Equity Bulk Account via API. Original conversation ID EOA623E0950DA92",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T10:25:21.000",
+      "vendorName": "Customer Transfer of Funds Charge",
+      "amount": 7.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Transfer of Funds Charge - Customer Transfer of Funds Charge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T10:25:21.000",
+      "vendorName": "Customer Payment to Small Business to 587023***383 LUCKY BETTY",
+      "amount": 300.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Payment to Small Business to 587023***383 LUCKY BETTY - Customer Payment to Small Business to 587023***383 LUCKY BETTY",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T10:11:34.000",
+      "vendorName": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY",
+      "amount": 15.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY - Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T09:20:17.000",
+      "vendorName": "Customer Transfer of Funds Charge",
+      "amount": 7.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Transfer of Funds Charge - Customer Transfer of Funds Charge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T09:20:17.000",
+      "vendorName": "Customer Payment to Small Business to 3079***415 collins owino",
+      "amount": 150.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Payment to Small Business to 3079***415 collins owino - Customer Payment to Small Business to 3079***415 collins owino",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T08:57:17.000",
+      "vendorName": "Customer Withdrawal At Agent Till 494208 Sidoman Network Jambo Coast Fries Hotel",
+      "amount": 200.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Withdrawal At Agent Till 494208 Sidoman Network Jambo Coast Fries Hotel - Customer Withdrawal At Agent Till 494208 Sidoman Network Jambo Coast Fries Hotel",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T08:57:17.000",
+      "vendorName": "Withdrawal Charge",
+      "amount": 29.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Withdrawal Charge - Withdrawal Charge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T07:06:00.000",
+      "vendorName": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY",
+      "amount": 15.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY - Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T02:54:42.000",
+      "vendorName": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY - Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-03T02:44:51.000",
+      "vendorName": "MEAL PARK LIMITED NAIROBI",
+      "amount": 160.0,
+      "ignoreTransaction": false,
+      "originalDescription": "MEAL PARK LIMITED NAIROBI - MEAL PARK LIMITED NAIROBI",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-02T20:19:47.000",
+      "vendorName": "Collins Mwangi",
+      "amount": 50.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Collins Mwangi - Collins Mwangi",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-02T20:01:17.000",
+      "vendorName": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY - Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-02T16:19:20.000",
+      "vendorName": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY - Customer Bundle Purchase to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T22:10:57.000",
+      "vendorName": "Funds received from 587047***965 ANNE NJAMBI",
+      "amount": 3000.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Funds received from 587047***965 ANNE NJAMBI - Funds received from 587047***965 ANNE NJAMBI",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T22:10:57.000",
+      "vendorName": "OD Loan Repayment to 232323 M-PESA Overdraw",
+      "amount": 994.65,
+      "ignoreTransaction": false,
+      "originalDescription": "OD Loan Repayment to 232323 M-PESA Overdraw - OD Loan Repayment to 232323 M-PESA Overdraw",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T20:08:21.000",
+      "vendorName": "PayBill Online Fuliza MPesa to 809888 MADARAKA EXPRESS Acc.12716870",
+      "amount": 4500.0,
+      "ignoreTransaction": false,
+      "originalDescription": "PayBill Online Fuliza MPesa to 809888 MADARAKA EXPRESS Acc.12716870 - PayBill Online Fuliza MPesa to 809888 MADARAKA EXPRESS Acc.12716870",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T20:08:21.000",
+      "vendorName": "Pay Bill Charge",
+      "amount": 60.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Pay Bill Charge - Pay Bill Charge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T20:05:43.000",
+      "vendorName": "PayBill Charge",
+      "amount": 20.0,
+      "ignoreTransaction": false,
+      "originalDescription": "PayBill Charge - PayBill Charge",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T20:05:43.000",
+      "vendorName": "Pay Bill Online to 681325 DREAMLINE EXPRESS LTD ACC.7LFDJSFXK3",
+      "amount": 2300.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Pay Bill Online to 681325 DREAMLINE EXPRESS LTD ACC.7LFDJSFXK3 - Pay Bill Online to 681325 DREAMLINE EXPRESS LTD ACC.7LFDJSFXK3",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T18:24:30.000",
+      "vendorName": "OD Loan Repayment to 232323 M-PESA Overdraw",
+      "amount": 2104.8,
+      "ignoreTransaction": false,
+      "originalDescription": "OD Loan Repayment to 232323 M-PESA Overdraw - OD Loan Repayment to 232323 M-PESA Overdraw",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T18:24:30.000",
+      "vendorName": "Business Payment from 300600 Equity Bulk Account via API. Original conversation",
+      "amount": 8000.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Business Payment from 300600 Equity Bulk Account via API. Original conversation - Business Payment from 300600 Equity Bulk Account via API. Original conversation ID EQAB3A0275E14D6",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T12:16:54.000",
+      "vendorName": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023 - Customer Bundle Purchase with Fuliza to 4093441 SAFARICOM DATA BUNDLES by 587023***754 MARY WANJIKU",
+      "useMemory": true
+    },
+    {
+      "date": "2026-07-01T12:16:54.000",
+      "vendorName": "OverDraft of Credit Party",
+      "amount": 10.0,
+      "ignoreTransaction": false,
+      "originalDescription": "OverDraft of Credit Party - OverDraft of Credit Party",
+      "useMemory": true
+    }
+  ]
+}
