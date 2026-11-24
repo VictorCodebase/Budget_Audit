@@ -1,0 +1,29 @@
+{
+  "institution": "Generic CSV",
+  "rule_version": 1,
+  "engine_min": 1,
+  "extractor": "csv",
+  "detect": {
+    "date_headers": ["Date", "Transaction Date", "Posted Date", "Value Date"],
+    "amount_headers": ["Amount", "Value", "Transaction Amount"],
+    "debit_headers": ["Debit", "Withdrawal", "Money Out", "Withdrawn"],
+    "credit_headers": ["Credit", "Deposit", "Money In", "Paid In"]
+  },
+  "layout": {
+    "header_row": 0
+  },
+  "direction": "signed",
+  "fields": {
+    "date": "Date",
+    "vendor": ["Description", "Details", "Vendor", "Payee"],
+    "amount": "Amount",
+    "source_ref": "Receipt No",
+    "debit": "Debit",
+    "credit": "Credit"
+  },
+  "keep_rows": [],
+  "skip_rows_containing": [],
+  "vendor": [
+    {"match": ".*", "normalize": "Preserve"}
+  ]
+}
