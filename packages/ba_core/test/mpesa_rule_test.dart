@@ -14,13 +14,13 @@ void main() {
     expect(rule.direction, 'drcr_column');
   });
 
-  test('M-PESA redacted CSV golden has expected paid-in rows', () {
-    final golden = File(
-      '../../test/golden/MPESA_Statement_2026-07-01_to_2026-07-18.csv',
+  test('M-PESA redacted CSV fixture has expected paid-in rows', () {
+    final fixture = File(
+      '../../test/fixtures/MPESA_Statement_2026-07-01_to_2026-07-18.csv',
     );
-    expect(golden.existsSync(), isTrue);
+    expect(fixture.existsSync(), isTrue);
 
-    final lines = golden.readAsLinesSync();
+    final lines = fixture.readAsLinesSync();
     expect(lines, isNotEmpty);
     expect(lines.first, contains('Paid In'));
     expect(

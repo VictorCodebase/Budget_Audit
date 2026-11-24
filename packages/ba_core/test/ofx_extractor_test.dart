@@ -27,10 +27,10 @@ void main() {
 
   test('extracts M-PESA and Equity redacted OFX fixtures', () {
     final mpesa = File(
-      '../../test/golden/MPESA_Statement_2026-07-01_to_2026-07-18.ofx',
+      '../../test/fixtures/MPESA_Statement_2026-07-01_to_2026-07-18.ofx',
     );
     final equity = File(
-      '../../test/golden/Equity_Statement_2026-03-02_to_2026-04-01.ofx',
+      '../../test/fixtures/Equity_Statement_2026-03-02_to_2026-04-01.ofx',
     );
     expect(const OfxExtractor().extractFile(mpesa).transactions, isNotEmpty);
     expect(const OfxExtractor().extractFile(equity).transactions, isNotEmpty);
