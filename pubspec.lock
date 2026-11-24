@@ -65,6 +65,27 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+  ba_core:
+    dependency: "direct main"
+    description:
+      path: "packages/ba_core"
+      relative: true
+    source: path
+    version: "0.1.0"
+  ba_crypto:
+    dependency: "direct main"
+    description:
+      path: "packages/ba_crypto"
+      relative: true
+    source: path
+    version: "0.1.0"
+  ba_data:
+    dependency: "direct main"
+    description:
+      path: "packages/ba_data"
+      relative: true
+    source: path
+    version: "0.1.0"
   bcrypt:
     dependency: "direct main"
     description:
