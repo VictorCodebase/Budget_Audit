@@ -25,7 +25,7 @@ void main() {
         isNot(contains('promptly advised')),
       );
 
-      final engine = const RuleEngine();
+      const engine = RuleEngine();
       final normalizedVendors = result.rows
           .map((row) => engine.normalizeVendor(rule, row.vendorRaw))
           .toSet();
