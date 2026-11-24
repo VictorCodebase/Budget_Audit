@@ -1,0 +1,26 @@
+{
+  "institution": "Generic OFX",
+  "rule_version": 1,
+  "engine_min": 1,
+  "extractor": "ofx",
+  "detect": {
+    "markers": ["OFXHEADER", "<OFX>", "<STMTTRN>"]
+  },
+  "layout": {
+    "tag_scanner": true
+  },
+  "direction": "signed",
+  "fields": {
+    "date": "DTPOSTED",
+    "vendor": ["NAME", "MEMO"],
+    "amount": "TRNAMT",
+    "source_ref": "FITID",
+    "opening": "LEDGERBAL",
+    "ending": "LEDGERBAL"
+  },
+  "keep_rows": [],
+  "skip_rows_containing": [],
+  "vendor": [
+    {"match": ".*", "normalize": "Preserve"}
+  ]
+}

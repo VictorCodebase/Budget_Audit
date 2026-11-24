@@ -4,3 +4,5 @@ export 'date/date_parser.dart';
 export 'reconcile/reconciler.dart';
 export 'rules/rule.dart';
 export 'engine/header_table.dart';
+export 'extract/csv/csv_extractor.dart';
+export 'extract/ofx/ofx_extractor.dart';
