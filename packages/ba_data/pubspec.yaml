@@ -9,6 +9,10 @@ environment:
 dependencies:
   ba_core:
     path: ../ba_core
+  drift: ^2.29.0
+  sqlite3: ^2.9.4
 
 dev_dependencies:
   test: ^1.26.3
+  build_runner: ^2.9.0
+  drift_dev: ^2.29.0
