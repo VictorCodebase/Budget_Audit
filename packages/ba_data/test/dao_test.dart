@@ -5,7 +5,10 @@ import 'package:ba_data/dao/vendor_defaults_dao.dart';
 import 'package:ba_data/ba_data.dart';
 import 'package:test/test.dart';
 
+import 'sqlite_test_setup.dart';
+
 void main() {
+  setUpAll(configureSqliteTestLibrary);
   late AppDatabase db;
 
   setUp(() {
