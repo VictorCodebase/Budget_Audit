@@ -7,3 +7,4 @@ export 'engine/header_table.dart';
 export 'engine/rule_engine.dart';
 export 'extract/csv/csv_extractor.dart';
 export 'extract/ofx/ofx_extractor.dart';
+export 'report/report.dart';
