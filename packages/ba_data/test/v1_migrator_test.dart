@@ -5,7 +5,10 @@ import 'package:ba_data/migrator/v1_migrator.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
+import 'sqlite_test_setup.dart';
+
 void main() {
+  setUpAll(configureSqliteTestLibrary);
   late AppDatabase destination;
   late Directory tempDirectory;
   late String v1Path;

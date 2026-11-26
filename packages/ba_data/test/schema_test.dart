@@ -2,7 +2,10 @@ import 'package:ba_data/ba_data.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
+import 'sqlite_test_setup.dart';
+
 void main() {
+  setUpAll(configureSqliteTestLibrary);
   late AppDatabase database;
 
   setUp(() {
@@ -12,23 +15,28 @@ void main() {
   tearDown(() => database.close());
 
   test('creates all v2 tables', () async {
-    final tables = await database.customSelect(
-      "SELECT name FROM sqlite_master "
-      "WHERE type = 'table' AND name NOT LIKE 'sqlite_%'",
-    ).get();
+    final tables = await database
+        .customSelect(
+          "SELECT name FROM sqlite_master "
+          "WHERE type = 'table' AND name NOT LIKE 'sqlite_%'",
+        )
+        .get();
     final names = tables.map((row) => row.read<String>('name')).toSet();
 
-    expect(names, containsAll({
-      'groups',
-      'categories',
-      'vendors',
-      'vendor_defaults',
-      'transactions',
-      'budgets',
-      'budget_lines',
-      'sync_state',
-      'meta',
-    }));
+    expect(
+      names,
+      containsAll({
+        'groups',
+        'categories',
+        'vendors',
+        'vendor_defaults',
+        'transactions',
+        'budgets',
+        'budget_lines',
+        'sync_state',
+        'meta',
+      }),
+    );
   });
 
   test('source_ref is unique only for non-null values', () async {
@@ -77,13 +85,15 @@ void main() {
   });
 
   test('foreign keys reject invalid category references', () async {
-    final pragma = await database.customSelect(
-      'PRAGMA foreign_keys',
-    ).getSingle();
+    final pragma = await database
+        .customSelect('PRAGMA foreign_keys')
+        .getSingle();
     expect(pragma.read<int>('foreign_keys'), 1);
-    final ddl = await database.customSelect(
-      "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'categories'",
-    ).getSingle();
+    final ddl = await database
+        .customSelect(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'categories'",
+        )
+        .getSingle();
     expect(ddl.read<String>('sql'), contains('FOREIGN KEY'));
 
     await expectLater(
